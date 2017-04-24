@@ -1,0 +1,36 @@
+<%- contentFor('pageId') %>
+page_checkin_performance_confirm
+<%- contentFor('pageClassName') %>
+page-checkin page-performance page-confirm
+<%- contentFor('scripts') %>
+<script src="/js/checkin/confirm.js"></script>
+<%- contentFor('body') %>
+<h1 class="pagetitle">入場確認</h1>
+
+<div class="performancedata row">
+    <h2><%- performance.get('film').get('name')['ja'] %></h2>
+    <span class="when"><%- performance.get(`start_str_ja`) %></span>
+    <span class="where"><%- performance.get(`location_str_ja`) %></span>
+</div>
+
+<p class="text-primary text-center process row">QRコードを読み取ってください</p>
+
+<div class="result">
+
+</div>
+
+<div class="results">
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<input type="hidden" name="apiEndpoint" value="<%= process.env.API_ENDPOINT %>">
+<input type="hidden" name="reservationsById" value="<%= JSON.stringify(reservationsById) %>">
+<input type="hidden" name="reservationIdsByQrStr" value="<%= JSON.stringify(reservationIdsByQrStr) %>">
+<input type="hidden" name="messageSearching" value="検索しています...">
+<input type="hidden" name="messagePleaseReadBarcode" value="QRコードを読み取ってください">
