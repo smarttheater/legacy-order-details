@@ -102,7 +102,7 @@ function confirm(req, res, next) {
             const reservations = yield chevre_domain_1.Models.Reservation.find({
                 performance: performance.get('_id'),
                 status: chevre_domain_2.ReservationUtil.STATUS_RESERVED
-            }, 'performance_day seat_code ticket_type_code ticket_type_name_ja ticket_type_name_en entered payment_no payment_seat_index').exec();
+            }, 'performance_day seat_code ticket_type_code ticket_type_name_ja ticket_type_name_en checkins payment_no payment_seat_index').exec();
             const reservationsById = {};
             const reservationIdsByQrStr = {};
             reservations.forEach((reservation) => {
@@ -118,7 +118,7 @@ function confirm(req, res, next) {
             return;
         }
         catch (error) {
-            next(new Error(req.__('Message.UnexpectedError')));
+            next(new Error('unexepected error'));
             return;
         }
     });

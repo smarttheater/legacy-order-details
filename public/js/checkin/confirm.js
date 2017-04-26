@@ -1,4 +1,4 @@
-$(function(){
+$(function () {
     var API_ENDPOINT = $('input[name="apiEndpoint"]').val();
 
     /** 全予約リスト */
@@ -36,15 +36,15 @@ $(function(){
 
             // 入場済みの場合
             if (_reservation.entered) {
-                message = _reservation.seat_code+' ['+_reservation.ticket_type_name_ja+'] 入場済み';
+                message = _reservation.seat_code + ' [' + _reservation.ticket_type_name_ja + '] 入場済み';
                 // audioYes.load();
                 audioYes.play();
 
                 $('.result').html(
-                    '<div class="alert confirmresult confirmresult-entered" role="alert">'+
-                        '<span class="inner">'+
-                            '<span class="glyphicon glyphicon glyphicon-ok-sign" aria-hidden="true"></span>' + message +
-                        '</span>'+
+                    '<div class="alert confirmresult confirmresult-entered" role="alert">' +
+                    '<span class="inner">' +
+                    '<span class="glyphicon glyphicon glyphicon-ok-sign" aria-hidden="true"></span>' + message +
+                    '</span>' +
                     '</div>'
                 );
             } else {
@@ -52,15 +52,14 @@ $(function(){
                 if (checkedReservationIds.indexOf(_reservation._id) < 0) {
                     checkedReservationIds.push(_reservation._id);
                     enteringReservations.push({
-                        _id: _reservation._id,
-                        entered_at: Date.now()
+                        _id: _reservation._id
                     });
 
                     updateResults();
                 }
 
 
-                message = _reservation.seat_code+' ['+_reservation.ticket_type_name_ja+'] OK';
+                message = _reservation.seat_code + ' [' + _reservation.ticket_type_name_ja + '] OK';
 
                 // 02,03は学生
                 if (_reservation.ticket_type === '02' || _reservation.ticket_type === '03') {
@@ -68,10 +67,10 @@ $(function(){
                     audioYes.play();
 
                     $('.result').html(
-                        '<div class="alert confirmresult confirmresult-ok-student" role="alert">'+
-                            '<span class="inner">'+
-                                '<span class="glyphicon glyphicon glyphicon-ok-sign" aria-hidden="true"></span>' + message +
-                            '</span>'+
+                        '<div class="alert confirmresult confirmresult-ok-student" role="alert">' +
+                        '<span class="inner">' +
+                        '<span class="glyphicon glyphicon glyphicon-ok-sign" aria-hidden="true"></span>' + message +
+                        '</span>' +
                         '</div>'
                     );
                 } else {
@@ -79,17 +78,17 @@ $(function(){
                     audioYes.play();
 
                     $('.result').html(
-                        '<div class="alert confirmresult confirmresult-ok" role="alert">'+
-                            '<span class="inner">'+
-                                '<span class="glyphicon glyphicon glyphicon-ok-sign" aria-hidden="true"></span>' + message +
-                            '</span>'+
+                        '<div class="alert confirmresult confirmresult-ok" role="alert">' +
+                        '<span class="inner">' +
+                        '<span class="glyphicon glyphicon glyphicon-ok-sign" aria-hidden="true"></span>' + message +
+                        '</span>' +
                         '</div>'
                     );
                 }
             }
 
 
-        // NG
+            // NG
         } else {
             // audioNo.load();
             audioNo.play();
@@ -97,10 +96,10 @@ $(function(){
             message = 'NG';
 
             $('.result').html(
-                '<div class="alert confirmresult confirmresult-ng" role="alert">'+
-                    '<span class="inner">'+
-                        '<span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>' + message +
-                    '</span>'+
+                '<div class="alert confirmresult confirmresult-ng" role="alert">' +
+                '<span class="inner">' +
+                '<span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>' + message +
+                '</span>' +
                 '</div>'
             );
         }
@@ -111,32 +110,34 @@ $(function(){
     */
     function processEnter() {
         if (enteringReservations.length < 1) {
-            setTimeout(function(){
+            setTimeout(function () {
                 processEnter();
-            },2000);
+            }, 2000);
 
         } else {
             var enteringReservation = enteringReservations[0];
             var id = enteringReservation._id;
             $.ajax({
                 dataType: 'json',
-                url: API_ENDPOINT + '/reservation/' + id + '/enter',
+                url: API_ENDPOINT + '/reservation/' + id + '/checkin',
                 type: 'POST',
                 data: {
-                    entered_at: enteringReservation.entered_at
+                    how: '認証ウェブアプリにて',
+                    where: '入場ゲート',
+                    why: '映画観覧のため'
                 },
-                beforeSend: function() {
+                beforeSend: function () {
                 }
-            }).done(function(data) {
+            }).done(function (data) {
                 if (data.success) {
                     console.log('entered. reservationId', id);
                     enteringReservations.splice(0, 1);
                     enteredReservationIds.push(id);
                     reservationsById[id].entered = true;
                 }
-            }).fail(function(jqxhr, textStatus, error) {
+            }).fail(function (jqxhr, textStatus, error) {
 
-            }).always(function() {
+            }).always(function () {
                 updateResults();
                 processEnter();
             });
@@ -151,13 +152,13 @@ $(function(){
 
         for (var i = checkedReservationIds.length - 1; i >= 0; i--) {
             var _reservation = reservationsById[checkedReservationIds[i]];
-            html += 
-                '<tr>'+
-                    '<td>'+_reservation.seat_code+'</td>'+
-                    '<td>'+_reservation.ticket_type_name_ja+'</td>'+
-                    '<td>'+((enteredReservationIds.indexOf(_reservation._id) >= 0) ? "入場済み" : "入場中...")+'</td>'+
+            html +=
+                '<tr>' +
+                '<td>' + _reservation.seat_code + '</td>' +
+                '<td>' + _reservation.ticket_type_name_ja + '</td>' +
+                '<td>' + ((enteredReservationIds.indexOf(_reservation._id) >= 0) ? "入場済み" : "入場中...") + '</td>' +
                 '</tr>'
-            ;
+                ;
         }
 
         $('.results tbody').html(html);
@@ -171,7 +172,7 @@ $(function(){
 
     // 文字入力キャッチイベント
     var qrStr = '';
-    $(window).keypress(function(e) {
+    $(window).keypress(function (e) {
         // 新しい入力値の場合
         if (qrStr.length === 0) {
             $('.process').text($('input[name="messageSearching"]').val());

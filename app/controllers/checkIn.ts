@@ -101,7 +101,7 @@ export async function confirm(req: Request, res: Response, next: NextFunction) {
                 performance: performance.get('_id'),
                 status: ReservationUtil.STATUS_RESERVED
             },
-            'performance_day seat_code ticket_type_code ticket_type_name_ja ticket_type_name_en entered payment_no payment_seat_index'
+            'performance_day seat_code ticket_type_code ticket_type_name_ja ticket_type_name_en checkins payment_no payment_seat_index'
         ).exec();
 
         const reservationsById: {
@@ -123,7 +123,7 @@ export async function confirm(req: Request, res: Response, next: NextFunction) {
         });
         return;
     } catch (error) {
-        next(new Error(req.__('Message.UnexpectedError')));
+        next(new Error('unexepected error'));
         return;
     }
 }
