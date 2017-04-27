@@ -99,20 +99,8 @@ function confirm(req, res, next) {
                 .populate('screen', 'name')
                 .populate('theater', 'name')
                 .exec();
-            const reservations = yield chevre_domain_1.Models.Reservation.find({
-                performance: performance.get('_id'),
-                status: chevre_domain_2.ReservationUtil.STATUS_RESERVED
-            }, 'performance_day seat_code ticket_type_code ticket_type_name_ja ticket_type_name_en checkins payment_no payment_seat_index').exec();
-            const reservationsById = {};
-            const reservationIdsByQrStr = {};
-            reservations.forEach((reservation) => {
-                reservationsById[reservation.get('_id').toString()] = reservation;
-                reservationIdsByQrStr[reservation.get('qr_str')] = reservation.get('_id').toString();
-            });
             res.render('checkIn/confirm', {
                 performance: performance,
-                reservationsById: reservationsById,
-                reservationIdsByQrStr: reservationIdsByQrStr,
                 layout: 'layouts/checkIn/layout'
             });
             return;
@@ -124,3 +112,41 @@ function confirm(req, res, next) {
     });
 }
 exports.confirm = confirm;
+/**
+ * 予約情報取得
+ * @memberof checkIn
+ * @function getReservations
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {Promise<void>}
+ */
+function getReservations(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const id = req.body.id;
+            const reservations = yield chevre_domain_1.Models.Reservation.find({
+                performance: id,
+                status: chevre_domain_2.ReservationUtil.STATUS_RESERVED
+            }, 'performance_day seat_code ticket_type_code ticket_type_name_ja ticket_type_name_en checkins payment_no payment_seat_index').exec();
+            const reservationsById = {};
+            const reservationIdsByQrStr = {};
+            reservations.forEach((reservation) => {
+                reservationsById[reservation.get('_id').toString()] = reservation;
+                reservationIdsByQrStr[reservation.get('qr_str')] = reservation.get('_id').toString();
+            });
+            res.json({
+                error: null,
+                reservationsById: reservationsById,
+                reservationIdsByQrStr: reservationIdsByQrStr
+            });
+            return;
+        }
+        catch (error) {
+            res.json({
+                error: '予約情報取得失敗'
+            });
+            return;
+        }
+    });
+}
+exports.getReservations = getReservations;

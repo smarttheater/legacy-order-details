@@ -11,4 +11,5 @@ const router = express_1.Router();
 router.get('/performances', checkInController.performances);
 router.post('/performances', checkInController.performanceSelect);
 router.get('/performance/:id/confirm', checkInController.confirm);
+router.post('/performance/reservations', checkInController.getReservations);
 exports.default = router;

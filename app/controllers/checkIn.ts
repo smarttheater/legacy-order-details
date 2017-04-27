@@ -88,7 +88,7 @@ export async function performanceSelect(req: Request, res: Response): Promise<vo
  * @param {NextFunction} next
  * @returns {Promise<void>}
  */
-export async function confirm(req: Request, res: Response, next: NextFunction) {
+export async function confirm(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         const performance = await Models.Performance.findOne({ _id: req.params.id })
             .populate('film', 'name')
@@ -96,9 +96,31 @@ export async function confirm(req: Request, res: Response, next: NextFunction) {
             .populate('theater', 'name')
             .exec();
 
+        res.render('checkIn/confirm', {
+            performance: performance,
+            layout: 'layouts/checkIn/layout'
+        });
+        return;
+    } catch (error) {
+        next(new Error('unexepected error'));
+        return;
+    }
+}
+
+/**
+ * 予約情報取得
+ * @memberof checkIn
+ * @function getReservations
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {Promise<void>}
+ */
+export async function getReservations(req: Request, res: Response): Promise<void> {
+    try {
+        const id = req.body.id;
         const reservations = await Models.Reservation.find(
             {
-                performance: performance.get('_id'),
+                performance: id,
                 status: ReservationUtil.STATUS_RESERVED
             },
             'performance_day seat_code ticket_type_code ticket_type_name_ja ticket_type_name_en checkins payment_no payment_seat_index'
@@ -115,15 +137,16 @@ export async function confirm(req: Request, res: Response, next: NextFunction) {
             reservationIdsByQrStr[reservation.get('qr_str')] = reservation.get('_id').toString();
         });
 
-        res.render('checkIn/confirm', {
-            performance: performance,
+        res.json({
+            error: null,
             reservationsById: reservationsById,
-            reservationIdsByQrStr: reservationIdsByQrStr,
-            layout: 'layouts/checkIn/layout'
+            reservationIdsByQrStr: reservationIdsByQrStr
         });
         return;
     } catch (error) {
-        next(new Error('unexepected error'));
+        res.json({
+            error: '予約情報取得失敗'
+        });
         return;
     }
 }

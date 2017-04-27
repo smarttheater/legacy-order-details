@@ -30,7 +30,6 @@ page-checkin page-performance page-confirm
 </div>
 
 <input type="hidden" name="apiEndpoint" value="<%= process.env.API_ENDPOINT %>">
-<input type="hidden" name="reservationsById" value="<%= JSON.stringify(reservationsById) %>">
-<input type="hidden" name="reservationIdsByQrStr" value="<%= JSON.stringify(reservationIdsByQrStr) %>">
+<input type="hidden" name="performanceId" value="<%= performance.get('id') %>">
 <input type="hidden" name="messageSearching" value="検索しています...">
 <input type="hidden" name="messagePleaseReadBarcode" value="QRコードを読み取ってください">
