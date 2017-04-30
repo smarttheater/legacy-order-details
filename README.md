@@ -52,19 +52,27 @@ set NODE_ENV=**********環境名(development,test,productionなど)**********
 set CHEVRE_PERFORMANCE_STATUSES_REDIS_HOST=**********パフォーマンス空席状況保管先redis host**********
 set CHEVRE_PERFORMANCE_STATUSES_REDIS_PORT=**********パフォーマンス空席状況保管先redis port**********
 set CHEVRE_PERFORMANCE_STATUSES_REDIS_KEY=**********パフォーマンス空席状況保管先redis key**********
-set FRONTEND_GMO_RESULT_ENDPOINT=**********GMOリンク決済からの戻り先エンドポイント**********
 set API_ENDPOINT=**********frontと連携するchevre apiのエンドポイント**********
 set REDIS_HOST=**********session保管先redis host**********
 set REDIS_PORT=**********session保管先redis port**********
 set REDIS_KEY=**********session保管先redis key**********
 set MONGOLAB_URI=**********mongodb接続URI**********
-set MONGOLAB_URI_GMO=**********gmo結果通知保管先mongodb接続URI**********
+
+
 ```
 only on Aure WebApps
 
 ```shell
 set WEBSITE_NODE_DEFAULT_VERSION=**********node.jsバージョン**********
 set WEBSITE_TIME_ZONE=Tokyo Standard Time
+```
+
+
+```
+DEBUG
+
+```shell
+set DEBUG=chevre-api*
 ```
 
 
