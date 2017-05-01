@@ -81,5 +81,5 @@
     "version": "git add -A",
     "postversion": "git push origin --tags"
   },
-  "version": "1.0.10"
+  "version": "1.0.11"
 }
