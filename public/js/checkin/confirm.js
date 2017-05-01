@@ -160,17 +160,17 @@
                 beforeSend: function () {
                 }
             }).done(function (data) {
-                if (data.success) {
-                    console.log('entered. reservationId', id);
-                    // 入場中の予約から削除
-                    enteringReservations.splice(0, 1);
-                    // 入場済みの予約に追加
-                    enteredReservationIds.push(id);
-                    // 入場履歴を更新
-                    reservationsById[id].checkins.push(checkInHistory);
-                }
+                console.log('entered. reservationId', id);
+                // 入場中の予約から削除
+                enteringReservations.splice(0, 1);
+                // 入場済みの予約に追加
+                enteredReservationIds.push(id);
+                // 入場履歴を更新
+                reservationsById[id].checkins.push(checkInHistory);
             }).fail(function (jqxhr, textStatus, error) {
                 console.error(jqxhr, textStatus, error);
+                // エラーメッセージ表示
+                // alert(jqxhr.responseJSON.errors[0].detail);
             }).always(function () {
                 updateResults();
                 processEnter();
