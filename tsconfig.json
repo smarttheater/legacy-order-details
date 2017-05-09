@@ -39,9 +39,6 @@
         "watch": false
     },
     "exclude": [
-        "config",
-        "definitions",
-        "locales",
         "node_modules",
         "public"
     ]

@@ -53,9 +53,6 @@ set CHEVRE_PERFORMANCE_STATUSES_REDIS_HOST=**********パフォーマンス空席
 set CHEVRE_PERFORMANCE_STATUSES_REDIS_PORT=**********パフォーマンス空席状況保管先redis port**********
 set CHEVRE_PERFORMANCE_STATUSES_REDIS_KEY=**********パフォーマンス空席状況保管先redis key**********
 set API_ENDPOINT=**********frontと連携するchevre apiのエンドポイント**********
-set REDIS_HOST=**********session保管先redis host**********
-set REDIS_PORT=**********session保管先redis port**********
-set REDIS_KEY=**********session保管先redis key**********
 set MONGOLAB_URI=**********mongodb接続URI**********
 
 
@@ -72,7 +69,7 @@ set WEBSITE_TIME_ZONE=Tokyo Standard Time
 DEBUG
 
 ```shell
-set DEBUG=chevre-api*
+set DEBUG=chevre-authentication*
 ```
 
 

@@ -77,6 +77,10 @@
         if (!qrStr) {
             return false;
         }
+        if (qrStrs === undefined) {
+            alert('予約情報を取得できていません');
+            return;
+        }
         var message = '';
         // 予約データが存在する場合
         if (qrStrs.indexOf(qrStr) >= 0) {

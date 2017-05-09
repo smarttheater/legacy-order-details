@@ -127,7 +127,7 @@ function getReservations(req, res) {
             const reservations = yield chevre_domain_1.Models.Reservation.find({
                 performance: id,
                 status: chevre_domain_2.ReservationUtil.STATUS_RESERVED
-            }, 'performance_day seat_code ticket_type_code ticket_type_name_ja ticket_type_name_en checkins payment_no payment_seat_index').exec();
+            }).exec();
             const reservationsById = {};
             const reservationIdsByQrStr = {};
             reservations.forEach((reservation) => {
@@ -139,13 +139,12 @@ function getReservations(req, res) {
                 reservationsById: reservationsById,
                 reservationIdsByQrStr: reservationIdsByQrStr
             });
-            return;
         }
         catch (error) {
+            console.error(error);
             res.json({
                 error: '予約情報取得失敗'
             });
-            return;
         }
     });
 }

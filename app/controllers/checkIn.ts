@@ -122,8 +122,7 @@ export async function getReservations(req: Request, res: Response): Promise<void
             {
                 performance: id,
                 status: ReservationUtil.STATUS_RESERVED
-            },
-            'performance_day seat_code ticket_type_code ticket_type_name_ja ticket_type_name_en checkins payment_no payment_seat_index'
+            }
         ).exec();
 
         const reservationsById: {
@@ -142,11 +141,10 @@ export async function getReservations(req: Request, res: Response): Promise<void
             reservationsById: reservationsById,
             reservationIdsByQrStr: reservationIdsByQrStr
         });
-        return;
     } catch (error) {
+        console.error(error);
         res.json({
             error: '予約情報取得失敗'
         });
-        return;
     }
 }
