@@ -5,9 +5,9 @@
  *
  * @namespace checkIn
  */
-import { Models } from '@motionpicture/chevre-domain';
-import { ReservationUtil } from '@motionpicture/chevre-domain';
-import { FilmUtil } from '@motionpicture/chevre-domain';
+import { Models } from '@motionpicture/ttts-domain';
+import { ReservationUtil } from '@motionpicture/ttts-domain';
+import { FilmUtil } from '@motionpicture/ttts-domain';
 import { NextFunction, Request, Response } from 'express';
 import * as mongoose from 'mongoose';
 import * as _ from 'underscore';

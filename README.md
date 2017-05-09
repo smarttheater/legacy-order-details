@@ -49,10 +49,10 @@ npm run css
 ## Required environment variables
 ```shell
 set NODE_ENV=**********環境名(development,test,productionなど)**********
-set CHEVRE_PERFORMANCE_STATUSES_REDIS_HOST=**********パフォーマンス空席状況保管先redis host**********
-set CHEVRE_PERFORMANCE_STATUSES_REDIS_PORT=**********パフォーマンス空席状況保管先redis port**********
-set CHEVRE_PERFORMANCE_STATUSES_REDIS_KEY=**********パフォーマンス空席状況保管先redis key**********
-set API_ENDPOINT=**********frontと連携するchevre apiのエンドポイント**********
+set TTTS_PERFORMANCE_STATUSES_REDIS_HOST=**********パフォーマンス空席状況保管先redis host**********
+set TTTS_PERFORMANCE_STATUSES_REDIS_PORT=**********パフォーマンス空席状況保管先redis port**********
+set TTTS_PERFORMANCE_STATUSES_REDIS_KEY=**********パフォーマンス空席状況保管先redis key**********
+set API_ENDPOINT=**********frontと連携するttts apiのエンドポイント**********
 set MONGOLAB_URI=**********mongodb接続URI**********
 
 
@@ -69,7 +69,7 @@ set WEBSITE_TIME_ZONE=Tokyo Standard Time
 DEBUG
 
 ```shell
-set DEBUG=chevre-authentication*
+set DEBUG=ttts-authentication*
 ```
 
 

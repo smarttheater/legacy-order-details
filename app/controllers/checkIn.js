@@ -15,9 +15,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
  *
  * @namespace checkIn
  */
-const chevre_domain_1 = require("@motionpicture/chevre-domain");
-const chevre_domain_2 = require("@motionpicture/chevre-domain");
-const chevre_domain_3 = require("@motionpicture/chevre-domain");
+const ttts_domain_1 = require("@motionpicture/ttts-domain");
+const ttts_domain_2 = require("@motionpicture/ttts-domain");
+const ttts_domain_3 = require("@motionpicture/ttts-domain");
 const _ = require("underscore");
 /**
  * 入場画面のパフォーマンス検索
@@ -32,8 +32,8 @@ function performances(_, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // 劇場とスクリーンを取得
-            const theaters = yield chevre_domain_1.Models.Theater.find({}, 'name').exec();
-            const screens = yield chevre_domain_1.Models.Screen.find({}, 'name theater').exec();
+            const theaters = yield ttts_domain_1.Models.Theater.find({}, 'name').exec();
+            const screens = yield ttts_domain_1.Models.Screen.find({}, 'name theater').exec();
             const screensByTheater = {};
             screens.forEach((screen) => {
                 if (screensByTheater[screen.get('theater')] === undefined) {
@@ -42,7 +42,7 @@ function performances(_, res, next) {
                 screensByTheater[screen.get('theater')].push(screen);
             });
             res.render('checkIn/performances', {
-                FilmUtil: chevre_domain_3.FilmUtil,
+                FilmUtil: ttts_domain_3.FilmUtil,
                 theaters: theaters,
                 screensByTheater: screensByTheater,
                 event: {
@@ -94,7 +94,7 @@ exports.performanceSelect = performanceSelect;
 function confirm(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const performance = yield chevre_domain_1.Models.Performance.findOne({ _id: req.params.id })
+            const performance = yield ttts_domain_1.Models.Performance.findOne({ _id: req.params.id })
                 .populate('film', 'name')
                 .populate('screen', 'name')
                 .populate('theater', 'name')
@@ -124,9 +124,9 @@ function getReservations(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const id = req.body.id;
-            const reservations = yield chevre_domain_1.Models.Reservation.find({
+            const reservations = yield ttts_domain_1.Models.Reservation.find({
                 performance: id,
-                status: chevre_domain_2.ReservationUtil.STATUS_RESERVED
+                status: ttts_domain_2.ReservationUtil.STATUS_RESERVED
             }).exec();
             const reservationsById = {};
             const reservationIdsByQrStr = {};
