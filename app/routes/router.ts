@@ -7,7 +7,7 @@
 import { Application, Request, Response } from 'express';
 import * as baseController from '../controllers/base';
 import * as errorController from '../controllers/error';
-import checkin from './checkin';
+import checkinRouter from './checkin';
 /**
  * URLルーティング
  *
@@ -21,7 +21,7 @@ export default (app: Application) => {
     const base = baseController.setLocals;
 
     // 入場
-    app.use('/checkin', base, checkin);
+    app.use('/checkin', base, checkinRouter);
 
     // 404
     app.get('/error/notFound', base, errorController.notFound);

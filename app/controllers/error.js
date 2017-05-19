@@ -12,12 +12,10 @@ const http_status_1 = require("http-status");
 function notFound(req, res) {
     if (req.xhr) {
         res.status(http_status_1.NOT_FOUND).send({ error: 'Not Found.' });
-        return;
     }
     else {
         res.status(http_status_1.NOT_FOUND);
         res.render('error/notFound');
-        return;
     }
 }
 exports.notFound = notFound;
@@ -36,7 +34,6 @@ function index(err, req, res) {
             success: false,
             message: err.message
         });
-        return;
     }
     else {
         res.status(http_status_1.INTERNAL_SERVER_ERROR);
@@ -44,7 +41,6 @@ function index(err, req, res) {
             message: err.message,
             error: err
         });
-        return;
     }
 }
 exports.index = index;

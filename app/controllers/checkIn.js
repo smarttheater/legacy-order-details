@@ -55,7 +55,6 @@ function performances(__, res, next) {
         }
         catch (error) {
             next(error);
-            return;
         }
     });
 }
@@ -72,11 +71,9 @@ function performanceSelect(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!_.isEmpty(req.body.performanceId)) {
             res.redirect(`/checkin/performance/${req.body.performanceId}/confirm`);
-            return;
         }
         else {
             res.redirect('/checkin/performances');
-            return;
         }
     });
 }
@@ -103,11 +100,9 @@ function confirm(req, res, next) {
                 performance: performance,
                 layout: 'layouts/checkIn/layout'
             });
-            return;
         }
         catch (error) {
             next(new Error('unexepected error'));
-            return;
         }
     });
 }

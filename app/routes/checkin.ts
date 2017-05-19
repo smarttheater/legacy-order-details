@@ -5,11 +5,11 @@
  */
 import { Router } from 'express';
 import * as checkInController from '../controllers/checkIn';
-const router = Router();
+const checkinRouter = Router();
 
-router.get('/performances', checkInController.performances);
-router.post('/performances', checkInController.performanceSelect);
-router.get('/performance/:id/confirm', checkInController.confirm);
-router.post('/performance/reservations', checkInController.getReservations);
+checkinRouter.get('/performances', checkInController.performances);
+checkinRouter.post('/performances', checkInController.performanceSelect);
+checkinRouter.get('/performance/:id/confirm', checkInController.confirm);
+checkinRouter.post('/performance/reservations', checkInController.getReservations);
 
-export default router;
+export default checkinRouter;

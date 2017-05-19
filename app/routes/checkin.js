@@ -7,9 +7,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const express_1 = require("express");
 const checkInController = require("../controllers/checkIn");
-const router = express_1.Router();
-router.get('/performances', checkInController.performances);
-router.post('/performances', checkInController.performanceSelect);
-router.get('/performance/:id/confirm', checkInController.confirm);
-router.post('/performance/reservations', checkInController.getReservations);
-exports.default = router;
+const checkinRouter = express_1.Router();
+checkinRouter.get('/performances', checkInController.performances);
+checkinRouter.post('/performances', checkInController.performanceSelect);
+checkinRouter.get('/performance/:id/confirm', checkInController.confirm);
+checkinRouter.post('/performance/reservations', checkInController.getReservations);
+exports.default = checkinRouter;

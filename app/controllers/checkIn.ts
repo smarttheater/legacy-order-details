@@ -53,10 +53,10 @@ export async function performances(__: Request, res: Response, next: NextFunctio
             },
             layout: 'layouts/checkIn/layout'
         });
+
         return;
     } catch (error) {
         next(error);
-        return;
     }
 }
 
@@ -71,10 +71,8 @@ export async function performances(__: Request, res: Response, next: NextFunctio
 export async function performanceSelect(req: Request, res: Response): Promise<void> {
     if (!_.isEmpty(req.body.performanceId)) {
         res.redirect(`/checkin/performance/${req.body.performanceId}/confirm`);
-        return;
     } else {
         res.redirect('/checkin/performances');
-        return;
     }
 }
 
@@ -100,10 +98,8 @@ export async function confirm(req: Request, res: Response, next: NextFunction): 
             performance: performance,
             layout: 'layouts/checkIn/layout'
         });
-        return;
     } catch (error) {
         next(new Error('unexepected error'));
-        return;
     }
 }
 
