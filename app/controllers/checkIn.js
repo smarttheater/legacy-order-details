@@ -28,7 +28,7 @@ const _ = require("underscore");
  * @param {NextFunction} next
  * @returns {Promise<void>}
  */
-function performances(_, res, next) {
+function performances(__, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             // 劇場とスクリーンを取得

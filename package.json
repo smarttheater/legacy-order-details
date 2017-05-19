@@ -17,17 +17,17 @@
     }
   ],
   "dependencies": {
-    "@motionpicture/gmo-service": "^3.0.4",
+    "@motionpicture/gmo-service": "^3.2.1",
     "@motionpicture/ttts-domain": "^3.0.0",
     "basic-auth": "^1.0.4",
-    "body-parser": "^1.17.1",
+    "body-parser": "^1.17.2",
     "connect-redis": "^3.3.0",
     "cookie-parser": "^1.4.1",
-    "debug": "^2.6.6",
+    "debug": "^2.6.8",
     "ejs": "^2.5.2",
-    "express": "^4.15.2",
+    "express": "^4.15.3",
     "express-ejs-layouts": "^2.3.0",
-    "express-session": "^1.15.2",
+    "express-session": "^1.15.3",
     "http-status": "^1.0.1",
     "moment": "^2.18.1",
     "redis": "^2.7.1",
@@ -55,10 +55,10 @@
     "gulp-sass": "^3.1.0",
     "ink-docstrap": "^1.3.0",
     "jsdoc": "^3.4.3",
-    "mocha": "^3.2.0",
+    "mocha": "^3.4.1",
     "nsp": "^2.6.3",
     "rimraf": "^2.6.1",
-    "snyk": "^1.30.0",
+    "snyk": "^1.30.1",
     "tslint": "^4.5.1",
     "tslint-microsoft-contrib": "^4.0.1",
     "typescript": "^2.3.2"
@@ -75,15 +75,18 @@
   "repository": {},
   "scripts": {
     "build": "tsc",
-    "check": "tslint --type-check --project tsconfig.json -c tslint.json index.ts app/**/*.ts && nsp check && snyk auth && snyk test --ignore-policy",
-    "clean": "rimraf app/**/*.js index.js npm-debug.log* docs/*",
+    "check": "npm run tslint && nsp check",
+    "clean": "rimraf app/**/*.js test/**/*.js index.js npm-debug.log* docs/*",
     "css": "gulp",
     "jsdoc": "node_modules/.bin/jsdoc -c jsdoc.json",
+    "mocha": "mocha --no-timeouts --recursive",
+    "snyk": "snyk auth && snyk test --ignore-policy",
     "start": "node ./index.js",
-    "test": "npm run check && mocha --no-timeouts --recursive",
+    "test": "npm run check && npm run mocha",
+    "tslint": "tslint --type-check --project tsconfig.json -c tslint.json index.ts app/**/*.ts test/**/*.ts",
     "preversion": "npm run clean && npm run build && npm test",
     "version": "git add -A",
     "postversion": "git push origin --tags"
   },
-  "version": "1.0.13"
+  "version": "1.0.14"
 }

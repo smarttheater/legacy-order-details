@@ -21,7 +21,7 @@ import * as _ from 'underscore';
  * @param {NextFunction} next
  * @returns {Promise<void>}
  */
-export async function performances(_: Request, res: Response, next: NextFunction): Promise<void> {
+export async function performances(__: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         // 劇場とスクリーンを取得
         const theaters = await Models.Theater.find(
