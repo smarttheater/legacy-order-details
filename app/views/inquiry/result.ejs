@@ -1,0 +1,58 @@
+<%- contentFor('pageId') %>
+page_checkin_performance_confirm
+<%- contentFor('pageClassName') %>
+page-checkin page-complete
+<%- contentFor('scripts') %>
+<script src="/js/checkin/confirm.js"></script>
+<%- contentFor('body') %>
+
+<h1 class="pagetitle">チケット照会</h1>
+
+<table class="table table-complete">
+    <thead>
+        <tr>
+            <th>購入番号</th>
+            <td><%- reservationDocuments[0].payment_no %></td>
+        </tr>
+        <tr>
+            <th>ご来塔日時</th>
+            <td>
+                <%= reservationDocuments[0].performance_start_str["ja"] %>&nbsp;&nbsp;<%= reservationDocuments[0].location_str["ja"] %>
+            </td>
+        </tr>
+    </thead>
+
+    <tbody>
+        <tr>
+            <th>券種/枚数</th>
+            <td>
+                <% reservationDocuments.forEach((reservation, index) => { %>
+                <div class="wrapper-seatcells">
+                    <h2 class="accordion_mobile_toggle"><%- reservation.seat_code %></h2>
+                    <div>
+                        <div class="innercontent">
+                            <div class="cell-seatcode">
+                                <%- reservation.seat_code %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <% }) %>
+            </td>
+        </tr>
+
+    </tbody>
+
+</table>
+
+<% /*
+let seatCodes = reservationDocuments.map((reservationDocument) => {return reservationDocument.seat_code});
+*/ %>
+<a class="visible-pc btn btn-lg btn-showseat show-seat-position" href="javascript:void(0)" ><span>座席を表示</span></a>
+
+
+<div class="btns2clm">
+    <a class="btn btn-lg btn-back" href=""><span>戻る</span></a>
+    <a class="btn btn-lg btn-cancel" href=""><span>チケットをキャンセルする</span></a>
+    <a class="btn btn-lg btn-next" href=""><span>他のチケットを照会する</span></a>
+</div>

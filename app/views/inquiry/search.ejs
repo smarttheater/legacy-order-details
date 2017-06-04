@@ -1,0 +1,72 @@
+<%- contentFor('pageId') %>
+page_inquiry_search
+<%- contentFor('pageClassName') %>
+page-checkin page-search
+<%- contentFor('scripts') %>
+<script src="/js/inquiry/search.js"></script>
+<%- contentFor('body') %>
+<input type="hidden" name="apiEndpoint" value="<%= process.env.API_ENDPOINT %>">
+
+<h1 class="pagetitle">チケット照会</h1>
+<p class="guidetext">チケット購入時に発行された購入番号と
+<br/>チケット購入時に入力した暗証番号を入力して照会ボタンを押してください。
+</p>
+
+<div class="checkin-searchform">
+    <form method="post">
+        <div class="menu-group">
+            <p name='error_head' class=".error-message error message text-danger panel-body bg-danger"></p>
+        </div>
+        <div>
+             <p>debug</p>
+             <p>performance_day: '20171025'</p>
+             <p>payment_no: '700000109'</p>
+             <p>purchaser_tel: '09012345678' </p>
+        <div>
+        <div class="form-group">
+            <select class="form-control" name="day">
+                <option value="">すべての上映日</option>
+                <%
+                let now = moment();
+                let start = moment(event.start);
+                let end = moment(event.end);
+                let options = '';
+                while (start.format('YYYYMMDD') <= end.format('YYYYMMDD')) {
+                    options += `<option value="${start.format('YYYYMMDD')}"`;
+                    if ('20171025' === start.format('YYYYMMDD')) {
+                        options += ' selected="selected"';
+                    }
+                    options += `>${start.format('MM/DD')}</option>`;
+                    start = start.add(+1, 'days');
+                    continue;
+                }
+                %>
+                <%- options %>
+            </select>
+        </div>
+
+        <div class="form-group form-seachqueryinput">
+            <input type="text" class="form-control" name="paymentNo" placeholder="購入番号" maxlength=9>
+            <p name="error-paymentNo" class="error message text-danger"></p>
+        </div>
+
+        <div class="form-group form-seachqueryinput">
+            <input type="text" class="form-control" name="purchaserTel" placeholder="電話番号" maxlength=20>
+            <p name="error-purchaserTel" class="error message text-danger"></p>
+        </div>
+        
+        <div class="wrapper-btn">
+            <a class="btn btn-search search" href="javascript:void(0)"><span>検索</span></a>
+        </div>
+    </form>
+</div>
+
+<div class="modal fade loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="text-center">Message.Searching</div>
+            </div>
+        </div>
+    </div>
+</div>

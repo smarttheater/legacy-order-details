@@ -8,6 +8,7 @@ import { Application, Request, Response } from 'express';
 import * as baseController from '../controllers/base';
 import * as errorController from '../controllers/error';
 import checkinRouter from './checkin';
+import inquiryRouter from './inquiry';
 /**
  * URLルーティング
  *
@@ -22,6 +23,8 @@ export default (app: Application) => {
 
     // 入場
     app.use('/checkin', base, checkinRouter);
+    // チケット照会
+    app.use('/inquiry', base, inquiryRouter);
 
     // 404
     app.get('/error/notFound', base, errorController.notFound);

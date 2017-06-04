@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const baseController = require("../controllers/base");
 const errorController = require("../controllers/error");
 const checkin_1 = require("./checkin");
+const inquiry_1 = require("./inquiry");
 /**
  * URLルーティング
  *
@@ -16,6 +17,8 @@ exports.default = (app) => {
     const base = baseController.setLocals;
     // 入場
     app.use('/checkin', base, checkin_1.default);
+    // チケット照会
+    app.use('/inquiry', base, inquiry_1.default);
     // 404
     app.get('/error/notFound', base, errorController.notFound);
     app.use((_, res) => { res.redirect('/error/notFound'); });
