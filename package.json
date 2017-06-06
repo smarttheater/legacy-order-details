@@ -28,6 +28,7 @@
     "express": "^4.15.3",
     "express-ejs-layouts": "^2.3.0",
     "express-session": "^1.15.3",
+    "express-validator": "^3.2.0",
     "http-status": "^1.0.1",
     "moment": "^2.18.1",
     "redis": "^2.7.1",

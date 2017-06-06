@@ -23,37 +23,37 @@ $(function () {
         });
     }
 
-    // function search() {
-    //     $('form').submit();
-    // }
     function search() {
-        conditions.searched_at = Date.now(); // ブラウザキャッシュ対策
-        $('.error-message').hide();
-        $.ajax({
-            dataType: 'json',
-            url: '/inquiry/search/count',
-            type: 'GET',
-            data: conditions,
-            beforeSend: function () {
-                $('.loading').modal();
-            }
-        }).done(function (data) {
-            // エラーメッセージ表示
-            if (data.errors) {
-                for (error in data.errors) {
-                    $('[name="error_' + error + '"]').text(data.errors[error].msg);
-                }
-                $('.error-message').show();
-            }
-            if( data.count > 0) {
-                alert(data.count + ":検索結果画面へGO!");
-                location.href('/inquiry/search/result');
-            }
-        }).fail(function (jqxhr, textStatus, error) {
-        }).always(function () {
-            $('.loading').modal('hide');
-        });
+        $('form').submit();
     }
+    // function search() {
+    //     conditions.searched_at = Date.now(); // ブラウザキャッシュ対策
+    //     $('.error-message').hide();
+    //     $.ajax({
+    //         dataType: 'json',
+    //         url: '/inquiry/search/count',
+    //         type: 'GET',
+    //         data: conditions,
+    //         beforeSend: function () {
+    //             $('.loading').modal();
+    //         }
+    //     }).done(function (data) {
+    //         // エラーメッセージ表示
+    //         if (data.errors) {
+    //             for (error in data.errors) {
+    //                 $('[name="error_' + error + '"]').text(data.errors[error].msg);
+    //             }
+    //             $('.error-message').show();
+    //         }
+    //         if( data.count > 0) {
+    //             alert(data.count + ":検索結果画面へGO!");
+    //             location.href('/inquiry/search/result');
+    //         }
+    //     }).fail(function (jqxhr, textStatus, error) {
+    //     }).always(function () {
+    //         $('.loading').modal('hide');
+    //     });
+    // }
 
     // 検索
     $(document).on('click', '.search', function () {

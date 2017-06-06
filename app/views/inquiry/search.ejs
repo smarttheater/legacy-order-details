@@ -15,7 +15,11 @@ page-checkin page-search
 <div class="checkin-searchform">
     <form method="post">
         <div class="menu-group">
-            <p name='error_head' class=".error-message error message text-danger panel-body bg-danger"></p>
+            <p name='error_head' class=".error-message error message text-danger panel-body bg-danger">
+            <% if (message !== '') { %>
+            <%= message %>
+            <% } %>
+            </p>
         </div>
         <div>
              <p>debug</p>
@@ -46,13 +50,21 @@ page-checkin page-search
         </div>
 
         <div class="form-group form-seachqueryinput">
-            <input type="text" class="form-control" name="paymentNo" placeholder="購入番号" maxlength=9>
-            <p name="error-paymentNo" class="error message text-danger"></p>
+            <input type="text" class="form-control" name="paymentNo" placeholder="購入番号" value="<%= req.body.paymentNo %>" maxlength=9>
+            <p  name="error-paymentNo" class="error message text-danger" style="padding-top:6px;">
+                <% if (errors && errors.paymentNo) { %>
+                <%- errors.paymentNo.msg %>
+                <% } %>
+            </p>
         </div>
 
         <div class="form-group form-seachqueryinput">
-            <input type="text" class="form-control" name="purchaserTel" placeholder="電話番号" maxlength=20>
-            <p name="error-purchaserTel" class="error message text-danger"></p>
+            <input type="text" class="form-control" name="purchaserTel" placeholder="電話番号" value="<%= req.body.purchaserTel %>" maxlength=20>
+            <p name="error-purchaserTel" class="error message text-danger" style="padding-top:6px;">
+                <% if (errors && errors.purchaserTel) { %>
+                <%- errors.purchaserTel.msg %>
+                <% } %>
+            </p>
         </div>
         
         <div class="wrapper-btn">

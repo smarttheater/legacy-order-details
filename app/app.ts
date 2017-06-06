@@ -8,6 +8,8 @@ import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
 import * as express from 'express';
 import * as mongoose from 'mongoose';
+// tslint:disable-next-line:no-var-requires no-require-imports
+import expressValidator = require('express-validator');
 import basicAuth from './middlewares/basicAuth';
 import benchmarks from './middlewares/benchmarks';
 import session from './middlewares/session';
@@ -42,6 +44,8 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(cookieParser());
 app.use(express.static(`${__dirname}/../public`));
+
+app.use(expressValidator()); // バリデーション
 
 router(app);
 

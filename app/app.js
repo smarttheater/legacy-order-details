@@ -9,6 +9,8 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const express = require("express");
 const mongoose = require("mongoose");
+// tslint:disable-next-line:no-var-requires no-require-imports
+const expressValidator = require("express-validator");
 const basicAuth_1 = require("./middlewares/basicAuth");
 const benchmarks_1 = require("./middlewares/benchmarks");
 const session_1 = require("./middlewares/session");
@@ -37,6 +39,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(`${__dirname}/../public`));
+app.use(expressValidator()); // バリデーション
 router_1.default(app);
 /*
  * Mongoose by default sets the auto_reconnect option to true.
