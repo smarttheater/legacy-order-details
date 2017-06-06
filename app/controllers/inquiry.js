@@ -20,10 +20,12 @@ const ttts_domain_1 = require("@motionpicture/ttts-domain");
 //import * as mongoose from 'mongoose';
 //import * as _ from 'underscore';
 //import * as Message from '../../common/const/message';
+const moment = require("moment");
 // // 購入番号 半角9
 // const NAME_MAX_LENGTH_PAYMENTNO: number = 9;
 // // Tel 半角20
 // const NAME_MAX_LENGTH_TEL: number = 20;
+const SESSION_KEY_INQUIRY_RESERVATIONS = 'ttts-ticket-inquiry-reservations';
 /**
  * 予約照会検索
  * @memberof inquiry
@@ -158,13 +160,15 @@ function count(req, res) {
         try {
             // 総数検索
             const count = yield ttts_domain_1.Models.Reservation.count(conditions).exec();
+            let reservations;
             if (count > 0) {
-                const reservations = yield ttts_domain_1.Models.Reservation.find(conditions).exec();
+                //const reservations = [{seat_code: 'A01', payment_no: 'p12345'}];
+                reservations = yield ttts_domain_1.Models.Reservation.find(conditions).exec();
                 // reservations.sort((a, b) => {
                 //     return ScreenUtil.sortBySeatCode(a.get('seat_code'), b.get('seat_code'));
                 // });
                 // 予約照会・検索結果画面へ遷移
-                req.session.reservations = reservations;
+                req.session[SESSION_KEY_INQUIRY_RESERVATIONS] = reservations;
             }
             else {
                 errors.head = { msg: 'ご指定の予約データは見つかりませんでした' };
@@ -172,6 +176,7 @@ function count(req, res) {
             res.json({
                 success: true,
                 count: count,
+                reservations: reservations,
                 errors: errors
             });
             return;
@@ -203,13 +208,14 @@ function result(req, res, next) {
                 // next(new Error(req.__('Message.NotFound')));
                 next(new Error('Message.NotFound'));
             }
-            const reservations = req.session.reservations;
+            const reservations = req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
             if (!reservations || reservations.length === 0) {
                 // next(new Error(req.__('Message.NotFound')));
                 next(new Error('Message.NotFound'));
                 return;
             }
             res.render('inquiry/result', {
+                moment: moment,
                 reservationDocuments: reservations,
                 layout: 'layouts/inquiry/layout'
             });

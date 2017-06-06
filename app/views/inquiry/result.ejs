@@ -3,56 +3,79 @@ page_checkin_performance_confirm
 <%- contentFor('pageClassName') %>
 page-checkin page-complete
 <%- contentFor('scripts') %>
-<script src="/js/checkin/confirm.js"></script>
+<script src="/js/inquiry/result.js"></script>
+<script src="/js/inquiry/jquery.qrcode.js"></script>
+<script src="/js/inquiry/qrcode.js"></script>
+
 <%- contentFor('body') %>
 
 <h1 class="pagetitle">チケット照会</h1>
 
 <table class="table table-complete">
-    <thead>
-        <tr>
-            <th>購入番号</th>
-            <td><%- reservationDocuments[0].payment_no %></td>
-        </tr>
-        <tr>
-            <th>ご来塔日時</th>
-            <td>
-                <%= reservationDocuments[0].performance_start_str["ja"] %>&nbsp;&nbsp;<%= reservationDocuments[0].location_str["ja"] %>
-            </td>
-        </tr>
-    </thead>
-
     <tbody>
         <tr>
-            <th>券種/枚数</th>
-            <td>
+            <th style="background-color:#D9D9D9;border:1px silver solid;">購入番号</th>
+            <td style="border:1px silver solid;">
+                <font color="red"><%- reservationDocuments[0].payment_no %></font>
+                <br/>
+                ※チケットの発行等に必要な番号となりますので必ず忘れないようにしてください。
+            </td>
+        </tr>
+        <tr>
+            <th style="background-color:#D9D9D9;border:1px silver solid;">ご来塔日時</th>
+            <%
+                moment.locale('ja');
+                const day = moment(reservationDocuments[0].performance_day, 'YYYYMMDD');
+                const start = `${reservationDocuments[0].performance_start_time.substr(0, 2)}:${reservationDocuments[0].performance_start_time.substr(2, 2)}`;
+                const end = `${reservationDocuments[0].performance_end_time.substr(0, 2)}:${reservationDocuments[0].performance_end_time.substr(2, 2)}`;
+            %>
+            <td style="border:1px silver solid;"><%- day.format('LL(ddd) ') %>
+                <%- start %>～<%- end %>
+            </td>
+        </tr>
+        <tr>
+            <th style="background-color:#D9D9D9;border:1px silver solid;">券種/枚数</th>
+            <td style="border:1px silver solid;">
                 <% reservationDocuments.forEach((reservation, index) => { %>
-                <div class="wrapper-seatcells">
-                    <h2 class="accordion_mobile_toggle"><%- reservation.seat_code %></h2>
-                    <div>
-                        <div class="innercontent">
-                            <div class="cell-seatcode">
-                                <%- reservation.seat_code %>
-                            </div>
+                <div class="wrapper-seatcells" style="display:inline-block;">
+                    <div style="background-color:white; padding: 12px 12px 12px 12px; margin: 2px;">
+                        <div class="innercontent qrcode" id="<%- reservation._id %>" style="padding-bottom: 16px;" >
+                        QR
+                        </div>
+                        <div class="innercontent" style="text-align:center;">
+                            <%- reservation.ticket_type_name.ja %>
+                        </div>
+                        <div class="innercontent" style="text-align:center;">
+                            \<%- String(reservation.ticket_type_charge).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,') %>
+                        </div>
+                        <div class="innercontent" style="text-align:center;">
+                            <%- reservation.seat_code %>
                         </div>
                     </div>
                 </div>
                 <% }) %>
             </td>
         </tr>
-
+        <tr>
+            <th style="background-color:#D9D9D9;border:1px silver solid;">ご利用金額</th>
+            <td style="border:1px silver solid;">\<%- String(reservationDocuments[0].gmo_amount).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,') %>
+        </tr>
     </tbody>
-
 </table>
 
-<% /*
-let seatCodes = reservationDocuments.map((reservationDocument) => {return reservationDocument.seat_code});
-*/ %>
-<a class="visible-pc btn btn-lg btn-showseat show-seat-position" href="javascript:void(0)" ><span>座席を表示</span></a>
-
-
-<div class="btns2clm">
-    <a class="btn btn-lg btn-back" href=""><span>戻る</span></a>
-    <a class="btn btn-lg btn-cancel" href=""><span>チケットをキャンセルする</span></a>
-    <a class="btn btn-lg btn-next" href=""><span>他のチケットを照会する</span></a>
+<div>
+    <a class="btn btn-lg btn-print" href="" style="margin:auto;width:40%;"><span>印刷する</span></a>
+    <br/>
+    <a class="btn btn-lg btn-cancel" href="" style="margin:auto;;width:40%"><span>チケットをキャンセルする</span></a>
+</div>
+<br/>
+<div style="border:1px silver solid;">
+<br/>
+入場方法案内
+<br/>
+<br/>
+</div>
+<br/>
+<div>
+    <a class="btn btn-lg btn-next" href="" style="margin:auto;width:40%;"><span>他のチケットを照会する</span></a>
 </div>

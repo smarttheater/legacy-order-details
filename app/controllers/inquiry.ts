@@ -11,12 +11,14 @@ import { NextFunction, Request, Response } from 'express';
 //import * as mongoose from 'mongoose';
 //import * as _ from 'underscore';
 //import * as Message from '../../common/const/message';
+import * as moment from 'moment';
 
 // // 購入番号 半角9
 // const NAME_MAX_LENGTH_PAYMENTNO: number = 9;
 // // Tel 半角20
 // const NAME_MAX_LENGTH_TEL: number = 20;
 
+const SESSION_KEY_INQUIRY_RESERVATIONS: string = 'ttts-ticket-inquiry-reservations';
 /**
  * 予約照会検索
  * @memberof inquiry
@@ -152,21 +154,24 @@ export async function count(req: Request, res: Response): Promise<void> {
         const count = await Models.Reservation.count(
             conditions
         ).exec();
+        let reservations;
         if ( count > 0) {
-            const reservations = await Models.Reservation.find(
+            //const reservations = [{seat_code: 'A01', payment_no: 'p12345'}];
+            reservations = await Models.Reservation.find(
                 conditions
             ).exec();
             // reservations.sort((a, b) => {
             //     return ScreenUtil.sortBySeatCode(a.get('seat_code'), b.get('seat_code'));
             // });
             // 予約照会・検索結果画面へ遷移
-            (<Express.Session>req.session).reservations = reservations;
+            (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS] = reservations;
         } else {
             (<any>errors).head = {msg: 'ご指定の予約データは見つかりませんでした'};
         }
         res.json({
             success: true,
             count: count,
+            reservations: reservations,
             errors: errors
         });
 
@@ -195,7 +200,7 @@ export async function result(req: Request, res: Response, next: NextFunction): P
             // next(new Error(req.__('Message.NotFound')));
             next(new Error('Message.NotFound'));
         }
-        const reservations = (<Express.Session>req.session).reservations;
+        const reservations = (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS];
         if (!reservations || reservations.length === 0) {
             // next(new Error(req.__('Message.NotFound')));
             next(new Error('Message.NotFound'));
@@ -204,6 +209,7 @@ export async function result(req: Request, res: Response, next: NextFunction): P
         }
 
         res.render('inquiry/result', {
+            moment: moment,
             reservationDocuments: reservations,
             layout: 'layouts/inquiry/layout'
         });
