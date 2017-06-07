@@ -29,7 +29,8 @@ page-checkin page-complete
                 const start = `${reservationDocuments[0].performance_start_time.substr(0, 2)}:${reservationDocuments[0].performance_start_time.substr(2, 2)}`;
                 const end = `${reservationDocuments[0].performance_end_time.substr(0, 2)}:${reservationDocuments[0].performance_end_time.substr(2, 2)}`;
             %>
-            <td style="border:1px silver solid;"><%- day.format('LL(ddd) ') %>
+            <td style="border:1px silver solid;">
+                <%- day.format('LL(ddd) ') %>
                 <%- start %>～<%- end %>
             </td>
         </tr>
@@ -79,3 +80,4 @@ page-checkin page-complete
 <div>
     <a class="btn btn-lg btn-next" href="" style="margin:auto;width:40%;"><span>他のチケットを照会する</span></a>
 </div>
+<%- include('cancel') %>
