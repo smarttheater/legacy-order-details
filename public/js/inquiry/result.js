@@ -9,35 +9,46 @@ $(function () {
         });
     });
 
-    // キャンセル
+    // キャンセル(ポップアップ表示)
     $(document).on('click', '.btn-cancel', function (event) {
+        event.preventDefault();
+        $('#cancelModal').modal();
+    });
+    // キャンセル(確定)
+    $(document).on('click', '.cancel-button', function (event) {
         event.preventDefault();
         cancel();
     });
 });
 /**
- * キャンセル
+ * キャンセル(確定)
  * @function cancel
  * @returns {void}
  */
 function cancel() {
-    // var theater = $('select[name=theater]').val();
-    // var day = $('select[name=day]').val();
-    // if (!theater || !day) {
-    //     alert('劇場、上映日を選択してください');
-    //     return;
-    // }
-    // var modal = $('#newModal');
-    // modal.find('.film-name').text('未選択');
-    // modal.find('.film-name').attr('data-film-id', '');
-    // modal.find('input[name=film]').val('');
-    // modal.find('select[name=openTimeHour]').val('00');
-    // modal.find('select[name=openTimeMinutes]').val('00');
-    // modal.find('select[name=startTimeHour]').val('00');
-    // modal.find('select[name=startTimeMinutes]').val('00');
-    // modal.find('select[name=endTimeHour]').val('00');
-    // modal.find('select[name=endTimeMinutes]').val('00');
-    // modal.find('select[name=screen]').val('');
-    // modal.find('select[name=ticketTypeGroup]').val('');
-    $('#cancelModal').modal();
+    var modal = $('#cancelModal');
+    var error_message = modal.find('[name=error-message]');
+    var payment_no = modal.find('input[name=payment_no]');
+    error_message.text('');
+    $.ajax({
+        dataType: 'json',
+        url: '/inquiry/search/cancel',
+        type: 'POST',
+        data: {
+            payment_no: payment_no.val()
+        }
+    }).done(function (data) {
+        if (!data.error) {
+            modal.modal('hide');
+            location.href = '/inquiry/search';
+            return;
+        } else {
+            error_message.text(data.error);
+        }
+    }).fail(function (jqxhr, textStatus, error) {
+        console.error(jqxhr, textStatus, error);
+        error_message.text(error);
+    }).always(function () {
+        $('.loading').modal('hide');
+    });
 }

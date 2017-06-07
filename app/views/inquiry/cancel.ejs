@@ -5,10 +5,12 @@
 				<button type="button" class="close" data-dismiss="modal"><span>×</span></button>
 				<h4 class="modal-title">チケットキャンセル</h4>
 				<div style="font-size: 13pt;padding-top: 20px;">キャンセル実行ボタンをクリックすると下記チケットがキャンセルされ、キャンセル料が発生します。</div>
+                <div name="error-message" style="font-size: 13pt;padding-top: 20px; color: red; "></div>
 			</div>
 			<div class="modal-body">
                 <div class="panel-body" style="padding-bottom: 0px;">
                     <form class="form-horizontal" style="text-align: left; background-color: #F2F2F2; padding: 30px;">
+                        <input type="hidden" name="payment_no" value="<%- reservationDocuments[0].payment_no %>">
                         <div class="form-group">
                             <label>●ご購入内容</label>
                         </div>
@@ -60,7 +62,7 @@
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal" style="width: 40%; margin: auto;">閉じる</button>
                 <br/>
-				<button type="button" class="btn btn-primary cencel-button" style="width: 40%; margin: auto;">キャンセル実行</button>
+				<button type="button" class="btn btn-primary cancel-button" style="width: 40%; margin: auto;">キャンセル実行</button>
 			</div>
 		</div>
 	</div>

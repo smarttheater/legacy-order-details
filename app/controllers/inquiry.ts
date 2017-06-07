@@ -5,11 +5,10 @@
  *
  * @namespace inquiry
  */
+import * as GMO from '@motionpicture/gmo-service';
+//import { Models, ReservationUtil, ScreenUtil} from '@motionpicture/ttts-domain';
 import { Models, ScreenUtil} from '@motionpicture/ttts-domain';
 import { NextFunction, Request, Response } from 'express';
-//import * as mongoose from 'mongoose';
-//import * as _ from 'underscore';
-//import * as Message from '../../common/const/message';
 import * as moment from 'moment';
 
 // 購入番号 半角9
@@ -99,7 +98,7 @@ function renderSearch(res: Response, message: string, errors: any): void {
     });
 }
 /**
- * 予約照会結果
+ * 予約照会結果画面(getのみ)
  * @memberof inquiry
  * @function result
  * @param {Request} req
@@ -114,7 +113,6 @@ export async function result(req: Request, res: Response, next: NextFunction): P
             next(new Error('Message.NotFound'));
         }
         const reservations = (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS];
-        //(<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS] = null;
         if (!reservations || reservations.length === 0) {
             // next(new Error(req.__('Message.NotFound')));
             next(new Error('NotFound'));
@@ -132,7 +130,67 @@ export async function result(req: Request, res: Response, next: NextFunction): P
     }
 }
 /**
- * 予約照会画面form値検証
+ * 予約キャンセル処理
+ * @memberof inquiry
+ * @function cancel
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {Promise<void>}
+ */
+export async function cancel(req: Request, res: Response): Promise<void> {
+    try {
+        const errorMessage: string = '予期せぬエラーが発生しました。チケット照会からやり直してください。';
+        validateForCancel(req);
+        const validatorResult = await req.getValidationResult();
+        const validations = req.validationErrors(true);
+        if (!validatorResult.isEmpty()) {
+            res.json({
+                validation: validations,
+                error: errorMessage
+            });
+
+            return;
+        }
+        // 予約取得
+        const reservations = (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS];
+        const cancelCharge: number = 400;
+        // キャンセル処理
+        const promises = ((<any>reservations).map(async(reservation: any) => {
+            // 金額変更
+            const result: GMO.CreditService.IChangeTranResult = await GMO.CreditService.changeTran({
+                shopId: process.env.GMO_SHOP_ID,
+                shopPass: process.env.GMO_SHOP_PASS,
+                accessId: reservation.gmo_access_id,
+                accessPass: reservation.gmo_access_pass,
+                //jobCd: GMO.Util.JOB_CD_CAPTURE,
+                jobCd: reservation.gmo_status,
+                amount: cancelCharge
+            });
+            if (result.approve !== '') {
+                // キャンセル作成
+                // 予約削除(AVAILABLEに変更)
+                // await Models.Reservation.findByIdAndUpdate(
+                //     reservation._id,
+                //     {
+                //          status: ReservationUtil.STATUS_AVAILABLE
+                //     }
+                //     ).exec();
+            }
+        }));
+        await Promise.all(promises);
+        res.json({
+            validation: null,
+            error: null
+        });
+    } catch (err) {
+        res.json({
+            validation: null,
+            error: err.message
+        });
+    }
+}
+/**
+ * 予約照会画面検証
  *
  * @param {any} req
  * @param {string} type
@@ -155,4 +213,16 @@ function getMaxLength(fieldName: string, max: number): string {
     const maxLength: string = '$fieldName$は$maxLength$文字以内で入力してください';
 
     return maxLength.replace('$fieldName$', fieldName).replace('$maxLength$', max.toString());
+}
+/**
+ * キャンセル検証
+ * @function updateValidation
+ * @param {Request} req
+ * @returns {void}
+ */
+function validateForCancel(req: Request): void {
+    const required = '$fieldName$が未入力です';
+    // 購入番号
+    const colName: string = '購入番号';
+    req.checkBody('payment_no', required.replace('$fieldName$', colName)).notEmpty();
 }

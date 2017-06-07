@@ -15,10 +15,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
  *
  * @namespace inquiry
  */
+const GMO = require("@motionpicture/gmo-service");
+//import { Models, ReservationUtil, ScreenUtil} from '@motionpicture/ttts-domain';
 const ttts_domain_1 = require("@motionpicture/ttts-domain");
-//import * as mongoose from 'mongoose';
-//import * as _ from 'underscore';
-//import * as Message from '../../common/const/message';
 const moment = require("moment");
 // 購入番号 半角9
 const NAME_MAX_LENGTH_PAYMENTNO = 9;
@@ -105,7 +104,7 @@ function renderSearch(res, message, errors) {
     });
 }
 /**
- * 予約照会結果
+ * 予約照会結果画面(getのみ)
  * @memberof inquiry
  * @function result
  * @param {Request} req
@@ -121,7 +120,6 @@ function result(req, res, next) {
                 next(new Error('Message.NotFound'));
             }
             const reservations = req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
-            //(<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS] = null;
             if (!reservations || reservations.length === 0) {
                 // next(new Error(req.__('Message.NotFound')));
                 next(new Error('NotFound'));
@@ -140,7 +138,70 @@ function result(req, res, next) {
 }
 exports.result = result;
 /**
- * 予約照会画面form値検証
+ * 予約キャンセル処理
+ * @memberof inquiry
+ * @function cancel
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {Promise<void>}
+ */
+function cancel(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const errorMessage = '予期せぬエラーが発生しました。チケット照会からやり直してください。';
+            validateForCancel(req);
+            const validatorResult = yield req.getValidationResult();
+            const validations = req.validationErrors(true);
+            if (!validatorResult.isEmpty()) {
+                res.json({
+                    validation: validations,
+                    error: errorMessage
+                });
+                return;
+            }
+            // 予約取得
+            const reservations = req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
+            const cancelCharge = 400;
+            // キャンセル処理
+            const promises = (reservations.map((reservation) => __awaiter(this, void 0, void 0, function* () {
+                // 金額変更
+                const result = yield GMO.CreditService.changeTran({
+                    shopId: process.env.GMO_SHOP_ID,
+                    shopPass: process.env.GMO_SHOP_PASS,
+                    accessId: reservation.gmo_access_id,
+                    accessPass: reservation.gmo_access_pass,
+                    //jobCd: GMO.Util.JOB_CD_CAPTURE,
+                    jobCd: reservation.gmo_status,
+                    amount: cancelCharge
+                });
+                if (result.approve !== '') {
+                    // キャンセル作成
+                    // 予約削除(AVAILABLEに変更)
+                    // await Models.Reservation.findByIdAndUpdate(
+                    //     reservation._id,
+                    //     {
+                    //          status: ReservationUtil.STATUS_AVAILABLE
+                    //     }
+                    //     ).exec();
+                }
+            })));
+            yield Promise.all(promises);
+            res.json({
+                validation: null,
+                error: null
+            });
+        }
+        catch (err) {
+            res.json({
+                validation: null,
+                error: err.message
+            });
+        }
+    });
+}
+exports.cancel = cancel;
+/**
+ * 予約照会画面検証
  *
  * @param {any} req
  * @param {string} type
@@ -160,4 +221,16 @@ function validate(req) {
 function getMaxLength(fieldName, max) {
     const maxLength = '$fieldName$は$maxLength$文字以内で入力してください';
     return maxLength.replace('$fieldName$', fieldName).replace('$maxLength$', max.toString());
+}
+/**
+ * キャンセル検証
+ * @function updateValidation
+ * @param {Request} req
+ * @returns {void}
+ */
+function validateForCancel(req) {
+    const required = '$fieldName$が未入力です';
+    // 購入番号
+    const colName = '購入番号';
+    req.checkBody('payment_no', required.replace('$fieldName$', colName)).notEmpty();
 }
