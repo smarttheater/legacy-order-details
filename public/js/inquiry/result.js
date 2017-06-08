@@ -19,6 +19,12 @@ $(function () {
         event.preventDefault();
         cancel();
     });
+    // キャンセル(完了)
+    $(document).on('click', '.btn-back-to-start', function (event) {
+        event.preventDefault();
+        location.href = '/inquiry/search';
+    });
+
 });
 /**
  * キャンセル(確定)
@@ -39,8 +45,9 @@ function cancel() {
         }
     }).done(function (data) {
         if (!data.error) {
-            modal.modal('hide');
-            location.href = '/inquiry/search';
+            //modal.modal('hide');
+            //location.href = '/inquiry/search';
+            $('#cancelMessage').modal();
             return;
         } else {
             error_message.text(data.error);
