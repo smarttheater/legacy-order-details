@@ -31,6 +31,9 @@
                         </div>
                         <div class="form-group" style="padding-left: 20px;">
                             <label>券種/枚数: </label>
+                            <% Object.keys(ticketInfos).forEach(function(key) { %>
+                            <%- ticketInfos[key].info %>
+                            <% }); %>
                         </div>
                         <div class="form-group">
                             <label>●キャンセル料: </label>
