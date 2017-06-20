@@ -61,6 +61,10 @@ app.use((req, _res, next) => {
         req.setLocale(req.query.locale);
         req.session.locale = req.query.locale;
     }
+    // add 2017/06/20 set default locale
+    if (!req.session.locale) {
+        req.session.locale = 'ja';
+    }
     next();
 });
 app.use(expressValidator()); // バリデーション

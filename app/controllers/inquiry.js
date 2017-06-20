@@ -24,10 +24,10 @@ const moment = require("moment");
 const numeral = require("numeral");
 const sendgrid = require("sendgrid");
 const util = require("util");
-// 購入番号 半角9
-const NAME_MAX_LENGTH_PAYMENTNO = 9;
-// Tel 半角20
-const NAME_MAX_LENGTH_TEL = 20;
+// // 購入番号 半角9
+// const NAME_MAX_LENGTH_PAYMENTNO: number = 9;
+// // Tel 半角20
+// const NAME_MAX_LENGTH_TEL: number = 20;
 // セッションキー
 const SESSION_KEY_INQUIRY_RESERVATIONS = 'ttts-ticket-inquiry-reservations';
 /**
@@ -72,7 +72,7 @@ function search(req, res, next) {
                     res.redirect('/inquiry/search/result');
                 }
                 else {
-                    const message = 'ご指定の予約データは見つかりませんでした';
+                    const message = req.__('Message.ReservationNotFound');
                     renderSearch(res, message, {});
                     return;
                 }
@@ -119,15 +119,14 @@ function renderSearch(res, message, errors) {
  */
 function result(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
+        const messageNotFound = req.__('Message.NotFound');
         try {
             if (req === null) {
-                // next(new Error(req.__('Message.NotFound')));
-                next(new Error('Message.NotFound'));
+                next(new Error(messageNotFound));
             }
             const reservations = req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
             if (!reservations || reservations.length === 0) {
-                // next(new Error(req.__('Message.NotFound')));
-                next(new Error('NotFound'));
+                next(new Error(messageNotFound));
                 return;
             }
             // 券種ごとに合計枚数算出
@@ -148,10 +147,13 @@ function result(req, res, next) {
                     ticketInfos[dataValue].count += 1;
                 }
             }
+            const locale = req.session.locale;
+            const leaf = req.__('Label.Leaf');
             // 券種ごとの表示情報編集
             Object.keys(ticketInfos).forEach((key) => {
                 const ticketInfo = ticketInfos[key];
-                ticketInfos[key].info = `${ticketInfo.ticket_type_name.ja} ${ticketInfo.charge} × ${ticketInfo.count}枚`;
+                // ＠＠＠＠＠
+                ticketInfos[key].info = `${ticketInfo.ticket_type_name[locale]} ${ticketInfo.charge} × ${ticketInfo.count}${leaf}`;
             });
             res.render('inquiry/result', {
                 moment: moment,
@@ -176,7 +178,7 @@ exports.result = result;
  */
 function cancel(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const errorMessage = '予期せぬエラーが発生しました。チケット照会からやり直してください。';
+        const errorMessage = req.__('Message.UnexpectedError');
         // 検証(プログラムでセットした値なので""の時はシステムエラー扱い)
         validateForCancel(req);
         const validatorResult = yield req.getValidationResult();
@@ -250,20 +252,10 @@ exports.cancel = cancel;
  * @param {string} type
  */
 function validate(req) {
-    let colName = '';
-    const required = '$fieldName$が未入力です';
     // 購入番号
-    colName = '購入番号';
-    req.checkBody('paymentNo', required.replace('$fieldName$', colName)).notEmpty();
-    req.checkBody('paymentNo', getMaxLength(colName, NAME_MAX_LENGTH_PAYMENTNO)).len({ max: NAME_MAX_LENGTH_PAYMENTNO });
+    req.checkBody('paymentNo', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.PaymentNo') })).notEmpty();
     // 電話番号
-    colName = '電話番号';
-    req.checkBody('purchaserTel', required.replace('$fieldName$', colName)).notEmpty();
-    req.checkBody('purchaserTel', getMaxLength(colName, NAME_MAX_LENGTH_TEL)).len({ max: NAME_MAX_LENGTH_TEL });
-}
-function getMaxLength(fieldName, max) {
-    const maxLength = '$fieldName$は$maxLength$文字以内で入力してください';
-    return maxLength.replace('$fieldName$', fieldName).replace('$maxLength$', max.toString());
+    req.checkBody('purchaserTel', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
 }
 /**
  * キャンセル検証
@@ -272,10 +264,9 @@ function getMaxLength(fieldName, max) {
  * @returns {void}
  */
 function validateForCancel(req) {
-    const required = '$fieldName$が未入力です';
     // 購入番号
-    const colName = '購入番号';
-    req.checkBody('payment_no', required.replace('$fieldName$', colName)).notEmpty();
+    const colName = req.__('Form.FieldName.PaymentNo');
+    req.checkBody('paymentNo', req.__('Message.required{{fieldName}}', { fieldName: colName })).notEmpty();
 }
 /**
  * メールを送信する
@@ -317,7 +308,7 @@ function getCancelMail(reservations) {
     mail.push('Notice of Completion of Cancel for TTTS Tickets');
     mail.push(`${reservation.purchaser_name.ja} 様`);
     mail.push(`Dear ${reservation.purchaser_name.en},`);
-    mail.push('TTTS_EVENT_NAMEの鑑賞キャンセルを受け付けました。');
+    mail.push('TTTS_EVENT_NAMEの鑑賞キャンセルを受け付けました');
     mail.push('キャンセルした内容は以下の通りとなりますのでご確認ください。');
     mail.push('皆さまに大変ご迷惑をおかけしております事、深くお詫び申し上げます。');
     mail.push('We have received your request for TTTS tickets cancellation.');

@@ -32,11 +32,11 @@
 		"TotalPrice": "合計金額",
 		"Email": "メールアドレス",
 		"FullName": "お名前",
-		"PaymentNo": "購入番号",
+		"PaymentNo": "＠＠＠購入番号＠＠＠",
 		"AllSections": "すべての部門・特集",
 		"AllGenres": "すべてのジャンル",
 		"AllDay": "すべての上映日",
-		"Tel": "電話番号",
+		"Tel": "＠＠＠電話番号＠＠＠",
 		"PaymentMethod": "お支払い方法",
 		"TotalCharge": "合計金額",
 		"Day": "上映日",
@@ -84,7 +84,8 @@
 		"NumberOfTicketsAvailable": "取得可能残り",
 		"Male": "男性",
 		"Female": "女性",
-		"NameOfPersonWhoWillSeeFilm": "鑑賞者氏名"
+		"NameOfPersonWhoWillSeeFilm": "鑑賞者氏名",
+		"Leaf": "＠＠＠枚＠＠＠"
 	},
 	"Button": {
 		"Send": "送信",
@@ -164,9 +165,9 @@
 		"Unsent": "送信できませんでした",
 		"PleaseReadBarcode": "QRコードを読み取ってください",
 		"seatsLimit{{limit}}": "選択出来る座席は{{limit}}席までとなります",
-		"UnexpectedError": "システムエラーが発生しました。ご不便をおかけして申し訳ありませんがしばらく経ってから再度お試しください。",
+		"UnexpectedError": "＠＠＠システムエラーが発生しました。ご不便をおかけして申し訳ありませんがしばらく経ってから再度お試しください。＠＠＠",
 		"Expired": "期限切れです",
-		"NotFound": "お探しのページが見つかりません",
+		"NotFound": "＠＠＠お探しのページが見つかりません＠＠＠",
 		"UnavailableSeat": "指定できない座席です",
 		"SelectedSeatsUnavailable": "選択された座席は指定できません",
 		"NoMoreReservation": "既に選択出来る座席の上限に達しています",
@@ -182,7 +183,8 @@
 		"UpdateWatcherNameHelp": "※日本人の場合は「全角カタカナ」外国人の場合は「半角英字」で入力してください。<br>※セイとメイの間に半角スペースを入れないでください。",
 		"invalidPaymentNoOrLast4DigitsOfTel": "購入番号または電話番号下4ケタに誤りがあります",
 		"cardNumber": "※半角数字、ハイフン「-」なしで入力してください",
-		"securitycode": "セキュリティーコードについて"
+		"securitycode": "セキュリティーコードについて",
+		"ReservationNotFound": "＠＠＠ご指定の予約データは見つかりませんでした＠＠＠"
 	},
 	"{{price}} yen": "{{price}} 円",
 	"Mr{{name}}": "{{name}} 様",
