@@ -245,7 +245,6 @@ function cancel(req, res) {
 exports.cancel = cancel;
 /**
  * 予約照会画面検証
-
  *
  * @param {any} req
  * @param {string} type

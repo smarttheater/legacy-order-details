@@ -240,7 +240,6 @@ export async function cancel(req: Request, res: Response): Promise<void> {
 }
 /**
  * 予約照会画面検証
-
  *
  * @param {any} req
  * @param {string} type
