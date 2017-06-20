@@ -18,7 +18,7 @@
   ],
   "dependencies": {
     "@motionpicture/gmo-service": "^3.2.1",
-    "@motionpicture/ttts-domain": "^3.0.0",
+    "@motionpicture/ttts-domain": "^10.1.0",
     "basic-auth": "^1.0.4",
     "body-parser": "^1.17.2",
     "config": "^1.26.1",
