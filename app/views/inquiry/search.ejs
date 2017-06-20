@@ -7,7 +7,7 @@ page-checkin page-search
 <%- contentFor('body') %>
 <input type="hidden" name="apiEndpoint" value="<%= process.env.API_ENDPOINT %>">
 
-<h1 class="pagetitle">チケット照会</h1>
+<h1 class="pagetitle"><%- __('h1.TicketInquiry') %></h1>
 <p class="guidetext">チケット購入時に発行された購入番号と
 <br/>チケット購入時に入力した暗証番号を入力して照会ボタンを押してください。
 </p>
@@ -21,12 +21,6 @@ page-checkin page-search
             <% } %>
             </p>
         </div>
-        <div>
-             <p>debug</p>
-             <p>performance_day: '20171025'</p>
-             <p>payment_no: '700000109'</p>
-             <p>purchaser_tel: '09012345678' </p>
-        <div>
         <div class="form-group">
             <select class="form-control" name="day">
                 <option value="">すべての上映日</option>

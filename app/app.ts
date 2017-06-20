@@ -7,7 +7,9 @@
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
 import * as express from 'express';
+import * as i18n from 'i18n';
 import * as mongoose from 'mongoose';
+import * as _ from 'underscore';
 // tslint:disable-next-line:no-var-requires no-require-imports
 import expressValidator = require('express-validator');
 import basicAuth from './middlewares/basicAuth';
@@ -44,6 +46,32 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(cookieParser());
 app.use(express.static(`${__dirname}/../public`));
+
+// i18n を利用する設定
+i18n.configure({
+    locales: ['en', 'ja'],
+    defaultLocale: 'ja',
+    directory: `${__dirname}/../locales`,
+    objectNotation: true,
+    updateFiles: false // ページのビューで自動的に言語ファイルを更新しない
+});
+// i18n の設定を有効化
+app.use(i18n.init);
+
+// セッションで言語管理
+// tslint:disable-next-line:variable-name
+app.use((req, _res, next) => {
+    if (!_.isEmpty((<any>req.session).locale)) {
+        req.setLocale((<any>req.session).locale);
+    }
+
+    if (!_.isEmpty(req.query.locale)) {
+        req.setLocale(req.query.locale);
+        (<any>req.session).locale = req.query.locale;
+    }
+
+    next();
+});
 
 app.use(expressValidator()); // バリデーション
 

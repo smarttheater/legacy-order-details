@@ -8,7 +8,9 @@
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const express = require("express");
+const i18n = require("i18n");
 const mongoose = require("mongoose");
+const _ = require("underscore");
 // tslint:disable-next-line:no-var-requires no-require-imports
 const expressValidator = require("express-validator");
 const basicAuth_1 = require("./middlewares/basicAuth");
@@ -39,6 +41,28 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(`${__dirname}/../public`));
+// i18n を利用する設定
+i18n.configure({
+    locales: ['en', 'ja'],
+    defaultLocale: 'ja',
+    directory: `${__dirname}/../locales`,
+    objectNotation: true,
+    updateFiles: false // ページのビューで自動的に言語ファイルを更新しない
+});
+// i18n の設定を有効化
+app.use(i18n.init);
+// セッションで言語管理
+// tslint:disable-next-line:variable-name
+app.use((req, _res, next) => {
+    if (!_.isEmpty(req.session.locale)) {
+        req.setLocale(req.session.locale);
+    }
+    if (!_.isEmpty(req.query.locale)) {
+        req.setLocale(req.query.locale);
+        req.session.locale = req.query.locale;
+    }
+    next();
+});
 app.use(expressValidator()); // バリデーション
 router_1.default(app);
 /*
