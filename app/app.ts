@@ -5,9 +5,11 @@
  * @global
  */
 import * as bodyParser from 'body-parser';
+import * as conf from 'config';
 import * as cookieParser from 'cookie-parser';
 import * as express from 'express';
 import * as i18n from 'i18n';
+import * as log4js from 'log4js';
 import * as mongoose from 'mongoose';
 import * as _ from 'underscore';
 // tslint:disable-next-line:no-var-requires no-require-imports
@@ -46,6 +48,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(cookieParser());
 app.use(express.static(`${__dirname}/../public`));
+
+// log4jsセット
+log4js.configure(conf.get<any>('log4js'));
 
 // i18n を利用する設定
 i18n.configure({

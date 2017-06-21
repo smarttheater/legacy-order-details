@@ -11,6 +11,7 @@ import { Models, ReservationUtil, ScreenUtil} from '@motionpicture/ttts-domain';
 //import { Models, ScreenUtil} from '@motionpicture/ttts-domain';
 import * as conf from 'config';
 import { NextFunction, Request, Response } from 'express';
+import * as log4js from 'log4js';
 import * as moment from 'moment';
 import * as numeral from 'numeral';
 import * as sendgrid from 'sendgrid';
@@ -22,6 +23,8 @@ import * as util from 'util';
 // const NAME_MAX_LENGTH_TEL: number = 20;
 // セッションキー
 const SESSION_KEY_INQUIRY_RESERVATIONS: string = 'ttts-ticket-inquiry-reservations';
+// ログ出力
+const logger = log4js.getLogger('system');
 
 /**
  * 予約照会検索
@@ -223,6 +226,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         // キャンセルメール送信
         await sendEmail(reservations[0].purchaser_email, getCancelMail(reservations));
 
+        logger.info('-----update db start-----');
         // 予約データ解放(AVAILABLEに変更)
         const promises = ((<any>reservations).map(async(reservation: any) => {
             await Models.Reservation.findByIdAndUpdate(
@@ -232,6 +236,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
                      $unset: getUnsetFields(reservation)
                 }
             ).exec();
+            logger.info('Reservation clear =', JSON.stringify(reservation));
         }));
         await Promise.all(promises);
 
@@ -241,9 +246,12 @@ export async function cancel(req: Request, res: Response): Promise<void> {
             tickets: (<any>Models.CustomerCancelRequest).getTickets(reservations),
             cancel_name: `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}`
         });
+        logger.info('CustomerCancelRequest create =', JSON.stringify(reservations[0]));
+        logger.info('-----update db end-----');
     } catch (err) {
-        // 担当者にエラー発生をしらせ、後は手作業で復旧してもらう
-        console.error(err.message);
+        // エラーログ出力(後は手作業で復旧してもらう)
+        // tslint:disable-next-line:max-line-length
+        logger.error(`payment_no=[${reservations[0].payment_no}] performance_day=[${reservations[0].performance_day}] message=[${err.message}]`);
     } finally {
         // GMO金額変更apiがOKならばユーザーにとってはキャンセル成功
         res.json({

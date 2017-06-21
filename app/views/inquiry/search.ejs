@@ -31,7 +31,7 @@ page-checkin page-search
                 let options = '';
                 while (start.format('YYYYMMDD') <= end.format('YYYYMMDD')) {
                     options += `<option value="${start.format('YYYYMMDD')}"`;
-                    if ('20171025' === start.format('YYYYMMDD')) {
+                    if ('20170619' === start.format('YYYYMMDD')) {
                         options += ' selected="selected"';
                     }
                     options += `>${start.format('MM/DD')}</option>`;

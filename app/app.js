@@ -6,9 +6,11 @@
  * @global
  */
 const bodyParser = require("body-parser");
+const conf = require("config");
 const cookieParser = require("cookie-parser");
 const express = require("express");
 const i18n = require("i18n");
+const log4js = require("log4js");
 const mongoose = require("mongoose");
 const _ = require("underscore");
 // tslint:disable-next-line:no-var-requires no-require-imports
@@ -41,6 +43,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(`${__dirname}/../public`));
+// log4jsセット
+log4js.configure(conf.get('log4js'));
 // i18n を利用する設定
 i18n.configure({
     locales: ['en', 'ja'],

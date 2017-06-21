@@ -20,6 +20,7 @@ const GMO = require("@motionpicture/gmo-service");
 const ttts_domain_1 = require("@motionpicture/ttts-domain");
 //import { Models, ScreenUtil} from '@motionpicture/ttts-domain';
 const conf = require("config");
+const log4js = require("log4js");
 const moment = require("moment");
 const numeral = require("numeral");
 const sendgrid = require("sendgrid");
@@ -30,6 +31,8 @@ const util = require("util");
 // const NAME_MAX_LENGTH_TEL: number = 20;
 // セッションキー
 const SESSION_KEY_INQUIRY_RESERVATIONS = 'ttts-ticket-inquiry-reservations';
+// ログ出力
+const logger = log4js.getLogger('system');
 /**
  * 予約照会検索
  * @memberof inquiry
@@ -229,12 +232,14 @@ function cancel(req, res) {
         try {
             // キャンセルメール送信
             yield sendEmail(reservations[0].purchaser_email, getCancelMail(reservations));
+            logger.info('-----update db start-----');
             // 予約データ解放(AVAILABLEに変更)
             const promises = (reservations.map((reservation) => __awaiter(this, void 0, void 0, function* () {
                 yield ttts_domain_1.Models.Reservation.findByIdAndUpdate(reservation._id, {
                     $set: { status: ttts_domain_1.ReservationUtil.STATUS_AVAILABLE },
                     $unset: getUnsetFields(reservation)
                 }).exec();
+                logger.info('Reservation clear =', JSON.stringify(reservation));
             })));
             yield Promise.all(promises);
             // キャンセルリクエスト保管
@@ -243,10 +248,13 @@ function cancel(req, res) {
                 tickets: ttts_domain_1.Models.CustomerCancelRequest.getTickets(reservations),
                 cancel_name: `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}`
             });
+            logger.info('CustomerCancelRequest create =', JSON.stringify(reservations[0]));
+            logger.info('-----update db end-----');
         }
         catch (err) {
-            // 担当者にエラー発生をしらせ、後は手作業で復旧してもらう
-            console.error(err.message);
+            // エラーログ出力(後は手作業で復旧してもらう)
+            // tslint:disable-next-line:max-line-length
+            logger.error(`payment_no=[${reservations[0].payment_no}] performance_day=[${reservations[0].performance_day}] message=[${err.message}]`);
         }
         finally {
             // GMO金額変更apiがOKならばユーザーにとってはキャンセル成功
