@@ -191,9 +191,10 @@ function cancel(req, res) {
             });
             return;
         }
+        // 予約取得
+        let reservations;
         try {
-            // 予約取得
-            const reservations = req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
+            reservations = req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
             if (reservations[0].payment_method !== gmo_service_1.Util.PAY_TYPE_CREDIT) {
                 res.json({
                     success: false,
@@ -214,12 +215,25 @@ function cancel(req, res) {
                 jobCd: reservations[0].gmo_status,
                 amount: cancelCharge * reservations.length
             });
+        }
+        catch (err) {
+            // GMO金額変更apiエラーはキャンセルできなかたことをユーザーに知らせる
+            res.json({
+                success: false,
+                validation: null,
+                //error: err.message
+                error: errorMessage
+            });
+            return;
+        }
+        try {
             // キャンセルメール送信
             yield sendEmail(reservations[0].purchaser_email, getCancelMail(reservations));
             // 予約データ解放(AVAILABLEに変更)
             const promises = (reservations.map((reservation) => __awaiter(this, void 0, void 0, function* () {
                 yield ttts_domain_1.Models.Reservation.findByIdAndUpdate(reservation._id, {
-                    status: ttts_domain_1.ReservationUtil.STATUS_AVAILABLE
+                    $set: { status: ttts_domain_1.ReservationUtil.STATUS_AVAILABLE },
+                    $unset: getUnsetFields(reservation)
                 }).exec();
             })));
             yield Promise.all(promises);
@@ -229,22 +243,49 @@ function cancel(req, res) {
                 tickets: ttts_domain_1.Models.CustomerCancelRequest.getTickets(reservations),
                 cancel_name: `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}`
             });
+        }
+        catch (err) {
+            // 担当者にエラー発生をしらせ、後は手作業で復旧してもらう
+            console.error(err.message);
+        }
+        finally {
+            // GMO金額変更apiがOKならばユーザーにとってはキャンセル成功
             res.json({
                 success: true,
                 validation: null,
                 error: null
             });
         }
-        catch (err) {
-            res.json({
-                success: false,
-                validation: null,
-                error: err.message
-            });
-        }
     });
 }
 exports.cancel = cancel;
+/**
+ * 更新時削除フィールド取得
+ *
+ * @param {any} reservation
+ * @return {any} unset
+ */
+function getUnsetFields(reservation) {
+    const setFields = [
+        '_id',
+        'performance',
+        'seat_code',
+        'updated_at',
+        'checkins',
+        'performance_canceled',
+        'status',
+        '__v',
+        'created_at'
+    ];
+    const unset = {};
+    // セットフィールド以外は削除フィールドにセット
+    Object.getOwnPropertyNames(reservation).forEach((propertyName) => {
+        if (setFields.indexOf(propertyName) < 0) {
+            unset[propertyName] = 1;
+        }
+    });
+    return unset;
+}
 /**
  * 予約照会画面検証
  *
@@ -265,8 +306,7 @@ function validate(req) {
  */
 function validateForCancel(req) {
     // 購入番号
-    const colName = req.__('Form.FieldName.PaymentNo');
-    req.checkBody('paymentNo', req.__('Message.required{{fieldName}}', { fieldName: colName })).notEmpty();
+    req.checkBody('payment_no', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.PaymentNo') })).notEmpty();
 }
 /**
  * メールを送信する
