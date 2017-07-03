@@ -183,7 +183,7 @@ function getPassList(req, res) {
             // パフォーマンス単位に予約情報をグルーピング
             // dataByPerformance = {
             //   performance_id1:{ performance: performance,
-            //                     ticket_types: ticket_types,
+            //                     ticketNames: {'000098': {ja:'車椅子', en:'wheelchair'},･･･},
             //                     reservations: [reservation1,2,･･･n]},
             //                     reservedNormalNum: 5
             //                     reservedExtra:{'000002': {name:"車椅子",reservedNum:1},{･･･}
@@ -209,6 +209,7 @@ function getPassList(req, res) {
             Object.keys(dataByPerformance).forEach((performanceId) => {
                 // パフォーマンス情報セット
                 const performance = dataByPerformance[performanceId].performance;
+                const ticketNames = dataByPerformance[performanceId].ticketNames;
                 const totalSeatNum = dataByPerformance[performanceId].reservations.length;
                 const reservedNum = getStatusCount(dataByPerformance[performanceId].reservations, ttts_domain_2.ReservationUtil.STATUS_RESERVED);
                 const schedule = {
@@ -223,13 +224,22 @@ function getPassList(req, res) {
                 // 特殊チケット予約情報セット
                 const concernedReservedArray = [];
                 const reservedExtra = dataByPerformance[performanceId].reservedExtra;
-                Object.keys(reservedExtra).forEach((id) => {
+                ticketsExtra.forEach((extraId) => {
+                    // reservedExtraに予約情報があれば予約数セット
+                    const concernedReservedNum = (reservedExtra.hasOwnProperty(extraId)) ? reservedExtra[extraId].reservedNum : 0;
                     concernedReservedArray.push({
-                        id: id,
-                        name: reservedExtra[id].name,
-                        reservedNum: reservedExtra[id].reservedNum
+                        id: extraId,
+                        name: ticketNames[extraId].ja,
+                        reservedNum: concernedReservedNum
                     });
                 });
+                // Object.keys(reservedExtra).forEach((id) => {
+                //     concernedReservedArray.push({
+                //         id: id,
+                //         name: reservedExtra[id].name,
+                //         reservedNum: reservedExtra[id].reservedNum
+                //     });
+                // });
                 schedule.concernedReservedArray = concernedReservedArray;
                 // チェックイン情報セット
                 const checkins = dataCheckins[performanceId];
@@ -362,9 +372,13 @@ function groupingReservationsByPerformance(dicPerformances, reservations) {
             const keyValue = reservation.performance;
             if (!dataByPerformance.hasOwnProperty(keyValue)) {
                 const ticketTypes = yield getTicketTypes(dicPerformances[keyValue].ticket_type_group);
+                const ticketNames = {};
+                for (const ticketType of ticketTypes) {
+                    ticketNames[ticketType._id] = ticketType.name;
+                }
                 dataByPerformance[keyValue] = {};
                 dataByPerformance[keyValue].performance = dicPerformances[keyValue];
-                dataByPerformance[keyValue].ticketTypes = ticketTypes;
+                dataByPerformance[keyValue].ticketNames = ticketNames;
                 dataByPerformance[keyValue].reservations = [];
                 dataByPerformance[keyValue].reservedNormalNum = 0;
                 dataByPerformance[keyValue].reservedExtra = {};

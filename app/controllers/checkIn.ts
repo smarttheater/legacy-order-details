@@ -188,7 +188,7 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
         // パフォーマンス単位に予約情報をグルーピング
         // dataByPerformance = {
         //   performance_id1:{ performance: performance,
-        //                     ticket_types: ticket_types,
+        //                     ticketNames: {'000098': {ja:'車椅子', en:'wheelchair'},･･･},
         //                     reservations: [reservation1,2,･･･n]},
         //                     reservedNormalNum: 5
         //                     reservedExtra:{'000002': {name:"車椅子",reservedNum:1},{･･･}
@@ -216,6 +216,7 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
         Object.keys(dataByPerformance).forEach((performanceId) => {
             // パフォーマンス情報セット
             const performance: any = dataByPerformance[performanceId].performance;
+            const ticketNames: any = dataByPerformance[performanceId].ticketNames;
             const totalSeatNum: number = dataByPerformance[performanceId].reservations.length;
             const reservedNum: number = getStatusCount(dataByPerformance[performanceId].reservations, ReservationUtil.STATUS_RESERVED);
             const schedule: any = {
@@ -230,13 +231,22 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
             // 特殊チケット予約情報セット
             const concernedReservedArray: any[] = [];
             const reservedExtra: any = dataByPerformance[performanceId].reservedExtra;
-            Object.keys(reservedExtra).forEach((id) => {
+            ticketsExtra.forEach((extraId) => {
+                // reservedExtraに予約情報があれば予約数セット
+                const concernedReservedNum: number = (reservedExtra.hasOwnProperty(extraId)) ? reservedExtra[extraId].reservedNum : 0;
                 concernedReservedArray.push({
-                    id: id,
-                    name: reservedExtra[id].name,
-                    reservedNum: reservedExtra[id].reservedNum
+                    id: extraId,
+                    name: ticketNames[extraId].ja,
+                    reservedNum: concernedReservedNum
                 });
             });
+            // Object.keys(reservedExtra).forEach((id) => {
+            //     concernedReservedArray.push({
+            //         id: id,
+            //         name: reservedExtra[id].name,
+            //         reservedNum: reservedExtra[id].reservedNum
+            //     });
+            // });
             schedule.concernedReservedArray = concernedReservedArray;
 
             // チェックイン情報セット
@@ -370,9 +380,13 @@ async function groupingReservationsByPerformance(dicPerformances: any[], reserva
         const keyValue = reservation.performance;
         if (!dataByPerformance.hasOwnProperty(keyValue)) {
             const ticketTypes = await getTicketTypes(dicPerformances[keyValue].ticket_type_group);
+            const ticketNames: any = {};
+            for (const ticketType of ticketTypes)  {
+                ticketNames[ticketType._id] = ticketType.name;
+            }
             (<any>dataByPerformance)[keyValue] = {};
             (<any>dataByPerformance)[keyValue].performance = dicPerformances[keyValue];
-            (<any>dataByPerformance)[keyValue].ticketTypes = ticketTypes;
+            (<any>dataByPerformance)[keyValue].ticketNames = ticketNames;
             (<any>dataByPerformance)[keyValue].reservations = [];
             (<any>dataByPerformance)[keyValue].reservedNormalNum = 0;
             (<any>dataByPerformance)[keyValue].reservedExtra = {};
