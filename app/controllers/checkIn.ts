@@ -163,19 +163,16 @@ export async function getReservations(req: Request, res: Response): Promise<void
 // tslint:disable-next-line:max-func-body-length
 export async function getPassList(req: Request, res: Response): Promise<void> {
     try {
-        //req.query('day');
         // 対象日時セット(引数化の可能性あり)
-        //@@@@@@@@@@@
-        //const selectType: string = 'day';
-        const selectType: string = 'time';
+        const selectType: string = 'day';
+        //const selectType: string = 'time';
         // 現在時刻取得
         // データがないのでテストで9時
-        //const now = moment();
-        let now = moment('20170619 0900', 'YYYYMMDD HHmm');
+        let now = moment();
+        //let now = moment('20170619 0900', 'YYYYMMDD HHmm');
         if (req.query.day !== undefined) {
             now = moment(req.query.day, 'YYYYMMDD');
         }
-        //---
 
         // 取得対象の日付と開始時刻FromToを取得
         const timeInfo : any = await getStartTime(selectType, now);
