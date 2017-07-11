@@ -34,10 +34,5 @@
         "levels": {
             "error": "ALL"
         }
-    },
-    "checkpointNames" : {
-        "daiten-auth": "大展望台",
-        "topdeck-auth": "TOP DESK"
-    },
-    "ticketsExtra": ["000098", "000099"]
+    }
 }
