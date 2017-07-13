@@ -188,6 +188,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     }
     // 予約取得
     let reservations;
+    let cancellationFee: number = 0;
     try {
         reservations = (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS];
         if (reservations[0].payment_method !== GMOUtil.PAY_TYPE_CREDIT) {
@@ -200,7 +201,8 @@ export async function cancel(req: Request, res: Response): Promise<void> {
             return;
         }
         // キャンセル料セット
-        const cancelCharge: number = 400;
+        const cancelCharge: number = Number(conf.get('cancelCharge'));
+        cancellationFee = cancelCharge * reservations.length;
         // 金額変更(エラー時はchangeTran内部で例外発生)
         await GMO.CreditService.changeTran({
             shopId: process.env.GMO_SHOP_ID,
@@ -209,7 +211,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
             accessPass: reservations[0].gmo_access_pass,
             //jobCd: GMO.Util.JOB_CD_CAPTURE,
             jobCd: reservations[0].gmo_status,
-            amount: cancelCharge * reservations.length
+            amount: cancellationFee
         });
     } catch (err) {
         // GMO金額変更apiエラーはキャンセルできなかたことをユーザーに知らせる
@@ -244,7 +246,8 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         await Models.CustomerCancelRequest.create({
             reservation: reservations[0],
             tickets: (<any>Models.CustomerCancelRequest).getTickets(reservations),
-            cancel_name: `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}`
+            cancel_name: `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}`,
+            cancellation_fee: cancellationFee
         });
         logger.info('CustomerCancelRequest create =', JSON.stringify(reservations[0]));
         logger.info('-----update db end-----');

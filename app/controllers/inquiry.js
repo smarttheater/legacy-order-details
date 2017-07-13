@@ -196,6 +196,7 @@ function cancel(req, res) {
         }
         // 予約取得
         let reservations;
+        let cancellationFee = 0;
         try {
             reservations = req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
             if (reservations[0].payment_method !== gmo_service_1.Util.PAY_TYPE_CREDIT) {
@@ -207,7 +208,8 @@ function cancel(req, res) {
                 return;
             }
             // キャンセル料セット
-            const cancelCharge = 400;
+            const cancelCharge = Number(conf.get('cancelCharge'));
+            cancellationFee = cancelCharge * reservations.length;
             // 金額変更(エラー時はchangeTran内部で例外発生)
             yield GMO.CreditService.changeTran({
                 shopId: process.env.GMO_SHOP_ID,
@@ -216,7 +218,7 @@ function cancel(req, res) {
                 accessPass: reservations[0].gmo_access_pass,
                 //jobCd: GMO.Util.JOB_CD_CAPTURE,
                 jobCd: reservations[0].gmo_status,
-                amount: cancelCharge * reservations.length
+                amount: cancellationFee
             });
         }
         catch (err) {
@@ -246,7 +248,8 @@ function cancel(req, res) {
             yield ttts_domain_1.Models.CustomerCancelRequest.create({
                 reservation: reservations[0],
                 tickets: ttts_domain_1.Models.CustomerCancelRequest.getTickets(reservations),
-                cancel_name: `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}`
+                cancel_name: `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}`,
+                cancellation_fee: cancellationFee
             });
             logger.info('CustomerCancelRequest create =', JSON.stringify(reservations[0]));
             logger.info('-----update db end-----');

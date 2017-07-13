@@ -34,5 +34,6 @@
         "levels": {
             "error": "ALL"
         }
-    }
+    },
+    "cancelCharge" : 400
 }
