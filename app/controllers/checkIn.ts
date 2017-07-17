@@ -7,75 +7,75 @@
  */
 import { Models } from '@motionpicture/ttts-domain';
 import { ReservationUtil } from '@motionpicture/ttts-domain';
-import { FilmUtil } from '@motionpicture/ttts-domain';
+//import { FilmUtil } from '@motionpicture/ttts-domain';
 import { NextFunction, Request, Response } from 'express';
 import * as moment from 'moment';
 import * as mongoose from 'mongoose';
 import * as _ from 'underscore';
 
-/**
- * 入場画面のパフォーマンス検索
- * @memberof checkIn
- * @function performances
- * @param {Request} req
- * @param {Response} res
- * @param {NextFunction} next
- * @returns {Promise<void>}
- */
-export async function performances(__: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-        // 劇場とスクリーンを取得
-        const theaters = await Models.Theater.find(
-            {},
-            'name'
-        ).exec();
+// /**
+//  * 入場画面のパフォーマンス検索
+//  * @memberof checkIn
+//  * @function performances
+//  * @param {Request} req
+//  * @param {Response} res
+//  * @param {NextFunction} next
+//  * @returns {Promise<void>}
+//  */
+// export async function performances(__: Request, res: Response, next: NextFunction): Promise<void> {
+//     try {
+//         // 劇場とスクリーンを取得
+//         const theaters = await Models.Theater.find(
+//             {},
+//             'name'
+//         ).exec();
 
-        const screens = await Models.Screen.find(
-            {},
-            'name theater'
-        ).exec();
+//         const screens = await Models.Screen.find(
+//             {},
+//             'name theater'
+//         ).exec();
 
-        const screensByTheater: any = {};
-        screens.forEach((screen) => {
-            if (screensByTheater[screen.get('theater')] === undefined) {
-                screensByTheater[screen.get('theater')] = [];
-            }
+//         const screensByTheater: any = {};
+//         screens.forEach((screen) => {
+//             if (screensByTheater[screen.get('theater')] === undefined) {
+//                 screensByTheater[screen.get('theater')] = [];
+//             }
 
-            screensByTheater[screen.get('theater')].push(screen);
-        });
+//             screensByTheater[screen.get('theater')].push(screen);
+//         });
 
-        res.render('checkIn/performances', {
-            FilmUtil: FilmUtil,
-            theaters: theaters,
-            screensByTheater: screensByTheater,
-            event: {
-                start: '2016-10-25T00:00:00+09:00',
-                end: '2017-12-31T23:59:59+09:00'
-            },
-            layout: 'layouts/checkIn/layout'
-        });
+//         res.render('checkIn/performances', {
+//             FilmUtil: FilmUtil,
+//             theaters: theaters,
+//             screensByTheater: screensByTheater,
+//             event: {
+//                 start: '2016-10-25T00:00:00+09:00',
+//                 end: '2017-12-31T23:59:59+09:00'
+//             },
+//             layout: 'layouts/checkIn/layout'
+//         });
 
-        return;
-    } catch (error) {
-        next(error);
-    }
-}
+//         return;
+//     } catch (error) {
+//         next(error);
+//     }
+// }
 
-/**
- * 入場画面のパフォーマンス選択
- * @memberof checkIn
- * @function performanceSelect
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
- */
-export async function performanceSelect(req: Request, res: Response): Promise<void> {
-    if (!_.isEmpty(req.body.performanceId)) {
-        res.redirect(`/checkin/performance/${req.body.performanceId}/confirm`);
-    } else {
-        res.redirect('/checkin/performances');
-    }
-}
+// /**
+//  * 入場画面のパフォーマンス選択
+//  * @memberof checkIn
+//  * @function performanceSelect
+//  * @param {Request} req
+//  * @param {Response} res
+//  * @returns {Promise<void>}
+//  */
+// export async function performanceSelect(req: Request, res: Response): Promise<void> {
+//     if (!_.isEmpty(req.body.performanceId)) {
+//         res.redirect(`/checkin/performance/${req.body.performanceId}/confirm`);
+//     } else {
+//         res.redirect('/checkin/performances');
+//     }
+// }
 
 /**
  * QRコード認証画面
@@ -89,14 +89,33 @@ export async function performanceSelect(req: Request, res: Response): Promise<vo
  */
 export async function confirm(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-        const performance = await Models.Performance.findOne({ _id: req.params.id })
-            .populate('film', 'name')
-            .populate('screen', 'name')
-            .populate('theater', 'name')
-            .exec();
+        // const performance = await Models.Performance.findOne({ _id: req.params.id })
+        //     .populate('film', 'name')
+        //     .populate('screen', 'name')
+        //     .populate('theater', 'name')
+        //     .exec();
 
-        res.render('checkIn/confirm', {
-            performance: performance,
+        // res.render('checkIn/confirm', {
+        //     performance: performance,
+        //     layout: 'layouts/checkIn/layout'
+        // });
+        if (req === null) {
+            next(new Error('unexepected error'));
+        }
+        res.render('checkIn/confirmTest', {
+            layout: 'layouts/checkIn/layout'
+        });
+    } catch (error) {
+        next(new Error('unexepected error'));
+    }
+}
+// for kusunose test
+export async function confirmTest(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+        if (req === null) {
+            next(new Error('unexepected error'));
+        }
+        res.render('checkIn/confirmTest', {
             layout: 'layouts/checkIn/layout'
         });
     } catch (error) {
@@ -114,12 +133,22 @@ export async function confirm(req: Request, res: Response, next: NextFunction): 
  */
 export async function getReservations(req: Request, res: Response): Promise<void> {
     try {
-        const id = req.body.id;
+        const performanceId: string = (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : '';
+        const conditions: any = {
+            status: ReservationUtil.STATUS_RESERVED
+        };
+        if (performanceId !== '') {
+            conditions.performanceId = performanceId;
+        } else {
+            const now = moment();
+            const day = now.format('YYYYMMDD');
+            const time = now.format('HHmm');
+            conditions.performance_day =  day;
+            conditions.performance_start_time = { $lte: time };
+            conditions.performance_end_time = { $gte: time };
+        }
         const reservations = await Models.Reservation.find(
-            {
-                performance: id,
-                status: ReservationUtil.STATUS_RESERVED
-            }
+            conditions
         ).exec();
 
         const reservationsById: {
@@ -147,7 +176,7 @@ export async function getReservations(req: Request, res: Response): Promise<void
 }
 
 /**
- * 予約通過確認
+ * 予約通過確認(api)
  * @memberof checkIn
  * @function getPassList
  * @param {Request} req

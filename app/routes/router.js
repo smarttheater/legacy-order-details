@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const baseController = require("../controllers/base");
 const errorController = require("../controllers/error");
+//import authRouter from './auth';
 const checkin_1 = require("./checkin");
 const inquiry_1 = require("./inquiry");
 /**
@@ -15,6 +16,8 @@ const inquiry_1 = require("./inquiry");
  */
 exports.default = (app) => {
     const base = baseController.setLocals;
+    // 入場
+    //app.use('/checkin', base, authRouter);
     // 入場
     app.use('/checkin', base, checkin_1.default);
     // チケット照会

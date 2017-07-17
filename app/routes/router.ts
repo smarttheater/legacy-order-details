@@ -7,6 +7,7 @@
 import { Application, Request, Response } from 'express';
 import * as baseController from '../controllers/base';
 import * as errorController from '../controllers/error';
+//import authRouter from './auth';
 import checkinRouter from './checkin';
 import inquiryRouter from './inquiry';
 /**
@@ -21,6 +22,8 @@ import inquiryRouter from './inquiry';
 export default (app: Application) => {
     const base = baseController.setLocals;
 
+    // 入場
+    //app.use('/checkin', base, authRouter);
     // 入場
     app.use('/checkin', base, checkinRouter);
     // チケット照会

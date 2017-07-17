@@ -17,68 +17,65 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const ttts_domain_1 = require("@motionpicture/ttts-domain");
 const ttts_domain_2 = require("@motionpicture/ttts-domain");
-const ttts_domain_3 = require("@motionpicture/ttts-domain");
 const moment = require("moment");
 const _ = require("underscore");
-/**
- * 入場画面のパフォーマンス検索
- * @memberof checkIn
- * @function performances
- * @param {Request} req
- * @param {Response} res
- * @param {NextFunction} next
- * @returns {Promise<void>}
- */
-function performances(__, res, next) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            // 劇場とスクリーンを取得
-            const theaters = yield ttts_domain_1.Models.Theater.find({}, 'name').exec();
-            const screens = yield ttts_domain_1.Models.Screen.find({}, 'name theater').exec();
-            const screensByTheater = {};
-            screens.forEach((screen) => {
-                if (screensByTheater[screen.get('theater')] === undefined) {
-                    screensByTheater[screen.get('theater')] = [];
-                }
-                screensByTheater[screen.get('theater')].push(screen);
-            });
-            res.render('checkIn/performances', {
-                FilmUtil: ttts_domain_3.FilmUtil,
-                theaters: theaters,
-                screensByTheater: screensByTheater,
-                event: {
-                    start: '2016-10-25T00:00:00+09:00',
-                    end: '2017-12-31T23:59:59+09:00'
-                },
-                layout: 'layouts/checkIn/layout'
-            });
-            return;
-        }
-        catch (error) {
-            next(error);
-        }
-    });
-}
-exports.performances = performances;
-/**
- * 入場画面のパフォーマンス選択
- * @memberof checkIn
- * @function performanceSelect
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
- */
-function performanceSelect(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (!_.isEmpty(req.body.performanceId)) {
-            res.redirect(`/checkin/performance/${req.body.performanceId}/confirm`);
-        }
-        else {
-            res.redirect('/checkin/performances');
-        }
-    });
-}
-exports.performanceSelect = performanceSelect;
+// /**
+//  * 入場画面のパフォーマンス検索
+//  * @memberof checkIn
+//  * @function performances
+//  * @param {Request} req
+//  * @param {Response} res
+//  * @param {NextFunction} next
+//  * @returns {Promise<void>}
+//  */
+// export async function performances(__: Request, res: Response, next: NextFunction): Promise<void> {
+//     try {
+//         // 劇場とスクリーンを取得
+//         const theaters = await Models.Theater.find(
+//             {},
+//             'name'
+//         ).exec();
+//         const screens = await Models.Screen.find(
+//             {},
+//             'name theater'
+//         ).exec();
+//         const screensByTheater: any = {};
+//         screens.forEach((screen) => {
+//             if (screensByTheater[screen.get('theater')] === undefined) {
+//                 screensByTheater[screen.get('theater')] = [];
+//             }
+//             screensByTheater[screen.get('theater')].push(screen);
+//         });
+//         res.render('checkIn/performances', {
+//             FilmUtil: FilmUtil,
+//             theaters: theaters,
+//             screensByTheater: screensByTheater,
+//             event: {
+//                 start: '2016-10-25T00:00:00+09:00',
+//                 end: '2017-12-31T23:59:59+09:00'
+//             },
+//             layout: 'layouts/checkIn/layout'
+//         });
+//         return;
+//     } catch (error) {
+//         next(error);
+//     }
+// }
+// /**
+//  * 入場画面のパフォーマンス選択
+//  * @memberof checkIn
+//  * @function performanceSelect
+//  * @param {Request} req
+//  * @param {Response} res
+//  * @returns {Promise<void>}
+//  */
+// export async function performanceSelect(req: Request, res: Response): Promise<void> {
+//     if (!_.isEmpty(req.body.performanceId)) {
+//         res.redirect(`/checkin/performance/${req.body.performanceId}/confirm`);
+//     } else {
+//         res.redirect('/checkin/performances');
+//     }
+// }
 /**
  * QRコード認証画面
  * @desc Rコードを読み取って結果を表示するための画面
@@ -92,13 +89,19 @@ exports.performanceSelect = performanceSelect;
 function confirm(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const performance = yield ttts_domain_1.Models.Performance.findOne({ _id: req.params.id })
-                .populate('film', 'name')
-                .populate('screen', 'name')
-                .populate('theater', 'name')
-                .exec();
-            res.render('checkIn/confirm', {
-                performance: performance,
+            // const performance = await Models.Performance.findOne({ _id: req.params.id })
+            //     .populate('film', 'name')
+            //     .populate('screen', 'name')
+            //     .populate('theater', 'name')
+            //     .exec();
+            // res.render('checkIn/confirm', {
+            //     performance: performance,
+            //     layout: 'layouts/checkIn/layout'
+            // });
+            if (req === null) {
+                next(new Error('unexepected error'));
+            }
+            res.render('checkIn/confirmTest', {
                 layout: 'layouts/checkIn/layout'
             });
         }
@@ -108,6 +111,23 @@ function confirm(req, res, next) {
     });
 }
 exports.confirm = confirm;
+// for kusunose test
+function confirmTest(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            if (req === null) {
+                next(new Error('unexepected error'));
+            }
+            res.render('checkIn/confirmTest', {
+                layout: 'layouts/checkIn/layout'
+            });
+        }
+        catch (error) {
+            next(new Error('unexepected error'));
+        }
+    });
+}
+exports.confirmTest = confirmTest;
 /**
  * 予約情報取得
  * @memberof checkIn
@@ -119,11 +139,22 @@ exports.confirm = confirm;
 function getReservations(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const id = req.body.id;
-            const reservations = yield ttts_domain_1.Models.Reservation.find({
-                performance: id,
+            const performanceId = (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : '';
+            const conditions = {
                 status: ttts_domain_2.ReservationUtil.STATUS_RESERVED
-            }).exec();
+            };
+            if (performanceId !== '') {
+                conditions.performanceId = performanceId;
+            }
+            else {
+                const now = moment();
+                const day = now.format('YYYYMMDD');
+                const time = now.format('HHmm');
+                conditions.performance_day = day;
+                conditions.performance_start_time = { $lte: time };
+                conditions.performance_end_time = { $gte: time };
+            }
+            const reservations = yield ttts_domain_1.Models.Reservation.find(conditions).exec();
             const reservationsById = {};
             const reservationIdsByQrStr = {};
             reservations.forEach((reservation) => {
@@ -146,7 +177,7 @@ function getReservations(req, res) {
 }
 exports.getReservations = getReservations;
 /**
- * 予約通過確認
+ * 予約通過確認(api)
  * @memberof checkIn
  * @function getPassList
  * @param {Request} req

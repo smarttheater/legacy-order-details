@@ -1,0 +1,26 @@
+<%- contentFor('scripts') %>
+<script src="/js/checkin/confirmTest.js"></script>
+<form method="post" class="form-horizontal form-login" style="margin: 20px 40px 20px 40px;"  >
+  <br/>
+  <% /* 予約一覧 */ %>
+  <div class="form-group .form-inline">
+    <label for="performanceId" class="control-label label-title">パフォーマンスID(未入力なら現在時刻のパフォーマンス)</label>
+    <input type="text" name="performanceId" id="performanceId" class="form-control" value="<%= req.body.performanceId %>">
+    <br/>
+    <button type="button" class="btn btn-list">予約一覧取得</button>
+    <br/>
+    <textarea rows="5" name="reservations" id="reservations" class="form-control"></textarea>
+  </div>
+  <br/>
+  <% /* 予約ID */ %>
+  <div class="form-group .form-inline">
+    <label for="reservationId" class="control-label label-title">予約ID</label>
+    <input type="text" name="reservationId" id="reservationId" class="form-control" value="" />
+  </div>
+  <% /* 読み取りのつもりボタン */ %>
+  <div class="form-group">
+    <div class="btn-area">
+      <button type="button" class="btn btn-ok">QR読み取り</button>
+    </div>
+  </div>
+</form>

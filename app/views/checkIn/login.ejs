@@ -1,0 +1,45 @@
+<form method="post" class="form-horizontal form-login" >
+  <br/>
+  <% /* ユーザーID */ %>
+  <div class="form-group .form-inline">
+    <label for="username" class="col-sm-3 control-label label-title">ID</label>
+    <div class="col-sm-9">
+      <input type="text" name="username" id="username" class="form-control" value="<%= req.body.username %>">
+      <p class="error message" style="text-align:left;">
+        <% if (errors && errors.username) { %>
+          <%- errors.username.msg %>
+        <% } %>
+      </p>
+    </div>
+  </div>
+  <% /* パスワード */ %>
+  <div class="form-group .form-inline">
+    <label for="password" class="col-sm-3 control-label label-title">パスワード</label>
+    <div class="col-sm-9">
+      <input type="password" name="password" id="password" class="form-control" value="<%= req.body.password %>">
+      <% /* 単体チェックエラー */ %>
+      <p class="error message" style="text-align:left;">
+        <% if (errors && errors.password) { %>
+          <%- errors.password.msg %>
+        <% } %>
+      </p>
+    </div>
+  </div>
+  <div class="form-group .form-inline">
+    <input type="radio" name="group" value="DAITEN_AUTH">大展望台
+    <input type="radio" name="group" value="TOPDECK_AUTH">TOP DESK
+  </div>
+  <% /* ログインボタン */ %>
+  <div class="form-group">
+    <div class="btn-area">
+      <button type="button" class="btn btn-ok">ログイン</button>
+    </div>
+  </div>
+</form>
+<script>
+$(function(){
+    $('.btn-ok').on('click', function(){
+        $('form').submit();
+    });
+});
+</script>

@@ -15,9 +15,13 @@ const mongoose = require("mongoose");
 const _ = require("underscore");
 // tslint:disable-next-line:no-var-requires no-require-imports
 const expressValidator = require("express-validator");
+// ミドルウェア
 const basicAuth_1 = require("./middlewares/basicAuth");
 const benchmarks_1 = require("./middlewares/benchmarks");
 const session_1 = require("./middlewares/session");
+const userAuthentication_1 = require("./middlewares/userAuthentication");
+// ルーター
+//import authCheckinRouter from './routes/auth';
 const router_1 = require("./routes/router");
 // tslint:disable-next-line:no-var-requires no-require-imports
 const expressLayouts = require('express-ejs-layouts');
@@ -71,8 +75,12 @@ app.use((req, _res, next) => {
     }
     next();
 });
-app.use(expressValidator()); // バリデーション
+// バリデーション
+app.use(expressValidator());
+// router登録
 router_1.default(app);
+// ユーザー認証(ログインの登録の後で実行すること)
+app.use(userAuthentication_1.default);
 /*
  * Mongoose by default sets the auto_reconnect option to true.
  * We recommend setting socket options at both the server and replica set level.

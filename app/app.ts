@@ -14,9 +14,15 @@ import * as mongoose from 'mongoose';
 import * as _ from 'underscore';
 // tslint:disable-next-line:no-var-requires no-require-imports
 import expressValidator = require('express-validator');
+
+// ミドルウェア
 import basicAuth from './middlewares/basicAuth';
 import benchmarks from './middlewares/benchmarks';
 import session from './middlewares/session';
+import userAuthentication from './middlewares/userAuthentication';
+
+// ルーター
+//import authCheckinRouter from './routes/auth';
 import router from './routes/router';
 // tslint:disable-next-line:no-var-requires no-require-imports
 const expressLayouts = require('express-ejs-layouts');
@@ -80,10 +86,12 @@ app.use((req, _res, next) => {
     }
     next();
 });
-
-app.use(expressValidator()); // バリデーション
-
+// バリデーション
+app.use(expressValidator());
+// router登録
 router(app);
+// ユーザー認証(ログインの登録の後で実行すること)
+app.use(userAuthentication);
 
 /*
  * Mongoose by default sets the auto_reconnect option to true.
