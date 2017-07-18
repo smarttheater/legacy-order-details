@@ -12,15 +12,21 @@
     <textarea rows="5" name="reservations" id="reservations" class="form-control"></textarea>
   </div>
   <br/>
-  <% /* 予約ID */ %>
+  <% /* QR文字列 */ %>
   <div class="form-group .form-inline">
-    <label for="reservationId" class="control-label label-title">予約ID</label>
-    <input type="text" name="reservationId" id="reservationId" class="form-control" value="" />
+    <label for="qr" class="control-label label-title">QR文字列</label>
+    <input type="text" name="qr" id="qr" class="form-control" value="20170713-700000109-0" placeholder="来塔日時-購入番号-座席インデックス" />
+    <label for="when" class="control-label label-title">タイムスタンプ(取消の時のみ必要です)</label>
+    <input type="text" name="when" id="when" class="form-control" value="" placeholder="checkinの_id" />
   </div>
-  <% /* 読み取りのつもりボタン */ %>
+  <% /* 取得 */ %>
   <div class="form-group">
     <div class="btn-area">
-      <button type="button" class="btn btn-ok">QR読み取り</button>
+      <button type="button" class="btn btn-get" style="display:inline-block;">取得</button>
+      <button type="button" class="btn btn-post" style="display:inline-block;">チェックイン</button>
+      <button type="button" class="btn btn-delete" style="display:inline-block;">取消</button>
     </div>
+    <br/>
+    <textarea rows="5" name="result" id="result" class="form-control"></textarea>
   </div>
 </form>

@@ -88,20 +88,25 @@ const _ = require("underscore");
  */
 function confirm(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (req === null) {
+            next(new Error('unexepected error'));
+        }
         try {
-            // const performance = await Models.Performance.findOne({ _id: req.params.id })
-            //     .populate('film', 'name')
-            //     .populate('screen', 'name')
-            //     .populate('theater', 'name')
-            //     .exec();
-            // res.render('checkIn/confirm', {
-            //     performance: performance,
-            //     layout: 'layouts/checkIn/layout'
-            // });
-            if (req === null) {
-                next(new Error('unexepected error'));
-            }
-            res.render('checkIn/confirmTest', {
+            const now = moment();
+            const day = now.format('YYYYMMDD');
+            const time = now.format('HHmm');
+            const conditions = {
+                day: day,
+                start_time: { $lte: time },
+                end_time: { $gte: time }
+            };
+            const performance = yield ttts_domain_1.Models.Performance.findOne(conditions)
+                .populate('film', 'name')
+                .populate('screen', 'name')
+                .populate('theater', 'name')
+                .exec();
+            res.render('checkIn/confirm', {
+                performance: performance,
                 layout: 'layouts/checkIn/layout'
             });
         }
@@ -176,6 +181,179 @@ function getReservations(req, res) {
     });
 }
 exports.getReservations = getReservations;
+/**
+ * 予約情報取得
+ * @memberof checkIn
+ * @function getReservation
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {Promise<void>}
+ */
+function getReservation(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (req.staffUser === undefined) {
+            throw new Error('staffUser not defined.');
+        }
+        if (!req.staffUser.isAuthenticated()) {
+            throw new Error('staffUser not authenticated.');
+        }
+        try {
+            const reservation = yield getReservationByQR(req.params.qr);
+            res.json({
+                status: true,
+                error: null,
+                reservation: reservation
+            });
+        }
+        catch (error) {
+            console.error(error);
+            res.json({
+                status: false,
+                error: '予約情報取得失敗',
+                message: error
+            });
+        }
+    });
+}
+exports.getReservation = getReservation;
+/**
+ * チェックイン作成
+ * @memberof checkIn
+ * @function addCheckIn
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {Promise<void>}
+ */
+function addCheckIn(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            if (req.staffUser === undefined) {
+                throw new Error('staffUser not defined.');
+            }
+            if (!req.staffUser.isAuthenticated()) {
+                throw new Error('staffUser not authenticated.');
+            }
+            // QR文字列から予約取得
+            const reservation = yield getReservationByQR(req.params.qr);
+            const checkins = reservation.checkins;
+            const unixTimestamp = (new Date()).getTime();
+            // チェックイン情報追加
+            checkins.push({
+                _id: unixTimestamp,
+                when: unixTimestamp,
+                where: req.staffUser.get('group'),
+                why: '',
+                how: req.staffUser.get('name').ja !== undefined ? req.staffUser.get('name').ja : null
+            });
+            // 予約更新
+            const update = {
+                checkins: checkins
+            };
+            yield ttts_domain_1.Models.Reservation.findByIdAndUpdate(reservation._id, update).exec();
+            res.json({
+                status: true
+            });
+        }
+        catch (error) {
+            console.error(error);
+            res.json({
+                status: false,
+                error: 'チェックイン情報作成失敗',
+                message: error.message
+            });
+        }
+    });
+}
+exports.addCheckIn = addCheckIn;
+/**
+ * チェックイン取り消し
+ * @memberof checkIn
+ * @function addCheckIn
+ * @param {Request} req
+ * @param {Response} res
+ * @returns {Promise<void>}
+ */
+function removeCheckIn(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            if (req.staffUser === undefined) {
+                throw new Error('staffUser not defined.');
+            }
+            if (!req.staffUser.isAuthenticated()) {
+                throw new Error('staffUser not authenticated.');
+            }
+            // QR文字列から予約取得
+            const reservation = yield getReservationByQR(req.body.qr);
+            const timeStamp = req.body.when;
+            const checkins = reservation.checkins;
+            let index = 0;
+            let delIndex = -1;
+            // 削除対象のチェックイン情報のindexを取得
+            for (const checkin of checkins) {
+                if (checkin._id === Number(timeStamp)) {
+                    delIndex = index;
+                    break;
+                }
+                index += 1;
+            }
+            // チェックイン削除
+            if (delIndex >= 0) {
+                checkins.splice(delIndex, 1);
+            }
+            // 予約更新
+            const update = { checkins: checkins };
+            yield ttts_domain_1.Models.Reservation.findByIdAndUpdate(reservation._id, update).exec();
+            res.json({
+                status: true
+            });
+        }
+        catch (error) {
+            console.error(error);
+            res.json({
+                status: false,
+                error: 'チェックイン情報作成失敗',
+                message: error.message
+            });
+        }
+    });
+}
+exports.removeCheckIn = removeCheckIn;
+/**
+ * QR文字列から予約情報取得
+ * @memberof checkIn
+ * @function getReservationByQR
+ * @param {string} qr
+ * @returns {Promise<any>}
+ */
+function getReservationByQR(qr) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const conditions = parseQR(qr);
+        conditions.status = ttts_domain_2.ReservationUtil.STATUS_RESERVED;
+        return (yield ttts_domain_1.Models.Reservation.findOne(conditions).exec());
+    });
+}
+/**
+ * QR文字列からクラス作成
+ * @function parseQR
+ * @param {string} qrStr
+ * @returns {any}
+ */
+function parseQR(qrStr) {
+    const qr = qrStr.split('-');
+    const qrInfo = {};
+    if (qr.length > 0) {
+        qrInfo.performance_day = qr[0];
+    }
+    if (qr.length > 1) {
+        qrInfo.payment_no = qr[1];
+    }
+    // tslint:disable-next-line:no-magic-numbers
+    if (qr.length > 2) {
+        // tslint:disable-next-line:no-magic-numbers
+        qrInfo.payment_seat_index = qr[2];
+    }
+    return qrInfo;
+}
 /**
  * 予約通過確認(api)
  * @memberof checkIn

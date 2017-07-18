@@ -14,9 +14,6 @@ import CheckInAdminUser from '../models/user/checkinAdmin';
 const checkInHome: string = '/checkin/confirm';
 const cookieName = 'remember_checkin_admin';
 
-// const GROUP_DAITEN_AUTH_STAFF = "DAITEN_AUTH";
-// const GROUP_TOPDECK_AUTH_STAFF = "TOPDECK_AUTH";
-
 /**
  * マスタ管理ログイン
  */

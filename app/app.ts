@@ -15,6 +15,8 @@ import * as _ from 'underscore';
 // tslint:disable-next-line:no-var-requires no-require-imports
 import expressValidator = require('express-validator');
 
+//import * as checkInAuthController from './controllers/auth';
+
 // ミドルウェア
 import basicAuth from './middlewares/basicAuth';
 import benchmarks from './middlewares/benchmarks';
@@ -88,11 +90,15 @@ app.use((req, _res, next) => {
 });
 // バリデーション
 app.use(expressValidator());
+
+// // ログイン
+// app.all('/login', checkInAuthController.login);
+// // ログアウト
+// app.all('/logout', checkInAuthController.logout);
 // router登録
 router(app);
 // ユーザー認証(ログインの登録の後で実行すること)
 app.use(userAuthentication);
-
 /*
  * Mongoose by default sets the auto_reconnect option to true.
  * We recommend setting socket options at both the server and replica set level.

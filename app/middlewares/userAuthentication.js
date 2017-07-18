@@ -68,7 +68,6 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
         });
     }
     else {
-        res.redirect(`/auth/login?cb=${req.originalUrl}`);
-        //res.redirect('/checkin/login');
+        res.redirect(`/checkin/login?cb=${req.originalUrl}`);
     }
 });

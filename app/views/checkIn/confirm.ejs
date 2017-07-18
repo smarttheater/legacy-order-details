@@ -8,13 +8,14 @@ page-checkin page-performance page-confirm
 <h1 class="pagetitle">入場確認</h1>
 
 <div class="performancedata row">
+    <% if(performance) { %>
     <h2><%- performance.get('film').get('name')['ja'] %></h2>
     <span class="when"><%- performance.get(`start_str_ja`) %></span>
     <span class="where"><%- performance.get(`location_str_ja`) %></span>
+    <% } %>
 </div>
 
 <p class="text-primary text-center process row">QRコードを読み取ってください</p>
-
 <div class="result">
 
 </div>
@@ -30,6 +31,8 @@ page-checkin page-performance page-confirm
 </div>
 
 <input type="hidden" name="apiEndpoint" value="<%= process.env.API_ENDPOINT %>">
+<% if(performance) { %>
 <input type="hidden" name="performanceId" value="<%= performance.get('id') %>">
+<% } %>
 <input type="hidden" name="messageSearching" value="検索しています...">
 <input type="hidden" name="messagePleaseReadBarcode" value="QRコードを読み取ってください">

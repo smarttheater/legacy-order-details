@@ -72,7 +72,6 @@ export default async (req: Request, res: Response, next: NextFunction) => {
             message: 'login required'
         });
     } else {
-        res.redirect(`/auth/login?cb=${req.originalUrl}`);
-        //res.redirect('/checkin/login');
+        res.redirect(`/checkin/login?cb=${req.originalUrl}`);
     }
 };

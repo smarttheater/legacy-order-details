@@ -15,6 +15,7 @@ const mongoose = require("mongoose");
 const _ = require("underscore");
 // tslint:disable-next-line:no-var-requires no-require-imports
 const expressValidator = require("express-validator");
+//import * as checkInAuthController from './controllers/auth';
 // ミドルウェア
 const basicAuth_1 = require("./middlewares/basicAuth");
 const benchmarks_1 = require("./middlewares/benchmarks");
@@ -77,6 +78,10 @@ app.use((req, _res, next) => {
 });
 // バリデーション
 app.use(expressValidator());
+// // ログイン
+// app.all('/login', checkInAuthController.login);
+// // ログアウト
+// app.all('/logout', checkInAuthController.logout);
 // router登録
 router_1.default(app);
 // ユーザー認証(ログインの登録の後で実行すること)

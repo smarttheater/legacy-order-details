@@ -7,11 +7,21 @@
     var qrStrs;
 
     $(function(){
-        $('.btn-ok').on('click', function(){
-            $('form').submit();
-        });
         $('.btn-list').on('click', function(){
             getReservations();
+        });
+
+        // QR文字列より予約取得
+        $('.btn-get').on('click', function(){
+            sendQR("GET");
+        });
+        // QR文字列よりチェックイン情報作成
+        $('.btn-post').on('click', function(){
+            sendQR("POST");
+        });
+        // QR文字列よりチェックイン情報作成
+        $('.btn-delete').on('click', function(){
+            sendQR("DELETE");
         });
 
         /**
@@ -27,6 +37,7 @@
                 dataType: 'json',
                 url: '/checkin/performance/reservations',
                 type: 'POST',
+                cache : false,
                 data: {
                     performanceId: id
                 },
@@ -49,5 +60,34 @@
                 //if (cb !== undefined) cb();
             });
         }
+        /**
+         * QR文字列送信 予約取得/チェックイン/チェックイン取消
+         * @function sendQR
+         * @param {string} type
+         * @returns {void}
+         */
+        function sendQR(type) {
+            var qr = $('input[name=qr]').val();
+            var when = $('input[name=when]').val();
+            $('#result').val('');
+            $.ajax({
+                dataType: 'json',
+                url: '/checkin/reservation/' + qr,
+                type: type,
+                cache : false,
+                data: {
+                    qr: qr,
+                    when: when
+                },
+                beforeSend: function () {
+                }
+            }).done(function (data) {
+                $('#result').val(JSON.stringify(data));
+            }).fail(function (jqxhr, textStatus, error) {
+                console.error(jqxhr, textStatus, error);
+            }).always(function () {
+            });
+        }
+
     });
 })();
