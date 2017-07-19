@@ -149,7 +149,7 @@ function getReservations(req, res) {
                 status: ttts_domain_2.ReservationUtil.STATUS_RESERVED
             };
             if (performanceId !== '') {
-                conditions.performanceId = performanceId;
+                conditions.performance = performanceId;
             }
             else {
                 const now = moment();

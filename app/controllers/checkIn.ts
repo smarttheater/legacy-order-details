@@ -142,7 +142,7 @@ export async function getReservations(req: Request, res: Response): Promise<void
             status: ReservationUtil.STATUS_RESERVED
         };
         if (performanceId !== '') {
-            conditions.performanceId = performanceId;
+            conditions.performance = performanceId;
         } else {
             const now = moment();
             const day = now.format('YYYYMMDD');
