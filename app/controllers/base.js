@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const conf = require("config");
 const moment = require("moment");
 /**
  * @memberof BaseController
@@ -11,6 +12,7 @@ const moment = require("moment");
  */
 function setLocals(req, res, next) {
     res.locals.req = req;
+    res.locals.conf = conf;
     res.locals.moment = moment;
     res.locals.validation = null;
     res.locals.officialWebsiteUrl = 'https://motionpicture.jp';

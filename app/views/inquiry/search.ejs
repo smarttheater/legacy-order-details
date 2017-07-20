@@ -1,27 +1,27 @@
 <%- contentFor('pageId') %>
 page_inquiry_search
 <%- contentFor('pageClassName') %>
-page-checkin page-search
+page-inquiry page-search
 <%- contentFor('scripts') %>
 <script src="/js/inquiry/search.js"></script>
 <%- contentFor('body') %>
 <input type="hidden" name="apiEndpoint" value="<%= process.env.API_ENDPOINT %>">
 
 <h1 class="pagetitle"><%- __('h1.TicketInquiry') %></h1>
-<p class="guidetext">チケット購入時に発行された購入番号と
-<br/>チケット購入時に入力した暗証番号を入力して照会ボタンを押してください。
+<p class="guidetext">チケット購入時に発行された購入番号とチケット購入時に入力した<br>電話番号を入力して「照会」ボタンを押してください。
 </p>
 
-<div class="checkin-searchform">
+<div class="inquiry-searchform">
     <form method="post">
         <div class="menu-group">
-            <p name='error_head' class=".error-message error message text-danger panel-body bg-danger">
             <% if (message !== '') { %>
+            <p name='error_head' class="error-message error message text-danger panel-body bg-danger">
             <%= message %>
             <% } %>
             </p>
         </div>
-        <div class="form-group">
+        <div class="form-group"> 
+            <label>来塔予約日時</label>
             <select class="form-control" name="day">
                 <option value="">すべての上映日</option>
                 <%
@@ -44,8 +44,9 @@ page-checkin page-search
         </div>
 
         <div class="form-group form-seachqueryinput">
-            <input type="text" class="form-control" name="paymentNo" placeholder="購入番号" value="<%= req.body.paymentNo %>" maxlength=9>
-            <p  name="error-paymentNo" class="error message text-danger" style="padding-top:6px;">
+            <label for="input_paymentNo"><%- __('Form.FieldName.paymentNo') %></label>
+            <input id="input_paymentNo type="text" class="form-control" name="paymentNo" value="<%= req.body.paymentNo %>" maxlength="9">
+            <p  name="error-paymentNo" class="error message text-danger">
                 <% if (errors && errors.paymentNo) { %>
                 <%- errors.paymentNo.msg %>
                 <% } %>
@@ -53,19 +54,23 @@ page-checkin page-search
         </div>
 
         <div class="form-group form-seachqueryinput">
-            <input type="text" class="form-control" name="purchaserTel" placeholder="電話番号" value="<%= req.body.purchaserTel %>" maxlength=20>
-            <p name="error-purchaserTel" class="error message text-danger" style="padding-top:6px;">
+            <label for="input_purchaserTel"><%- __('Form.FieldName.tel') %></label>
+            <input id="input_purchaserTel" type="text" class="form-control" name="purchaserTel" value="<%= req.body.purchaserTel %>" maxlength="20">
+            <p name="error-purchaserTel" class="error message text-danger">
                 <% if (errors && errors.purchaserTel) { %>
                 <%- errors.purchaserTel.msg %>
                 <% } %>
             </p>
         </div>
-        
-        <div class="wrapper-btn">
-            <a class="btn btn-search search" href="javascript:void(0)"><span>検索</span></a>
-        </div>
+
     </form>
 </div>
+
+<div class="navbtns">
+    <a class="btn btn-next btn-search search" href="javascript:void(0)"><span><%- __('Button.Search')%></span></a>
+    <a class="btn-back" href="javascript:void(0)"><span><%- __('Button.Back')%></span></a>
+</div>
+
 
 <div class="modal fade loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog" role="document">

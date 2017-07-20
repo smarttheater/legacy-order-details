@@ -1,0 +1,35 @@
+.page-inquiry {
+    .btn-cancel {
+        @include btn-white;
+        display: table;
+        width: 220px;
+        height: 40px;
+        margin: 2em auto;
+    }
+}
+.inquiry-searchform {
+    max-width: 600px;
+    margin: 0 auto 40px;
+    background: #eee;
+    padding: 2em 0;
+    >form {
+        width: 80%;
+        margin: auto;
+        select {
+            font-size: 16px;
+        }
+        input {
+            font-size: 16px;
+            height: 40px;
+        }
+    }
+    label {
+        font-weight: bold;
+        font-size: 1.1em;
+        line-height: 2;
+    }
+}
+
+.btn-next {
+    width: 200px;
+}

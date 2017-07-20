@@ -7,6 +7,7 @@
  * @namespace BaseController
  */
 import { NextFunction, Request, Response } from 'express';
+import * as conf from 'config';
 import * as moment from 'moment';
 
 /**
@@ -19,6 +20,7 @@ import * as moment from 'moment';
  */
 export function setLocals(req: Request, res: Response, next: NextFunction): void {
     res.locals.req = req;
+    res.locals.conf = conf;
     res.locals.moment = moment;
     res.locals.validation = null;
     res.locals.officialWebsiteUrl = 'https://motionpicture.jp';

@@ -62,7 +62,7 @@ log4js.configure(conf.get<any>('log4js'));
 
 // i18n を利用する設定
 i18n.configure({
-    locales: ['en', 'ja'],
+    locales: Object.keys(conf.get<any>('locales')),
     defaultLocale: 'ja',
     directory: `${__dirname}/../locales`,
     objectNotation: true,
