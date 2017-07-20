@@ -1,89 +1,89 @@
-<div class="modal fade" id="cancelModal" tabindex="-1">
+<div class="modal modal-cancel fade" id="modal_cancelreservation" tabindex="-1" data-paymentNo="<%- reservationDocuments[0].payment_no %>">
 	<div class="modal-dialog">
 		<div class="modal-content">
-			<div class="modal-header" style="padding-bottom: 0px;">
-				<button type="button" class="close" data-dismiss="modal"><span>×</span></button>
-				<h4 class="modal-title">チケットキャンセル</h4>
-				<div style="font-size: 13pt;padding-top: 20px;">キャンセル実行ボタンをクリックすると下記チケットがキャンセルされ、キャンセル料が発生します。</div>
-                <div name="error-message" style="font-size: 13pt;padding-top: 20px; color: red; "></div>
+			<div class="modal-header">
+				<p class="btn-close" data-dismiss="modal"><span>×</span></p>
+				<h2 class="modal-title">チケットキャンセル</h2>
+				<p class="guidetext">キャンセル実行ボタンをクリックすると下記チケットがキャンセルされ、<br>キャンセル料が発生します。</p>
+                <p id="error_cancel"></p>
 			</div>
 			<div class="modal-body">
-                <div class="panel-body" style="padding-bottom: 0px;">
-                    <form class="form-horizontal" style="text-align: left; background-color: #F2F2F2; padding: 30px;">
-                        <input type="hidden" name="payment_no" value="<%- reservationDocuments[0].payment_no %>">
-                        <div class="form-group">
-                            <label>●ご購入内容</label>
-                        </div>
-                        <div class="form-group" style="padding-left: 20px;" >
-                            <label>購入番号: </label>
-                            <%- reservationDocuments[0].payment_no %>
-                        </div>
+                <form>
+                    <input type="hidden" name="">
+                    <h3>ご購入内容</h3>
+                    <div>
+                        <h4>購入番号</h4>
+                        <%- reservationDocuments[0].payment_no %>
+                        <hr>
+
+                        <h4>ご来塔ご予約日時</h4>
                         <%
-                            moment.locale('ja');
+                            moment.locale(locale);
                             const day = moment(reservationDocuments[0].performance_day, 'YYYYMMDD');
                             const start = `${reservationDocuments[0].performance_start_time.substr(0, 2)}:${reservationDocuments[0].performance_start_time.substr(2, 2)}`;
                             const end = `${reservationDocuments[0].performance_end_time.substr(0, 2)}:${reservationDocuments[0].performance_end_time.substr(2, 2)}`;
                         %>
-                        <div class="form-group" style="padding-left: 20px;">
-                            <label>ご予約日時: </label>
-                            <%- day.format('LL(ddd) ') %>
-                            <%- start %>～<%- end %>
-                        </div>
-                        <div class="form-group" style="padding-left: 20px;">
-                            <label>券種/枚数: </label>
-                            <% Object.keys(ticketInfos).forEach(function(key) { %>
-                            <%- ticketInfos[key].info %>
-                            <% }); %>
-                        </div>
-                        <div class="form-group">
-                            <label>●キャンセル料: </label>
-                            <label style="font-size: 24px; font-weight: bold;"><font color="red">400</font>円</label>
-                        </div>
-                        <div class="form-group">
-                            <label>●購入者情報: </label>
-                        </div>
-                        <div class="form-group" style="padding-left: 20px;" >
-                            <label>氏名: </label>
-                            <%- reservationDocuments[0].purchaser_last_name %>
-                            <%- reservationDocuments[0].purchaser_first_name %>
-                        </div>
-                        <div class="form-group" style="padding-left: 20px;" >
-                            <label>メールアドレス: </label>
-                            <%- reservationDocuments[0].purchaser_email %>
-                        </div>
-                        <div class="form-group" style="padding-left: 20px;" >
-                            <label>電話番号: </label>
-                            <%- reservationDocuments[0].purchaser_tel %>
-                        </div>
-                    </form>
-                    <div style="text-align: left; background-color: #F2F2F2; padding: 30px; margin-top: 30px;">
-                    チケットキャンセルの注意事項案内
-                    <br/>
+                        <%- day.format('LL(ddd) ') %> <%- start %>～<%- end %>
+                        <hr>
+
+                        <h4>券種/枚数</h4>
+                        <% Object.keys(ticketInfos).forEach(function(key) { %>
+                            <p><%- ticketInfos[key].info %></p>
+                        <% }); %>
                     </div>
+
+                    <h3>購入者内容</h3>
+                    <div>
+                        <h4>氏名</h4>
+                        <%- reservationDocuments[0].purchaser_last_name %>　<%- reservationDocuments[0].purchaser_first_name %>
+                        <hr>
+
+                        <h4>メールアドレス</h4>
+                        <%- reservationDocuments[0].purchaser_email %>
+                        <hr>
+
+                        <h4>電話番号</h4>
+                        <%- reservationDocuments[0].purchaser_tel %>
+                    </div>
+
+                    <h3>キャンセル料</h3>
+                    <div>
+                        <p class="cancelfee">&yen;400</p>
+                    </div>
+                </form>
+
+                <hr style="margin-top: 0;">
+
+                <div class="cancelnotice">
+                    <h3>チケットキャンセルに関する注意事項</h3>
+                    <p>
+                        ・キャンセルする場合、キャンセル料が発生いたします。<br>
+                        ・キャンセルしたチケットは戻すことができませんのでご了承ください。<br>
+                        ・「キャンセル実行」ボタンを押した際、上記注意事項に同意したとみなします。
+                    </p>
                 </div>
 			</div>
+
 			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal" style="width: 40%; margin: auto;">閉じる</button>
-                <br/>
-				<button type="button" class="btn btn-primary cancel-button" style="width: 40%; margin: auto;">キャンセル実行</button>
+				<p id="btn_execcancel" class="btn btn-red"><span>キャンセル実行<span class="show-processing">中...</span></span></p>
 			</div>
+
 		</div>
 	</div>
 </div>
-<div class="modal fade" id="cancelMessage" tabindex="-1">
+
+<div class="modal fade" id="modal_completed" tabindex="-1">
 	<div class="modal-dialog">
 		<div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">チケットキャンセル完了</h2>
+            </div>
 			<div class="modal-body">
-                <div class="panel-body" style="padding-bottom: 0px;">
-                    <form class="form-horizontal" style="padding:15px;border:2px red solid;">
-                        <div class="form-group" style="margin-bottom: 0px;" >
-                            <label>チケットのキャンセルを受付ました。</label>
-                        </div>
-                    </form>
-                </div>
+                <h3>購入番号: <%- reservationDocuments[0].payment_no %></h3>
+                <p>上記チケットのキャンセル手続きが完了いたしました。</p>
 			</div>
-			<div class="modal-footer" style="padding-top: 0px;">
-				<button type="button" class="btn btn-back-to-start" data-dismiss="modal" style="width: 40%; margin: auto;">チケット照会に戻る</button>
+			<div class="modal-footer">
+				<a href="/inquiry/search" class="btn-back">チケット照会に戻る</a>
 			</div>
 		</div>
 	</div>

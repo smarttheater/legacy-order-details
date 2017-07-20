@@ -4,7 +4,7 @@ var concat = require('gulp-concat');
 var sass = require('gulp-sass');
 var autoPrefixer = require('gulp-autoprefixer');
 var cssComb = require('gulp-csscomb');
-var cssnano = require('gulp-cssnano');
+var csso = require('gulp-csso');
 var mmq = require('gulp-merge-media-queries');
 
 var dir_src = './public';
@@ -29,7 +29,7 @@ gulp.task('sass',function(){
 	.pipe(autoPrefixer())
 	.pipe(cssComb())
 	.pipe(mmq())
-	.pipe(cssnano())
+	.pipe(csso())
 	.pipe(gulp.dest(dir_dst+'/css'))
 	gulp.src([
 		dir_src+'/scss/__reset.scss',
@@ -46,7 +46,7 @@ gulp.task('sass',function(){
 	.pipe(autoPrefixer())
 	.pipe(cssComb())
 	.pipe(mmq())
-	.pipe(cssnano())
+	.pipe(csso())
 	.pipe(gulp.dest(dir_dst+'/css'))
 });
 

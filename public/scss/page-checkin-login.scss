@@ -1,0 +1,42 @@
+// 当日入場端末ログインページ
+#page_checkin_login {
+
+    .form-login {
+        padding-top: 2em;
+        font-size: 20px;
+        max-width: 600px;
+        margin: auto;
+        input[type=text], input[type=password] {
+            width: 100%;
+        }
+        .label-title {
+            margin-bottom: 4px;
+        }
+    }
+
+    .radios-group {
+        padding: 1em;
+        text-align: center;
+        label {
+            font-size: 20px;
+            margin-bottom: 30px;
+            display: block;
+            input[type=radio] {
+                width: 20px;
+                height: 20px;
+                vertical-align: bottom;
+                margin-right: 6px;                
+            }
+            input:checked ~ span {
+                color: red;
+                font-weight: bold;
+                text-decoration: underline;
+            }
+        }
+    }
+
+    .btn-next {
+        width: 200px;
+        margin-top: 0;        
+    }
+}

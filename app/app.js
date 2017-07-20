@@ -52,7 +52,7 @@ app.use(express.static(`${__dirname}/../public`));
 log4js.configure(conf.get('log4js'));
 // i18n を利用する設定
 i18n.configure({
-    locales: ['en', 'ja'],
+    locales: Object.keys(conf.get('locales')),
     defaultLocale: 'ja',
     directory: `${__dirname}/../locales`,
     objectNotation: true,

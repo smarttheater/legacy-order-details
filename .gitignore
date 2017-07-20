@@ -8,6 +8,9 @@ iisnode/
 docs
 .env*
 .vscode/
+.DS_Store
+Thumbs.db
+*.bat
 
 !.gitignore
 !.gitkeep
