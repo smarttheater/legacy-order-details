@@ -58,7 +58,7 @@ for (let reservation of reservations) {
 
                         <div class="pr-time">
                             <h3>入塔受付時間</h3>
-                            <strong><%- moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') %> - <%- moment(reservation.get('performance_end_time'), 'HHmm').format('HH:mm') %></strong>
+                            <strong><%- moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') %> - <%- moment(reservation.get('performance_end_time'), 'HHmm').format('HH:mm') %>(JST)</strong>
                             <p class="smalltext timenotice">※混雑する場合がございますので、<span class="bold">入塔受付時間の15分前には各入塔口にお越し下さい。</span></p>
                         </div>
 
@@ -118,8 +118,8 @@ for (let reservation of reservations) {
                         <hr>
 
                         <div class="stafftable">
-                            <h3>認証スタッフ待機位置</h3>
-                            <h4><img class="mark" src="/images/print/staff_mark.svg">：認証スタッフ待機位置</h4>
+                            <h3>QR認証場所</h3>
+                            <h4><img class="mark" src="/images/print/staff_mark.svg">：QR認証場所</h4>
                             <table>
                                 <tbody>
                                     <tr>
@@ -128,7 +128,7 @@ for (let reservation of reservations) {
                                         </td>
                                         <td>
                                             <h4>フットタウン 1F</h4>
-                                            <p>フットタウン1Fの展望台直通エレベーター前に、認証スタッフが待機しております。</p>
+                                            <p>フットタウン1Fの展望台直通エレベーター前にて、QRコードの認証を行います。</p>
                                         </td>
                                     </tr>
                                     <tr>
@@ -137,7 +137,7 @@ for (let reservation of reservations) {
                                         </td>
                                         <td>
                                             <h4>フットタウン RF</h4>
-                                            <p>フットタウンRFの昇り階段入り口に、認証スタッフが待機しております。</p>
+                                            <p>フットタウンRFの昇り階段入り口にて、QRコードの認証を行います。</p>
                                         </td>
                                     </tr>
                                 </tbody>

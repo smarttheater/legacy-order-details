@@ -11,6 +11,8 @@ const inquiryRouter = Router();
 inquiryRouter.all('/search', inquiryController.search);
 // チケット照会/結果表示
 inquiryRouter.get('/search/result', inquiryController.result);
+// チケット照会/A4チケット印刷
+inquiryRouter.get('/print', inquiryController.print);
 // チケット照会/キャンセル処理
 inquiryRouter.post('/search/cancel', inquiryController.cancel);
 

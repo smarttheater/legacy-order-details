@@ -1,3 +1,4 @@
+<% const reservationIdArray = []; %>
 <%- contentFor('pageId') %>
 page_inquiry_result
 <%- contentFor('pageClassName') %>
@@ -35,7 +36,9 @@ page-inquiry page-result page-complete
         <tr>
             <th><%- __('Label.TicketType') %> / <%- __('Label.TicketCount') %></th>
             <td>
-                <% reservationDocuments.forEach((reservation, index) => { %>
+                <% reservationDocuments.forEach((reservation, index) => {
+                    reservationIdArray.push(`\"${reservation._id.toString()}\"`);
+                %>
                 <div class="wrapper-qrcodes">
                     <div>
                         <p>
@@ -60,9 +63,9 @@ page-inquiry page-result page-complete
 </table>
 
 <div>
-    <a class="btn btn-blue btn-print" href=""><span>印刷する</span></a>
+    <a class="btn btn-blue btn-print" target="_blank" href='/inquiry/print/?ids=[<%- reservationIdArray.join(',') %>]'><span>印刷する</span></a>
     <br/>
-    <a class="btn btn-cancel" href=""><span>チケットをキャンセルする</span></a>
+    <p class="btn btn-cancel"><span>チケットをキャンセルする</span></p>
 </div>
 
 <div class="enteringguide">

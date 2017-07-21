@@ -172,6 +172,36 @@ function result(req, res, next) {
 }
 exports.result = result;
 /**
+ * 印刷
+ */
+function print(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const ids = JSON.parse(req.query.ids);
+            const reservations = yield ttts_domain_1.Models.Reservation.find({
+                _id: { $in: ids },
+                status: ttts_domain_1.ReservationUtil.STATUS_RESERVED
+            }).exec();
+            if (reservations.length === 0) {
+                next(new Error(req.__('Message.NotFound')));
+                return;
+            }
+            reservations.sort((a, b) => {
+                return ttts_domain_1.ScreenUtil.sortBySeatCode(a.get('seat_code'), b.get('seat_code'));
+            });
+            res.render('reserve/print', {
+                layout: false,
+                reservations: reservations
+            });
+        }
+        catch (error) {
+            console.error(error);
+            next(new Error(req.__('Message.UnexpectedError')));
+        }
+    });
+}
+exports.print = print;
+/**
  * 予約キャンセル処理
  * @memberof inquiry
  * @function cancel

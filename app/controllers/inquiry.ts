@@ -162,6 +162,43 @@ export async function result(req: Request, res: Response, next: NextFunction): P
         next(error);
     }
 }
+
+
+/**
+ * 印刷
+ */
+export async function print(req: Request, res: Response, next: NextFunction) {
+    try {
+        const ids: string[] = JSON.parse(req.query.ids);
+        const reservations = await Models.Reservation.find(
+            {
+                _id: { $in: ids },
+                status: ReservationUtil.STATUS_RESERVED
+            }
+        ).exec();
+
+        if (reservations.length === 0) {
+            next(new Error(req.__('Message.NotFound')));
+
+            return;
+        }
+
+        reservations.sort((a, b) => {
+            return ScreenUtil.sortBySeatCode(a.get('seat_code'), b.get('seat_code'));
+        });
+
+        res.render('reserve/print', {
+            layout: false,
+            reservations: reservations
+        });
+    } catch (error) {
+        console.error(error);
+        next(new Error(req.__('Message.UnexpectedError')));
+    }
+}
+
+
+
 /**
  * 予約キャンセル処理
  * @memberof inquiry
