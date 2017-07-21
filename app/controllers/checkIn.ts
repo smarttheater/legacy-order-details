@@ -13,6 +13,15 @@ import * as moment from 'moment';
 import * as mongoose from 'mongoose';
 import * as _ from 'underscore';
 
+// チケット情報(descriptionは予約データに持つべき)
+const ticketInfos: any = {
+    '000004': { description: '1'},
+    '000005': { description: '1'},
+    '000006': { description: '1'}
+};
+// 出力対象区分
+const descriptionInfos: any = {1: 'wheelchair'};
+
 // /**
 //  * 入場画面のパフォーマンス検索
 //  * @memberof checkIn
@@ -368,37 +377,34 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
         // 取得対象の日付と開始時刻FromToを取得
         const timeInfo : any = await getStartTime(selectType, now);
         // 取得対象のパフォーマンス取得
-        const performanceInfo = await getTargetPerformances(timeInfo);
+        const performanceInfo: any = await getTargetPerformances(timeInfo);
         // 予約情報取得
         const reservations = <any[]>await Models.Reservation.find(
             {
-                performance: { $in: (<any>performanceInfo).ids }
+                performance: { $in: performanceInfo.ids },
+                status: ReservationUtil.STATUS_RESERVED
             }
         ).exec();
 
         // パフォーマンス単位に予約情報をグルーピング
-        // dataByPerformance = {
-        //   performance_id1:{ performance: performance,
-        //                     ticketNames: {'000098': {ja:'車椅子', en:'wheelchair'},･･･},
-        //                     ticketTypesExtra : ['000004', '000005', '000006']
-        //                     reservations: [reservation1,2,･･･n]},
-        //                     reservedNormalNum: 5
-        //                     reservedExtra:{'000002': {name:"車椅子",reservedNum:1},{･･･}
-        // }
-        const dataByPerformance: any = await groupingReservationsByPerformance(performanceInfo.dicPerformances, reservations);
+        //  パフォーマンスID: performance: performance,
+        //                    reservations: [reservation1,2,･･･n]},
+        //                    reservedNormalNum: 5
+        //                    reservedExtra:{'1': {name:"wheelchair",reservedNum:1},{･･･}
+        const dataByPerformance: any = await groupingReservationsByPerformance(
+                                                performanceInfo.dicPerformances,
+                                                performanceInfo.ids,
+                                                reservations);
 
         // パフォーマンス+通過地点単位にチェックイン情報をグルーピング
-        // dataCheckins = {
-        //   performance_id1:{ 'daiten-auth' : [res1.checkins[0],res2.checkins[0]],
-        //                     'topdeck-auth': [res1.checkins[1]] },
-        // }
-        //   performance_id1:{ 'daiten-auth' : {
+        //   パフォーマンスID:{'daiten-auth' : {
         //                        checkins: [res1.checkins[0],res2.checkins[0]],
         //                        arrived: { '00099': 1, '00098': 2, },
         //                     'topdeck-auth': {
         //                        checkins: [res1.checkins[1],
         //                        arrived: { '00099': 0, '00098': 1, },
         const dataCheckins: any = groupingCheckinsByWhere(dataByPerformance);
+
         // チェックポイント名称取得
         const owners: any[] = await Models.Owner.find({notes: '1'}).exec();
         const checkpointNames: any = {};
@@ -414,28 +420,35 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
         Object.keys(dataByPerformance).forEach((performanceId) => {
             // パフォーマンス情報セット
             const performance: any = dataByPerformance[performanceId].performance;
-            const ticketNames: any = dataByPerformance[performanceId].ticketNames;
-            const ticketTypesExtra: string[] = dataByPerformance[performanceId].ticketTypesExtra;
-            const totalSeatNum: number = dataByPerformance[performanceId].reservations.length;
             const reservedNum: number = getStatusCount(dataByPerformance[performanceId].reservations, ReservationUtil.STATUS_RESERVED);
             const schedule: any = {
                 performanceId: performanceId,
                 start_time: performance.start_time,
                 end_time: performance.end_time,
-                totalSeatNum: totalSeatNum,
                 totalReservedNum: reservedNum,
                 concernedReservedArray: [],
                 checkpointArray: []
             };
-            // 特殊チケット予約情報セット
+            // 特殊チケット(車椅子)予約情報セット
             const concernedReservedArray: any[] = [];
             const reservedExtra: any = dataByPerformance[performanceId].reservedExtra;
-            ticketTypesExtra.forEach((extraId) => {
+            // ticketTypesExtra.forEach((extraId) => {
+            //     // reservedExtraに予約情報があれば予約数セット
+            //     const concernedReservedNum: number = (reservedExtra.hasOwnProperty(extraId)) ? reservedExtra[extraId].reservedNum : 0;
+            //     concernedReservedArray.push({
+            //         id: extraId,
+            //         name: ticketNames[extraId].ja,
+            //         reservedNum: concernedReservedNum
+            //     });
+            // });
+
+            Object.keys(descriptionInfos).forEach((description) => {
                 // reservedExtraに予約情報があれば予約数セット
-                const concernedReservedNum: number = (reservedExtra.hasOwnProperty(extraId)) ? reservedExtra[extraId].reservedNum : 0;
+                const concernedReservedNum: number = (reservedExtra.hasOwnProperty(description)) ?
+                                                      reservedExtra[description].reservedNum : 0;
                 concernedReservedArray.push({
-                    id: extraId,
-                    name: ticketNames[extraId].ja,
+                    id: description,
+                    name: descriptionInfos[description],
                     reservedNum: concernedReservedNum
                 });
             });
@@ -444,10 +457,6 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
             // チェックイン情報セット
             const checkins = dataCheckins[performanceId];
             if (Object.keys(checkins).length > 0) {
-                //const checkpoint: any = {concernedUnarrivedArray: []};
-                //   performance_id1:{ 'daiten-auth' : {
-                //                        checkins: [res1.checkins[0],res2.checkins[0]],
-                //                        arrived: { '00099': 1, '00098': 2, },
                 Object.keys(checkins).forEach((where) => {
                     const checkpoint: any = {
                         id: where,
@@ -560,11 +569,84 @@ async function getTargetPerformances(timeInfo: any): Promise<any> {
  * @memberof checkIn
  * @function groupingReservationsByPerformance
  * @param {any} dicPerformances
+ * @param {string[]} performancesIds
  * @param {any} reservations
  * @returns {Promise<any>[]}
  */
-async function groupingReservationsByPerformance(dicPerformances: any[], reservations: any[]): Promise<any> {
+// async function groupingReservationsByPerformance(dicPerformances: any[], reservations: any[]): Promise<any> {
+//     const dataByPerformance: any = {};
+
+//     // 初期セット(DBアクセスがあるので最小限の処理のloopを分割)
+//     for (const reservation of reservations)  {
+//         // キーはパフォーマンスID
+//         const keyValue = reservation.performance;
+//         if (!dataByPerformance.hasOwnProperty(keyValue)) {
+//             const ticketTypes = await getTicketTypes(dicPerformances[keyValue].ticket_type_group);
+//             const ticketNames: any = {};
+//             const ticketTypesExtra: string[] = [];
+//             for (const ticketType of ticketTypes)  {
+//                 ticketNames[ticketType._id] = ticketType.name;
+//                 if (ticketType.get('description') === '1') {
+//                     ticketTypesExtra.push(ticketType._id);
+//                 }
+//             }
+//             (<any>dataByPerformance)[keyValue] = {};
+//             (<any>dataByPerformance)[keyValue].performance = dicPerformances[keyValue];
+//             (<any>dataByPerformance)[keyValue].ticketNames = ticketNames;
+//             (<any>dataByPerformance)[keyValue].ticketTypesExtra = ticketTypesExtra;
+//             (<any>dataByPerformance)[keyValue].reservations = [];
+//             (<any>dataByPerformance)[keyValue].reservedNormalNum = 0;
+//             (<any>dataByPerformance)[keyValue].reservedExtra = {};
+//         }
+//     }
+//     // 予約情報セット
+//     reservations.map(async(reservation: any) => {
+//         // 予約情報
+//         const keyValue = reservation.performance;
+//         (<any>dataByPerformance)[keyValue].reservations.push(reservation);
+//         // 通常の時は通常予約数をプラス,特殊チケットは特殊チケット情報セット
+//         //const isExtra: boolean = ticketsExtra.indexOf(reservation.ticket_type) >= 0;
+//         const isExtra: boolean = (<any>dataByPerformance)[keyValue].ticketTypesExtra.indexOf(reservation.ticket_type) >= 0;
+//         if (isExtra) {
+//             const reservedExtra: any = (<any>dataByPerformance)[keyValue].reservedExtra;
+//             // reservedExtra:{ '000002' : {name:"車椅子", reservedNum:1},}
+//             if (!reservedExtra.hasOwnProperty(reservation.ticket_type)) {
+//                 reservedExtra[reservation.ticket_type] = {
+//                     name: (<any>reservation.ticket_type_name).ja,
+//                     reservedNum: 1
+//                 };
+//             } else {
+//                 reservedExtra[reservation.ticket_type].reservedNum += 1;
+//             }
+//         } else {
+//             (<any>dataByPerformance)[keyValue].reservedNormalNum += 1;
+//         }
+//     });
+
+//     return dataByPerformance;
+// }
+async function groupingReservationsByPerformance(dicPerformances: any, performanceIds: string[], reservations: any[]): Promise<any> {
     const dataByPerformance: any = {};
+
+    // 初期セット(DBアクセスがあるので最小限の処理のloopを分割)
+    for (const performanceId of performanceIds) {
+        // キーはパフォーマンスID
+        if (!dataByPerformance.hasOwnProperty(performanceId)) {
+            const ticketTypes = await getTicketTypes(dicPerformances[performanceId].ticket_type_group);
+            const ticketTypesExtra: string[] = [];
+            for (const ticketType of ticketTypes)  {
+                if (ticketInfos.hasOwnProperty(ticketType._id)) {
+                    ticketTypesExtra.push(ticketType._id);
+                }
+            }
+            (<any>dataByPerformance)[performanceId] = {};
+            (<any>dataByPerformance)[performanceId].performance = dicPerformances[performanceId];
+            (<any>dataByPerformance)[performanceId].ticketTypesExtra = ticketTypesExtra;
+            (<any>dataByPerformance)[performanceId].reservations = [];
+            (<any>dataByPerformance)[performanceId].reservedNormalNum = 0;
+            (<any>dataByPerformance)[performanceId].reservedExtra = {};
+        }
+    }
 
     // 初期セット(DBアクセスがあるので最小限の処理のloopを分割)
     for (const reservation of reservations)  {
@@ -572,17 +654,17 @@ async function groupingReservationsByPerformance(dicPerformances: any[], reserva
         const keyValue = reservation.performance;
         if (!dataByPerformance.hasOwnProperty(keyValue)) {
             const ticketTypes = await getTicketTypes(dicPerformances[keyValue].ticket_type_group);
-            const ticketNames: any = {};
+            //const ticketNames: any = {};
             const ticketTypesExtra: string[] = [];
             for (const ticketType of ticketTypes)  {
-                ticketNames[ticketType._id] = ticketType.name;
-                if (ticketType.get('description') === '1') {
+                //ticketNames[ticketType._id] = ticketType.name;
+                if (ticketInfos.hasOwnProperty(ticketType._id)) {
                     ticketTypesExtra.push(ticketType._id);
                 }
             }
             (<any>dataByPerformance)[keyValue] = {};
             (<any>dataByPerformance)[keyValue].performance = dicPerformances[keyValue];
-            (<any>dataByPerformance)[keyValue].ticketNames = ticketNames;
+            //(<any>dataByPerformance)[keyValue].ticketNames = ticketNames;
             (<any>dataByPerformance)[keyValue].ticketTypesExtra = ticketTypesExtra;
             (<any>dataByPerformance)[keyValue].reservations = [];
             (<any>dataByPerformance)[keyValue].reservedNormalNum = 0;
@@ -595,18 +677,18 @@ async function groupingReservationsByPerformance(dicPerformances: any[], reserva
         const keyValue = reservation.performance;
         (<any>dataByPerformance)[keyValue].reservations.push(reservation);
         // 通常の時は通常予約数をプラス,特殊チケットは特殊チケット情報セット
-        //const isExtra: boolean = ticketsExtra.indexOf(reservation.ticket_type) >= 0;
         const isExtra: boolean = (<any>dataByPerformance)[keyValue].ticketTypesExtra.indexOf(reservation.ticket_type) >= 0;
         if (isExtra) {
             const reservedExtra: any = (<any>dataByPerformance)[keyValue].reservedExtra;
-            // reservedExtra:{ '000002' : {name:"車椅子", reservedNum:1},}
-            if (!reservedExtra.hasOwnProperty(reservation.ticket_type)) {
-                reservedExtra[reservation.ticket_type] = {
-                    name: (<any>reservation.ticket_type_name).ja,
+            const description = ticketInfos[reservation.ticket_type].description;
+            // reservedExtra:{ '1' : {name:"wheelchair", reservedNum:1},}
+            if (!reservedExtra.hasOwnProperty(description)) {
+                reservedExtra[description] = {
+                    //name: ticketInfos[reservation.ticket_type].name,
                     reservedNum: 1
                 };
             } else {
-                reservedExtra[reservation.ticket_type].reservedNum += 1;
+                reservedExtra[description].reservedNum += 1;
             }
         } else {
             (<any>dataByPerformance)[keyValue].reservedNormalNum += 1;
@@ -639,9 +721,6 @@ async function getTicketTypes(group: string): Promise<any> {
  */
 function groupingCheckinsByWhere(dataByPerformance: any): any {
     // dataCheckins = {
-    //   performance_id1:{ 'daiten-auth' : [res1.checkins[0],res2.checkins[0]],
-    //                     'topdeck-auth': [res1.checkins[1]] },
-    // }
     //   performance_id1:{ 'daiten-auth' : {
     //                        checkins: [res1.checkins[0],res2.checkins[0]],
     //                        arrived: { '00099': 1, '00098': 2, },
@@ -657,15 +736,22 @@ function groupingCheckinsByWhere(dataByPerformance: any): any {
                     //dataCheckin[checkin.where] = [];
                     dataCheckin[checkin.where] = {checkins: [], arrived: {}};
                 }
+                // チェックイン数セット
                 if (!dataCheckin[checkin.where].arrived.hasOwnProperty(reservation.ticket_type)) {
                     dataCheckin[checkin.where].arrived[reservation.ticket_type] = 1;
                 } else {
                     dataCheckin[checkin.where].arrived[reservation.ticket_type] += 1;
                 }
+                // // チェックイン数セット
+                // const description: string = ticketInfos[reservation.ticket_type].description;
+                // if (!dataCheckin[checkin.where].arrived.hasOwnProperty(description)) {
+                //     dataCheckin[checkin.where].arrived[description] = 1;
+                // } else {
+                //     dataCheckin[checkin.where].arrived[description] += 1;
+                // }
                 checkin.id = reservation._id;                   // 予約id
                 checkin.ticket_type = reservation.ticket_type;  // ticket_type(00099)
-                checkin.ticket_type_name = reservation.ticket_type_name;    // ticket_type(車椅子)
-                //dataCheckin[checkin.where].push(checkin);
+                //checkin.ticket_type_name = reservation.ticket_type_name;
                 dataCheckin[checkin.where].checkins.push(checkin);
             });
         });
@@ -714,6 +800,23 @@ function getConcernedUnarrivedArray(concernedReservedArray: any[], checkin: any)
             unarrivedNum: reserve.reservedNum   //初期値は来場予定者数
         });
     });
+
+// const ticketInfos: any = {
+//     '000004': { description: '1'},
+//     '000005': { description: '1'},
+//     '000006': { description: '1'}
+// };
+
+// checkin.arrived
+// Object {000004: 1}
+
+// concernedUnarrivedArray(特殊チケット)
+// unarrive
+// Object {id: "1", name: "wheelchair", unarrivedNum: 2}
+
+// "1"という区分に含まれるチケットID [4,5,6]
+// 2重ループ？4,5,6をチェック
+
     // 未入場者数 = 来場予定者数 - チェックポイント通過者数
     concernedUnarrivedArray.forEach((unarrive: any) => {
         const arrivedNum : number = checkin.arrived.hasOwnProperty(unarrive.id) ? (<any>checkin.arrived)[unarrive.id] : 0;
