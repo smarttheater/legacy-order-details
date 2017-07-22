@@ -8,8 +8,9 @@ page-inquiry page-result page-complete
 
 <%- contentFor('body') %>
 
-<h1 class="pagetitle"><%- __('h1.TicketInquiry') %></h1>
-<p class="guidetext">内容をご確認いただき問題ないようでしたら「チケットを印刷する」ボタンを押してください<br>キャンセルを行う場合は「チケットをキャンセル」ボタンを押してください。</p>
+<h1 class="pagetitle"><%- __('h1.TicketResult') %></h1>
+<p class="guidetext">以下のQRコードが入場チケットとなります。保存もしくは印刷の上、御持参ください。<br>キャンセルを行う場合は「チケットをキャンセル」ボタンを押してください。</p>
+<p class="guidetext"></p>
 
 
 <table class="table table-complete">
@@ -34,7 +35,7 @@ page-inquiry page-result page-complete
             </td>
         </tr>
         <tr>
-            <th><%- __('Label.TicketType') %> / <%- __('Label.TicketCount') %></th>
+            <th><%- __('Label.QrCode') %></th>
             <td>
                 <% reservationDocuments.forEach((reservation, index) => {
                     reservationIdArray.push(`\"${reservation._id.toString()}\"`);
@@ -46,7 +47,8 @@ page-inquiry page-result page-complete
                         </p>
                         <p>
                             <%- reservation.ticket_type_name[locale] || reservation.ticket_type_name.en %><br>
-                            &yen;<%- reservation.ticket_type_charge %>                          
+                            &yen;<%- reservation.ticket_type_charge %><br>
+                            <%- reservation.seat_code %>
                         </p>
                     </div>
                 </div>

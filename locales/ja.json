@@ -7,7 +7,8 @@
 	"Telephone Support": "電話対応",
 	"On that day": "当日",
 	"h1": {
-		"TicketInquiry": "＠＠＠チケット照会＠＠＠",
+		"TicketInquiry": "チケット照会",
+		"TicketResult": "チケット内容確認",
 		"MyPage": "マイページ",
 		"Error": "エラー",
 		"NotFound": "お探しのページが見つかりません",
@@ -85,11 +86,12 @@
 		"Male": "男性",
 		"Female": "女性",
 		"NameOfPersonWhoWillSeeFilm": "鑑賞者氏名",
-		"Leaf": "＠＠＠枚＠＠＠"
+		"Leaf": "枚",
+		"QrCode":"QRコード"
 	},
 	"Button": {
 		"Send": "送信",
-		"Search": "検索",
+		"Search": "照会",
 		"Back": "戻る",
 		"Next": "次へ",
 		"Change": "変更",
