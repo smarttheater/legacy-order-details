@@ -6,8 +6,8 @@
  *
  * @namespace BaseController
  */
-import { NextFunction, Request, Response } from 'express';
 import * as conf from 'config';
+import { NextFunction, Request, Response } from 'express';
 import * as moment from 'moment';
 
 /**

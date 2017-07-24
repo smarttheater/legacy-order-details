@@ -1,5 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * ベースコントローラー
+ *
+ * 基本的にコントローラークラスはルーティングクラスより呼ばれる
+ * あらゆるルーティングで実行されるメソッドは、このクラスがベースとなるので、メソッド共通の処理はここで実装するとよい
+ *
+ * @namespace BaseController
+ */
 const conf = require("config");
 const moment = require("moment");
 /**

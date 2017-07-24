@@ -163,7 +163,6 @@ export async function result(req: Request, res: Response, next: NextFunction): P
     }
 }
 
-
 /**
  * 印刷
  */
@@ -196,8 +195,6 @@ export async function print(req: Request, res: Response, next: NextFunction) {
         next(new Error(req.__('Message.UnexpectedError')));
     }
 }
-
-
 
 /**
  * 予約キャンセル処理
