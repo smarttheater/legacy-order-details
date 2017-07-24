@@ -1,61 +1,131 @@
-//当日入場バーコード読み取りページ
-#page_checkin_performance_confirm{
-  >.container{
-    padding:0;
-  }
-  .pagetitle{
-    margin:1.5em auto;
-  }
-
-  .performancedata{
-    padding:0 1em;
-    h2{
-      font-size:16px;
+// 入場QR読み取りページ
+#page_checkin_confirm {
+    header {
+        display: none;
     }
-    .when{
-      font-size:24px;
-      line-height:2;
-      display:block;
+    >.container {
+        padding: 0;
     }
-  }
-
-  .text-primary{
-    font-weight:bold;
-    color:#00a0e9;
-  }
-
-  .confirmresult{
-    display:table;
-    width:100%;
-    min-height:80px;
-    font-size:28px;
-    color:#fff;
-    border-radius:0;
-    .glyphicon{
-      font-size:0.8em;
-      margin-right:4px;
+    .header {
+        position: relative;
+        background-color: #efefef;
+        padding-right: 40px;
+        .pointname {
+            color: #000;
+            font-size: 20px;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .logout {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 100%;
+            background-color: #8f9192;
+            padding-top: 4px;
+            text-align: center;
+            &::before {
+                content: url(/images/common/icon-white-logout.svg);
+                display: inline-block;
+                position: absolute;
+                width: 32px;
+                height: 32px;
+                right: 0;
+                top: 50%;
+                margin-top: -16px;
+            }
+        }
     }
-    .inner{
-      display:table-cell;
-      text-align:center;
-      vertical-align:middle;
+    .timecontainer {
+        text-align: center;
+        margin-top: 20px;
     }
-  }
-  .confirmresult-ok{
-    background-color:#00a0e9;
-  }
-  .confirmresult-ok-student{
-    background-color:#009944;
-  }
-  .confirmresult-ng{
-    background-color:#e83828;
-  }
-  .confirmresult-entered{
-    background-color:#f39800;
-  }
+    #print_date {
+        font-size: 18px;
+    }
+    #print_clock {
+        display: block;
+        font-size: 36px;
+        margin-top: 8px;
+    }
+    #qrdetail {
+        padding: 10px;
+        text-align: center;
+        >div {
+            display: table;
+            width: 100%;
+            min-height: 48px;
+            color: #fff;
+            border-radius: 0;
+            .inner {
+                display: table-cell;
+                text-align: center;
+                vertical-align: middle;
+            }            
+        }
+        .qrdetail-date {
+            color: #7ab0e5;
+            border: 1px solid #7ab0e5;
+            margin-bottom: 20px;
+            font-size: 24px;
+            span {
+                vertical-align: middle;
+            }
+            .day {
+                font-size: 20px;
+                margin-right: 10px;
+            }
+            .time {
+                font-weight: bold;
+            }
+        }
+        &.is-ng .qrdetail-date {
+            color: #fff;
+            background-color: #e83828;
+            border-color: #e83828;
+        }
+        .qrdetail-ticket {
+            font-size: 20px;
+            font-weight: bold;
+            background-color: #87d67c;
+        }
+    }
 
+    #btn_delete {
+        width: 200px;
+        height: 40px;
+        margin: 2em auto;
+    }
 
-  .results{
-    font-size:11px;
-  }
+    #checkinlogtable {
+        font-size: 11px;
+        tr {
+            background-color: #7ab0e5;
+            color: #fff;
+            font-size: 18px;
+            &.tr-ng {
+                background-color: #e83828;
+            }
+        }
+        td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .td-day, .td-time {
+            width: 64px;
+        }
+        .td-count {
+            width: 48px;
+        }
+        .td-where {
+            span {
+                word-break: break-all;
+            }
+        }
+    }
+
+    footer {
+        display: none;
+    }
 }

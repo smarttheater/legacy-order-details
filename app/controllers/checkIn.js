@@ -100,21 +100,8 @@ function confirm(req, res, next) {
             next(new Error('unexepected error'));
         }
         try {
-            const now = moment();
-            const day = now.format('YYYYMMDD');
-            const time = now.format('HHmm');
-            const conditions = {
-                day: day,
-                start_time: { $lte: time },
-                end_time: { $gte: time }
-            };
-            const performance = yield ttts_domain_1.Models.Performance.findOne(conditions)
-                .populate('film', 'name')
-                .populate('screen', 'name')
-                .populate('theater', 'name')
-                .exec();
             res.render('checkIn/confirm', {
-                performance: performance,
+                staffUser: req.staffUser,
                 layout: 'layouts/checkIn/layout'
             });
         }
@@ -241,18 +228,23 @@ function addCheckIn(req, res) {
             if (!req.staffUser.isAuthenticated()) {
                 throw new Error('staffUser not authenticated.');
             }
+            if (!req.body.checkin) {
+                throw new Error('req.body.checkin null');
+            }
             // QR文字列から予約取得
             const reservation = yield getReservationByQR(req.params.qr);
             const checkins = reservation.checkins;
             const unixTimestamp = (new Date()).getTime();
             // チェックイン情報追加
-            checkins.push({
-                _id: unixTimestamp,
-                when: unixTimestamp,
-                where: req.staffUser.get('group'),
-                why: '',
-                how: req.staffUser.get('name').ja !== undefined ? req.staffUser.get('name').ja : null
-            });
+            checkins.push(req.body.checkin
+            // {
+            //     _id: unixTimestamp,
+            //     when: unixTimestamp,
+            //     where: req.staffUser.get('group'),
+            //     why: '',
+            //     how: req.staffUser.get('name').ja !== undefined ? req.staffUser.get('name').ja : null
+            // }
+            );
             // 予約更新
             const update = {
                 checkins: checkins

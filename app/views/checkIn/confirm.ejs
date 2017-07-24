@@ -1,38 +1,31 @@
 <%- contentFor('pageId') %>
-page_checkin_performance_confirm
+page_checkin_confirm
 <%- contentFor('pageClassName') %>
-page-checkin page-performance page-confirm
+page-checkin page-confirm
 <%- contentFor('scripts') %>
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
 <script src="/js/checkin/confirm.js"></script>
 <%- contentFor('body') %>
-<h1 class="pagetitle">入場確認</h1>
 
-<div class="performancedata row">
-    <% if(performance) { %>
-    <h2><%- performance.get('film').get('name')['ja'] %></h2>
-    <span class="when"><%- performance.get(`start_str_ja`) %></span>
-    <span class="where"><%- performance.get(`location_str_ja`) %></span>
-    <% } %>
+<div class="header">
+    <h1 class="pointname"><span><%- staffUser.name.ja %></span></h1>
+    <a class="logout" href="/checkin/login"></a>
 </div>
 
-<p class="text-primary text-center process row">QRコードを読み取ってください</p>
-<div class="result">
+<p class="timecontainer">
+    <span id="print_date"></span>
+    <span id="print_clock"></span>
+</p>
 
-</div>
+<div id="qrdetail">QRコードを読み取ってください</div>
 
-<div class="results">
-    <div class="table-responsive">
-        <table class="table table-bordered">
-            <tbody>
+<hr>
 
-            </tbody>
-        </table>
-    </div>
-</div>
+<!--p id="btn_delete" class="btn"><span>入場取消</span></p-->
 
-<input type="hidden" name="apiEndpoint" value="<%= process.env.API_ENDPOINT %>">
-<% if(performance) { %>
-<input type="hidden" name="performanceId" value="<%= performance.get('id') %>">
-<% } %>
-<input type="hidden" name="messageSearching" value="検索しています...">
-<input type="hidden" name="messagePleaseReadBarcode" value="QRコードを読み取ってください">
+<table id="checkinlogtable" class="table table-bordered">
+    <tbody></tbody>
+</table>
+
+<input type="hidden" name="input_username" id="input_username" value="<%- staffUser.name.ja %>">
+<input type="hidden" name="pointgroup" id="input_pointgroup" value="<%- staffUser.group %>">
