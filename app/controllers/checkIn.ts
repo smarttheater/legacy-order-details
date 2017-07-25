@@ -222,16 +222,26 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
         if (!req.staffUser.isAuthenticated()) {
             throw new Error('staffUser not authenticated.');
         }
-        if (!req.body.checkin) {
-            throw new Error('req.body.checkin null');
+        if (!req.body['checkin[_id]']
+        || !req.body['checkin[where]']
+        || !req.body['checkin[how]']
+        ) {
+            throw new Error('req.body.checkin invalid');
         }
         // QR文字列から予約取得
         const reservation: any = await getReservationByQR(req.params.qr);
         const checkins: any[] = reservation.checkins;
-        const unixTimestamp = (new Date()).getTime();
+        const unixTimestamp = parseInt(req.body['checkin[_id]'], 10);
+        // const unixTimestamp = (new Date()).getTime();
         // チェックイン情報追加
         checkins.push(
-            req.body.checkin
+            {
+                _id: unixTimestamp,
+                when: unixTimestamp,
+                where: req.body['checkin[where]'],
+                why: '',
+                how: req.body['checkin[how]']
+            }
         // {
         //     _id: unixTimestamp,
         //     when: unixTimestamp,

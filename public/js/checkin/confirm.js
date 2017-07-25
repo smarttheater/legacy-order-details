@@ -1,23 +1,16 @@
 /* global moment */
 $(function() {
-    /* 時計 */
-    document.getElementById('print_date').innerHTML = moment().format('YYYY/MM/DD');
-    var dom_clock = document.getElementById('print_clock');
-    dom_clock.innerHTML = moment().format('HH:mm');
-    setInterval(function() {
-        dom_clock.innerHTML = moment().format('HH:mm');
-    }, 60000);
-
     /* チェックインに入れる情報 */
     var checkPointGroup = document.getElementById('input_pointgroup').value;
     var checkUserName = document.getElementById('input_username').value;
 
     /* 取得済み予約キャッシュ */
-    var reservationsById = [];
-    var reservationIdsByQrStr = [];
+    var reservationsById = {};
+    var reservationIdsByQrStr = {};
 
     /* チェックインAPI送信キュー */
-    var enteringReservations = [];
+    var enteringReservationsByQrStr = {};
+    var enteringReservationQrStrArray = [];
 
     /* チェックインOK時効果音 */
     var audioYes = new Audio('/audio/yes01.mp3');
@@ -27,6 +20,8 @@ $(function() {
     var audioNo = new Audio('/audio/no01.mp3');
     audioNo.load();
 
+    // API通信状況表示用DOM
+    var $apistatus = $('#apistatus');
 
     /**
      * チェックイン結果を描画する
@@ -55,6 +50,7 @@ $(function() {
         // チェックイン履歴HTML配列 (中身を入れてから昇順に表示するため配列)
         var chckinLogHtmlArray = [];
         reservation.checkins.forEach(function(checkin) {
+            if (!checkin || !checkin._id) { return true; }
             // チェックイン実行日
             var ddmm = moment(checkin._id).format('MM/DD');
             ddmm = (ddmm_today === ddmm) ? '本日' : ddmm;
@@ -106,6 +102,8 @@ $(function() {
         var $dfd = $.Deferred();
         if (!qrStr) {
             $dfd.reject('QRコードが読み取れません' + qrStr);
+        } else if (enteringReservationsByQrStr[qrStr]) {
+            $dfd.resolve(enteringReservationsByQrStr[qrStr]);
         } else if (reservationIdsByQrStr[qrStr]) {
             $dfd.resolve(reservationsById[reservationIdsByQrStr[qrStr]]);
         } else {
@@ -117,6 +115,7 @@ $(function() {
                 }
             }).fail(function(jqxhr, textStatus, error) {
                 console.log(jqxhr, textStatus, error);
+                $apistatus.html('[' + moment.format('HH:mm:ss') + '] QR情報取得API通信エラー発生中');
                 $dfd.reject('通信エラー発生', textStatus);
             });
         }
@@ -129,28 +128,44 @@ $(function() {
      * @function processEnter
      * @returns {void}
      */
+    var busy_processEnter = false;
     var processEnter = function() {
-        var enteringReservation = enteringReservations[0];
-        if (!enteringReservation) {
+        if (busy_processEnter) { return false; }
+        busy_processEnter = true;
+        var enteringReservationQrStr = enteringReservationQrStrArray[0];
+        var enteringReservation = enteringReservationsByQrStr[enteringReservationQrStr];
+        if (!enteringReservationQrStr || !enteringReservation) {
             setTimeout(function() {
+                busy_processEnter = false;
                 processEnter();
             }, 2000);
         } else {
             $.ajax({
                 dataType: 'json',
-                url: '/checkin/reservation/' + enteringReservation.qr_str,
+                url: '/checkin/reservation/' + enteringReservationQrStr,
                 type: 'POST',
-                data: enteringReservation.checkins[enteringReservation.checkins.length - 1]
+                data: {
+                    checkin: enteringReservation.checkins[enteringReservation.checkins.length - 1]
+                }
             }).done(function(data) {
-                console.log('checkin ok', data);
-                // 入場中の予約から削除
-                enteringReservations.splice(0, 1);
+                // とりあえずこの予約QRの順番は一旦終了
+                enteringReservationQrStrArray.splice(0, 1);
+                if (!data.status) {
+                    console.log('チェックインエラー発生 = ' + enteringReservationQrStr);
+                    // 予約の状態の問題かもしれない失敗が起きたのでとりあえず後回しにする
+                    enteringReservationQrStrArray.push(enteringReservationQrStr);
+                    return false;
+                }
+                // 成功したのでそのままキューから削除
+                delete enteringReservationsByQrStr[enteringReservationQrStr];
             }).fail(function(jqxhr, textStatus, error) {
                 console.log(jqxhr, textStatus, error);
+                $apistatus.html('[' + moment.format('HH:mm:ss') + '] チェックインAPI通信エラー発生中');
                 // エラーメッセージ表示
                 // alert(jqxhr.responseJSON.errors[0].detail);
             }).always(function() {
                 setTimeout(function() {
+                    busy_processEnter = false;
                     processEnter();
                 }, 2000);
             });
@@ -179,12 +194,12 @@ $(function() {
             });
             renderResult(reservation);
             // getReservationsに予約を上書きされて↑のcheckinが消されないようにキューにはコピーを入れる
-            enteringReservations.push($.extend(true, {}, reservation));
+            enteringReservationsByQrStr[reservation.qr_str] = $.extend(true, {}, reservation);
+            enteringReservationQrStrArray.push(reservation.qr_str);
         }).fail(function(errMsg) {
             alert(errMsg);
         }).always(function() {
             busy_check = false;
-            processEnter();
         });
     };
 
@@ -210,6 +225,7 @@ $(function() {
                 console.log('No Data: /checkin/performance/reservations', data);
             }
         }).fail(function(jqxhr, textStatus, error) {
+            $apistatus.html('[' + moment.format('HH:mm:ss') + '] 予約状況取得API通信エラー発生中<br>');
             console.log(jqxhr, textStatus, error);
         }).always(function() {
             if (typeof cb === 'function') { cb(); }
@@ -232,10 +248,19 @@ $(function() {
     };
 
 
+    /* 時計 */
+    document.getElementById('print_date').innerHTML = moment().format('YYYY/MM/DD');
+    var dom_clock = document.getElementById('print_clock');
+    dom_clock.innerHTML = moment().format('HH:mm');
+    setInterval(function() {
+        dom_clock.innerHTML = moment().format('HH:mm');
+    }, 60000);
+
     // 予約情報取得
     getReservations(function() {
         // 予約情報同期 30秒ごと
         loopGetReservations(30000);
+        processEnter();
     });
 
     // QR読み取りイベント (※1文字ずつkeypressされてくる)
@@ -247,7 +272,7 @@ $(function() {
         }
         // 新しい入力値の場合
         if (tempQrStr.length === 0) {
-            $('.result').html('データ照会中...');
+            $qrdetail.html('データ照会中...');
         }
         // エンターで入力終了
         if (e.keyCode === 13) {
