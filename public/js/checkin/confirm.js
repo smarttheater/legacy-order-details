@@ -274,6 +274,10 @@ $(function() {
             currentReservation.checkins.pop();
             $qrdetail.find('.qrdetail-date').remove();
             $targetCheckinRow.remove();
+            // 取り消すチェックインが無くなったので取り消しボタンを隠す
+            if (!currentReservation.checkins.length) {
+                btn_delete.style.display = 'none';
+            }
         }, 0);
     };
 
