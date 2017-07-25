@@ -96,6 +96,7 @@
         width: 200px;
         height: 40px;
         margin: 2em auto;
+        display: none; // QR読み取り後に表示
     }
 
     #checkinlogtable {

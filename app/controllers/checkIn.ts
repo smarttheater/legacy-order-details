@@ -231,7 +231,7 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
         // QR文字列から予約取得
         const reservation: any = await getReservationByQR(req.params.qr);
         const checkins: any[] = reservation.checkins;
-        const unixTimestamp = parseInt(req.body['checkin[_id]'], 10);
+        const unixTimestamp: number = parseInt(req.body['checkin[_id]'], 10);
         // const unixTimestamp = (new Date()).getTime();
         // チェックイン情報追加
         checkins.push(
@@ -283,15 +283,18 @@ export async function removeCheckIn(req: Request, res: Response): Promise<void> 
         if (!req.staffUser.isAuthenticated()) {
             throw new Error('staffUser not authenticated.');
         }
+        if (!req.params.qr || !req.body.when) {
+            throw new Error('invalid request');
+        }
         // QR文字列から予約取得
-        const reservation: any = await getReservationByQR(req.body.qr);
+        const reservation: any = await getReservationByQR(req.params.qr);
         const timeStamp: string = req.body.when;
         const checkins: any[] = reservation.checkins;
         let index: number = 0;
         let delIndex: number = -1;
         // 削除対象のチェックイン情報のindexを取得
         for (const checkin of checkins) {
-            if ( checkin._id === Number(timeStamp)) {
+            if (checkin && checkin._id === Number(timeStamp)) {
                 delIndex = index;
                 break;
             }
@@ -311,7 +314,7 @@ export async function removeCheckIn(req: Request, res: Response): Promise<void> 
         console.error(error);
         res.json({
             status: false,
-            error: 'チェックイン情報作成失敗',
+            error: 'チェックイン取り消し失敗',
             message: error.message
         });
     }

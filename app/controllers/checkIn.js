@@ -291,15 +291,18 @@ function removeCheckIn(req, res) {
             if (!req.staffUser.isAuthenticated()) {
                 throw new Error('staffUser not authenticated.');
             }
+            if (!req.params.qr || !req.body.when) {
+                throw new Error('invalid request');
+            }
             // QR文字列から予約取得
-            const reservation = yield getReservationByQR(req.body.qr);
+            const reservation = yield getReservationByQR(req.params.qr);
             const timeStamp = req.body.when;
             const checkins = reservation.checkins;
             let index = 0;
             let delIndex = -1;
             // 削除対象のチェックイン情報のindexを取得
             for (const checkin of checkins) {
-                if (checkin._id === Number(timeStamp)) {
+                if (checkin && checkin._id === Number(timeStamp)) {
                     delIndex = index;
                     break;
                 }
@@ -320,7 +323,7 @@ function removeCheckIn(req, res) {
             console.error(error);
             res.json({
                 status: false,
-                error: 'チェックイン情報作成失敗',
+                error: 'チェックイン取り消し失敗',
                 message: error.message
             });
         }
