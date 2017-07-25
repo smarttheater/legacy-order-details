@@ -89,6 +89,19 @@
             font-size: 20px;
             font-weight: bold;
             background-color: #87d67c;
+            &.ticket-adult {
+                background-color: #d3c27d;
+            }
+            &.ticket-child {
+                background-color: #987dd3;
+            }
+            &.ticket-infant{
+                background-color: #7cb9ce;
+            }
+            &.ticket-wheelchair {
+                // background-color: #87d67c;
+            }
+
         }
     }
 

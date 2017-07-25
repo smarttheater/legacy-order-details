@@ -87,6 +87,24 @@ $(function() {
         } else {
             audioYes.play();
         }
+        // 券種名で色分け
+        var ticketName = reservation.ticket_type_name.ja;
+        var ticketClassName = 'qrdetail-ticket';
+        if (/大人/.test(ticketName)) {
+            ticketClassName += ' ticket-adult';
+        }
+        if (/小・中学生/.test(ticketName)) {
+            ticketClassName += ' ticket-child';
+        }
+        if (/幼児/.test(ticketName)) {
+            ticketClassName += ' ticket-infant';
+        }
+        if (/セット/.test(ticketName)) {
+            ticketClassName += ' ticket-set';
+        }
+        if (/車椅子/.test(ticketName)) {
+            ticketClassName += ' ticket-wheelchair';
+        }
         // 予約情報を表示
         $qrdetail.html(
             '<div class="qrdetail-date">' +
@@ -95,7 +113,7 @@ $(function() {
                     '<span class="time">' + moment(reservation.performance_start_time, 'HHmm').format('HH:mm') + '～' + moment(reservation.performance_end_time, 'HHmm').format('HH:mm') + '</span>' +
                 '</p>' +
             '</div>' +
-            '<div class="qrdetail-ticket"><p class="inner">' + reservation.ticket_type_name.ja + '</div>'
+            '<div class="' + ticketClassName + '"><p class="inner">' + ticketName + '</div>'
         );
         // チェックインログを降順で表示
         $checkinlogtablebody.html(checkinLogHtmlArray.reverse().join(''));
@@ -172,7 +190,6 @@ $(function() {
             }
             // 成功したのでそのままキューから削除
             delete enteringReservationsByQrStr[targetQr];
-            console.log('deleted:' + targetQr, enteringReservationsByQrStr);
         }).fail(function(jqxhr, textStatus, error) {
             console.log(jqxhr, textStatus, error);
             $apistatus.html('[' + moment().format('HH:mm:ss') + '] チェックインAPI通信エラー発生中');
@@ -241,7 +258,7 @@ $(function() {
         var $targetCheckinRow = $checkinlogtablebody.find('tr:first').css('background-color', 'blue');
         // CSS反映のためrelayoutさせる
         setTimeout(function() {
-            if (!targetCheckin || !confirm('以下のチェックインを取り消してよろしいですか？\n' + moment(targetCheckin._id).format('YYYY/MM/DD HH:mm:ss') + ' ' + targetCheckin.how)) {
+            if (!targetCheckin || !confirm('以下のチェックインを取り消してよろしいですか？\n' + moment(targetCheckin._id).format('MM/DD HH:mm') + ' ' + targetCheckin.how)) {
                 $targetCheckinRow.css('background-color', '');
                 return false;
             }
