@@ -231,6 +231,7 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
         // QR文字列から予約取得
         const reservation: any = await getReservationByQR(req.params.qr);
         const checkins: any[] = reservation.checkins;
+        // tslint:disable-next-line:no-magic-numbers
         const unixTimestamp: number = parseInt(req.body['checkin[_id]'], 10);
         // const unixTimestamp = (new Date()).getTime();
         // チェックイン情報追加

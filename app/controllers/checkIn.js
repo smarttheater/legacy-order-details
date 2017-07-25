@@ -236,6 +236,7 @@ function addCheckIn(req, res) {
             // QR文字列から予約取得
             const reservation = yield getReservationByQR(req.params.qr);
             const checkins = reservation.checkins;
+            // tslint:disable-next-line:no-magic-numbers
             const unixTimestamp = parseInt(req.body['checkin[_id]'], 10);
             // const unixTimestamp = (new Date()).getTime();
             // チェックイン情報追加
