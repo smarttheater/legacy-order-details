@@ -8,19 +8,23 @@
 import { Models } from '@motionpicture/ttts-domain';
 import { ReservationUtil } from '@motionpicture/ttts-domain';
 //import { FilmUtil } from '@motionpicture/ttts-domain';
+import * as conf from 'config';
 import { NextFunction, Request, Response } from 'express';
 import * as moment from 'moment';
 import * as mongoose from 'mongoose';
 import * as _ from 'underscore';
 
-// チケット情報(descriptionは予約データに持つべき)
-const ticketInfos: any = {
-    '000004': { description: '1'},
-    '000005': { description: '1'},
-    '000006': { description: '1'}
-};
+// チケット情報(descriptionは予約データに持つべき(ticket_description))
+const ticketInfos: any = conf.get('ticketInfos');
+// const ticketInfos: any = {
+//     '000004': { description: '1'},
+//     '000005': { description: '1'},
+//     '000006': { description: '1'}
+// };
+
 // 出力対象区分
-const descriptionInfos: any = {1: 'wheelchair'};
+const descriptionInfos: any = conf.get('descriptionInfos');
+//const descriptionInfos: any = {1: 'wheelchair'};
 
 // /**
 //  * 入場画面のパフォーマンス検索
@@ -116,6 +120,7 @@ export async function confirmTest(req: Request, res: Response, next: NextFunctio
             next(new Error('unexepected error'));
         }
         res.render('checkIn/confirmTest', {
+            staffUser: req.staffUser,
             layout: 'layouts/checkIn/layout'
         });
     } catch (error) {
@@ -641,8 +646,8 @@ async function groupingReservationsByPerformance(dicPerformances: any, performan
         if (!dataByPerformance.hasOwnProperty(performanceId)) {
             const ticketTypes = await getTicketTypes(dicPerformances[performanceId].ticket_type_group);
             const ticketTypesExtra: string[] = [];
-            for (const ticketType of ticketTypes)  {
-                if (ticketInfos.hasOwnProperty(ticketType._id)) {
+            for (const ticketType of ticketTypes) {
+                if (isSpecialTicket(ticketType.get('description'))) {
                     ticketTypesExtra.push(ticketType._id);
                 }
             }
@@ -664,8 +669,7 @@ async function groupingReservationsByPerformance(dicPerformances: any, performan
             //const ticketNames: any = {};
             const ticketTypesExtra: string[] = [];
             for (const ticketType of ticketTypes)  {
-                //ticketNames[ticketType._id] = ticketType.name;
-                if (ticketInfos.hasOwnProperty(ticketType._id)) {
+                if (isSpecialTicket(ticketType.get('description'))) {
                     ticketTypesExtra.push(ticketType._id);
                 }
             }
@@ -688,10 +692,8 @@ async function groupingReservationsByPerformance(dicPerformances: any, performan
         if (isExtra) {
             const reservedExtra: any = (<any>dataByPerformance)[keyValue].reservedExtra;
             const description = ticketInfos[reservation.ticket_type].description;
-            // reservedExtra:{ '1' : {name:"wheelchair", reservedNum:1},}
             if (!reservedExtra.hasOwnProperty(description)) {
                 reservedExtra[description] = {
-                    //name: ticketInfos[reservation.ticket_type].name,
                     reservedNum: 1
                 };
             } else {
@@ -831,4 +833,14 @@ function getConcernedUnarrivedArray(concernedReservedArray: any[], checkin: any)
     });
 
     return concernedUnarrivedArray;
+}
+/**
+ * 予約通過確認・特殊チケット判定
+ * @memberof checkIn
+ * @function isSpecialTicket
+ * @param {string} description
+ * @returns {boolean}
+ */
+function isSpecialTicket(description: string): boolean {
+    return description !== '0';
 }

@@ -67,6 +67,17 @@
          * @returns {void}
          */
         function sendQR(type) {
+            /* チェックインに入れる情報 */
+            var checkPointGroup = document.getElementById('input_pointgroup').value;
+            var checkUserName = document.getElementById('input_username').value;
+            var unixTimestamp = (new Date()).getTime();
+            var checkin = {
+                _id: unixTimestamp,
+                when: unixTimestamp,
+                where: checkPointGroup,
+                why: '',
+                how: checkUserName
+            };
             var qr = $('input[name=qr]').val();
             var when = $('input[name=when]').val();
             $('#result').val('');
@@ -77,7 +88,8 @@
                 cache : false,
                 data: {
                     qr: qr,
-                    when: when
+                    when: when,
+                    checkin: checkin
                 },
                 beforeSend: function () {
                 }

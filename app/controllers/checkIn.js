@@ -17,16 +17,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const ttts_domain_1 = require("@motionpicture/ttts-domain");
 const ttts_domain_2 = require("@motionpicture/ttts-domain");
+//import { FilmUtil } from '@motionpicture/ttts-domain';
+const conf = require("config");
 const moment = require("moment");
 const _ = require("underscore");
-// チケット情報(descriptionは予約データに持つべき)
-const ticketInfos = {
-    '000004': { description: '1' },
-    '000005': { description: '1' },
-    '000006': { description: '1' }
-};
+// チケット情報(descriptionは予約データに持つべき(ticket_description))
+const ticketInfos = conf.get('ticketInfos');
+// const ticketInfos: any = {
+//     '000004': { description: '1'},
+//     '000005': { description: '1'},
+//     '000006': { description: '1'}
+// };
 // 出力対象区分
-const descriptionInfos = { 1: 'wheelchair' };
+const descriptionInfos = conf.get('descriptionInfos');
+//const descriptionInfos: any = {1: 'wheelchair'};
 // /**
 //  * 入場画面のパフォーマンス検索
 //  * @memberof checkIn
@@ -119,6 +123,7 @@ function confirmTest(req, res, next) {
                 next(new Error('unexepected error'));
             }
             res.render('checkIn/confirmTest', {
+                staffUser: req.staffUser,
                 layout: 'layouts/checkIn/layout'
             });
         }
@@ -637,7 +642,7 @@ function groupingReservationsByPerformance(dicPerformances, performanceIds, rese
                 const ticketTypes = yield getTicketTypes(dicPerformances[performanceId].ticket_type_group);
                 const ticketTypesExtra = [];
                 for (const ticketType of ticketTypes) {
-                    if (ticketInfos.hasOwnProperty(ticketType._id)) {
+                    if (isSpecialTicket(ticketType.get('description'))) {
                         ticketTypesExtra.push(ticketType._id);
                     }
                 }
@@ -658,8 +663,7 @@ function groupingReservationsByPerformance(dicPerformances, performanceIds, rese
                 //const ticketNames: any = {};
                 const ticketTypesExtra = [];
                 for (const ticketType of ticketTypes) {
-                    //ticketNames[ticketType._id] = ticketType.name;
-                    if (ticketInfos.hasOwnProperty(ticketType._id)) {
+                    if (isSpecialTicket(ticketType.get('description'))) {
                         ticketTypesExtra.push(ticketType._id);
                     }
                 }
@@ -682,10 +686,8 @@ function groupingReservationsByPerformance(dicPerformances, performanceIds, rese
             if (isExtra) {
                 const reservedExtra = dataByPerformance[keyValue].reservedExtra;
                 const description = ticketInfos[reservation.ticket_type].description;
-                // reservedExtra:{ '1' : {name:"wheelchair", reservedNum:1},}
                 if (!reservedExtra.hasOwnProperty(description)) {
                     reservedExtra[description] = {
-                        //name: ticketInfos[reservation.ticket_type].name,
                         reservedNum: 1
                     };
                 }
@@ -819,4 +821,14 @@ function getConcernedUnarrivedArray(concernedReservedArray, checkin) {
         unarrive.unarrivedNum = unarrive.unarrivedNum - arrivedNum;
     });
     return concernedUnarrivedArray;
+}
+/**
+ * 予約通過確認・特殊チケット判定
+ * @memberof checkIn
+ * @function isSpecialTicket
+ * @param {string} description
+ * @returns {boolean}
+ */
+function isSpecialTicket(description) {
+    return description !== '0';
 }

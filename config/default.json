@@ -42,5 +42,13 @@
             "error": "ALL"
         }
     },
-    "cancelCharge" : 400
+    "cancelCharge" : 400,
+    "ticketInfos" : {
+        "000004": { "description": "1"},
+        "000005": { "description": "1"},
+        "000006": { "description": "1"}
+    },
+    "descriptionInfos" : {
+        "1": "wheelchair"
+    }
 }
