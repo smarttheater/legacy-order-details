@@ -56,7 +56,7 @@
         >div {
             display: table;
             width: 100%;
-            min-height: 48px;
+            min-height: 60px;
             color: #fff;
             border-radius: 0;
             .inner {
@@ -69,15 +69,15 @@
             color: #7ab0e5;
             border: 1px solid #7ab0e5;
             margin-bottom: 20px;
-            font-size: 24px;
             span {
                 vertical-align: middle;
             }
             .day {
-                font-size: 20px;
+                font-size: 22px;
                 margin-right: 10px;
             }
             .time {
+                font-size: 26px;
                 font-weight: bold;
             }
         }

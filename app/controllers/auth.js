@@ -22,10 +22,15 @@ const cookieName = 'remember_checkin_admin';
 /**
  * マスタ管理ログイン
  */
-function login(req, res) {
+function login(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         if (req.staffUser !== undefined && req.staffUser.isAuthenticated()) {
             res.redirect(checkInHome);
+            return;
+        }
+        const owners = yield TTTS.Models.Owner.find().exec();
+        if (!owners) {
+            next(new Error(Message.Common.unexpectedError));
             return;
         }
         let errors = {};
@@ -36,10 +41,14 @@ function login(req, res) {
             errors = req.validationErrors(true);
             if (validatorResult.isEmpty()) {
                 // ユーザー認証
-                const owner = yield TTTS.Models.Owner.findOne({
-                    username: req.body.username,
-                    group: req.body.group
-                }).exec();
+                // const owner = await TTTS.Models.Owner.findOne(
+                //     {
+                //         username: req.body.username
+                //     }
+                // ).exec();
+                const owner = owners.filter((owner) => {
+                    return (owner.name.ja === req.body.username);
+                })[0];
                 if (owner === null) {
                     errors = { username: { msg: 'IDもしくはパスワードの入力に誤りがあります' } };
                 }
@@ -75,6 +84,7 @@ function login(req, res) {
             displayId: 'Aa-1',
             title: '入場管理ログイン',
             errors: errors,
+            usernames: owners.map((owner) => { return owner.name.ja; }),
             layout: 'layouts/checkIn/layout'
         });
     });

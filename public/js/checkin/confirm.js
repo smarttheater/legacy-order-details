@@ -71,8 +71,7 @@ $(function() {
         // ユーザーグループごとのカウントを入れるオブジェクト
         var countByCheckinGroup = {};
         // チェックイン履歴HTML配列 (中身を入れてから降順に表示するため配列)
-        var checkinLogHtmlArray = [];
-        reservation.checkins.forEach(function(checkin) {
+        var checkinLogHtmlArray = reservation.checkins.map(function(checkin) {
             if (!checkin || !checkin._id) { return true; }
             // チェックイン実行日
             var ddmm = moment(checkin._id).format('MM/DD');
@@ -85,7 +84,7 @@ $(function() {
                 is_ng = true;
                 countByCheckinGroup[checkin.where]++;
             }
-            checkinLogHtmlArray.push(
+            return (
                 '<tr class="' + ((is_ng) ? 'tr-ng' : '') + '">' +
                     '<td class="td-day">' + ddmm + '</td>' +
                     '<td class="td-time">' + moment(checkin._id).format('HH:mm') + '</td>' +
@@ -248,6 +247,7 @@ $(function() {
             currentReservation = $.extend(true, {}, reservation);
             btn_delete.style.display = 'table';
         }).fail(function(errMsg) {
+            audioNo.play();
             alert(errMsg);
         }).always(function() {
             $apistatus_checkin.html('チェックイン通信中: ' + enteringReservationQrStrArray.length + '件');
@@ -415,6 +415,16 @@ $(function() {
     // チェックイン取り消しボタン
     btn_delete.onclick = deleteNewestCheckin;
 
+    // 離脱警告 (AsWeb3でonbeforeunloadは不可なのでナビバー非表示にして移動はこのログアウト以外封じる)
+    document.getElementById('btn_logout').onclick = function(e) {
+        e.preventDefault();
+        if ((enteringReservationQrStrArray.length || cancelingCheckinReservationQrStrArray.length)
+        && !confirm('通信処理中のチェックインがありますが破棄して移動しますか？')) {
+            return false;
+        }
+        location.replace('/checkin/logout');
+    };
+
     // QR読み取りイベント (※1文字ずつkeypressされてくる)
     var tempQrStr = '';
     $(window).keypress(function(e) {
@@ -435,6 +445,7 @@ $(function() {
             tempQrStr += String.fromCharCode(e.keyCode); // ※AsReaderのイベントにはcharCodeが無い
         }
     });
+
     // for debug
     $('.pointname').click(function() {
         check('20170726-300000035-0');

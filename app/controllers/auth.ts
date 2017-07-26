@@ -17,10 +17,15 @@ const cookieName = 'remember_checkin_admin';
 /**
  * マスタ管理ログイン
  */
-export async function login(req: Request, res: Response): Promise<void> {
+export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
     if (req.staffUser !== undefined && req.staffUser.isAuthenticated()) {
         res.redirect(checkInHome);
+        return;
+    }
 
+    const owners: any[] = await TTTS.Models.Owner.find().exec();
+    if (!owners) {
+        next(new Error(Message.Common.unexpectedError));
         return;
     }
 
@@ -33,12 +38,14 @@ export async function login(req: Request, res: Response): Promise<void> {
         errors = req.validationErrors(true);
         if (validatorResult.isEmpty()) {
             // ユーザー認証
-            const owner = await TTTS.Models.Owner.findOne(
-                {
-                    username: req.body.username,
-                    group: req.body.group
-                }
-            ).exec();
+            // const owner = await TTTS.Models.Owner.findOne(
+            //     {
+            //         username: req.body.username
+            //     }
+            // ).exec();
+            const owner: any = owners.filter((owner: any) => {
+                return (owner.name.ja === req.body.username);
+            })[0];
 
             if (owner === null) {
                 errors = { username: { msg: 'IDもしくはパスワードの入力に誤りがあります' } };
@@ -83,6 +90,7 @@ export async function login(req: Request, res: Response): Promise<void> {
         displayId: 'Aa-1',
         title: '入場管理ログイン',
         errors: errors,
+        usernames: owners.map((owner) => { return owner.name.ja; }),
         layout: 'layouts/checkIn/layout'
     });
 }
