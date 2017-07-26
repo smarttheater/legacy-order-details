@@ -19,16 +19,27 @@ $(function() {
     /* 表示中の予約 */
     var currentReservation = {};
 
-    /* チェックインOK時効果音 */
+    /* チェックイン時効果音 */
     var audioYes = new Audio('/audio/yes01.mp3');
     audioYes.load();
-
-    /* チェックインNG時効果音 */
     var audioNo = new Audio('/audio/no01.mp3');
     audioNo.load();
+    // ※iOSの制約のため非同期イベントでAudioを再生するには一度ユーザーイベントからAudioを再生しておく必要がある (一度でも再生すれば以降は自由に再生できる)
+    // 運用マニュアルに「ログイン後に一回時計をタップして音声を初期化する」を追加？
+    var flg_audioInit = false;
+    $('.timecontainer').click(function() {
+        if (!flg_audioInit) {
+            audioYes.volume = 0.0;
+            audioYes.play();
+            audioNo.volume = 0.0;
+            audioNo.play();
+            flg_audioInit = true;
+        }
+    });
 
     // API通信状況表示用DOM
-    var $apistatus = $('#apistatus');
+    var $apistatus_checkin = $('#apistatus_checkin');
+    var $apistatus_delete = $('#apistatus_delete');
 
     // チェックイン取り消しボタンDOM
     var btn_delete = document.getElementById('btn_delete');
@@ -46,8 +57,10 @@ $(function() {
         $qrdetail.removeClass('is-ng');
         audioNo.pause();
         audioNo.currentTime = 0.0;
+        audioNo.volume = 1.0;
         audioYes.pause();
         audioYes.currentTime = 0.0;
+        audioYes.volume = 1.0;
         // NGチェックインフラグ
         var is_ng = false;
         // 「本日」を表示するための比較用文字列
@@ -57,7 +70,7 @@ $(function() {
         ddmm_ticket = (ddmm_today === ddmm_ticket) ? '本日' : ddmm_ticket;
         // ユーザーグループごとのカウントを入れるオブジェクト
         var countByCheckinGroup = {};
-        // チェックイン履歴HTML配列 (中身を入れてから昇順に表示するため配列)
+        // チェックイン履歴HTML配列 (中身を入れてから降順に表示するため配列)
         var checkinLogHtmlArray = [];
         reservation.checkins.forEach(function(checkin) {
             if (!checkin || !checkin._id) { return true; }
@@ -146,7 +159,6 @@ $(function() {
                 }
             }).fail(function(jqxhr, textStatus, error) {
                 console.log(jqxhr, textStatus, error);
-                $apistatus.html('[' + moment().format('HH:mm:ss') + '] QR情報取得API通信エラー発生中');
                 $dfd.reject('通信エラー発生', textStatus);
             });
         }
@@ -155,7 +167,7 @@ $(function() {
 
 
     /**
-     * チェックインをAPIに報告する(enteringReservationQrStrArrayの最新から消化していく)
+     * チェックインをAPIに報告する(enteringReservationQrStrArrayの先頭から消化していく)
      * @function syncCheckinWithApi
      * @returns {void}
      */
@@ -192,10 +204,11 @@ $(function() {
             delete enteringReservationsByQrStr[targetQr];
         }).fail(function(jqxhr, textStatus, error) {
             console.log(jqxhr, textStatus, error);
-            $apistatus.html('[' + moment().format('HH:mm:ss') + '] チェックインAPI通信エラー発生中');
+            $apistatus_checkin.html('[' + moment().format('HH:mm:ss') + '] チェックインAPI通信エラー発生中');
             // エラーメッセージ表示
             // alert(jqxhr.responseJSON.errors[0].detail);
         }).always(function() {
+            $apistatus_checkin.html('チェックイン通信中: ' + enteringReservationQrStrArray.length + '件');
             setTimeout(function() {
                 busy_syncCheckinWithApi = false;
                 syncCheckinWithApi();
@@ -237,6 +250,7 @@ $(function() {
         }).fail(function(errMsg) {
             alert(errMsg);
         }).always(function() {
+            $apistatus_checkin.html('チェックイン通信中: ' + enteringReservationQrStrArray.length + '件');
             busy_check = false;
         });
     };
@@ -272,18 +286,23 @@ $(function() {
             }
             // 画面上では取り消したことにする
             currentReservation.checkins.pop();
-            $qrdetail.find('.qrdetail-date').remove();
             $targetCheckinRow.remove();
+
             // 取り消すチェックインが無くなったので取り消しボタンを隠す
             if (!currentReservation.checkins.length) {
                 btn_delete.style.display = 'none';
+                $qrdetail.html('QRコードを読み取ってください');
+            } else {
+                $qrdetail.find('.qrdetail-date').remove();
             }
+
+            $apistatus_delete.html('チェックイン取り消し通信中: ' + cancelingCheckinReservationQrStrArray.length + '件');
         }, 0);
     };
 
 
     /**
-     * 対象予約の最新チェックインの取り消しをAPIに要求する(cancelingCheckinReservationQrStrArrayの最新から消化していく)
+     * 対象予約の最新チェックインの取り消しをAPIに要求する(cancelingCheckinReservationQrStrArrayの先頭から消化していく)
      * @function syncDeleteCheckinWithApi
      * @returns {void}
      */
@@ -312,7 +331,7 @@ $(function() {
             // とりあえずこの予約QRの順番は一旦終了
             cancelingCheckinReservationQrStrArray.splice(0, 1);
             if (!data.status) {
-                $apistatus.html('[' + moment().format('HH:mm:ss') + '] チェックイン取り消しAPIエラー発生(' + data.error + ') = ' + targetQr);
+                $apistatus_delete.html('[' + moment().format('HH:mm:ss') + '] チェックイン取り消しAPIエラー発生(' + data.error + ') = ' + targetQr);
                 // 予約の状態の問題かもしれない失敗が起きたのでとりあえず後回しにする
                 cancelingCheckinReservationQrStrArray.push(targetQr);
                 return false;
@@ -321,10 +340,11 @@ $(function() {
             delete cancelingCheckinReservationsByQrStr[targetQr];
         }).fail(function(jqxhr, textStatus, error) {
             console.log(jqxhr, textStatus, error);
-            $apistatus.html('[' + moment().format('HH:mm:ss') + '] チェックイン取り消しAPI通信エラー発生中');
+            $apistatus_delete.html('[' + moment().format('HH:mm:ss') + '] チェックイン取り消しAPI通信エラー発生中');
             // エラーメッセージ表示
             // alert(jqxhr.responseJSON.errors[0].detail);
         }).always(function() {
+            $apistatus_delete.html('チェックイン取り消し通信中: ' + cancelingCheckinReservationQrStrArray.length + '件');
             setTimeout(function() {
                 busy_syncDeleteCheckinWithApi = false;
                 syncDeleteCheckinWithApi();
@@ -354,7 +374,6 @@ $(function() {
                 console.log('No Data: /checkin/performance/reservations', data);
             }
         }).fail(function(jqxhr, textStatus, error) {
-            $apistatus.html('[' + moment().format('HH:mm:ss') + '] 予約状況取得API通信エラー発生中<br>');
             console.log(jqxhr, textStatus, error);
         }).always(function() {
             if (typeof cb === 'function') { cb(); }
@@ -383,7 +402,7 @@ $(function() {
     dom_clock.innerHTML = moment().format('HH:mm');
     setInterval(function() {
         dom_clock.innerHTML = moment().format('HH:mm');
-    }, 60000);
+    }, 10000);
 
     // 予約情報取得
     getReservations(function() {
