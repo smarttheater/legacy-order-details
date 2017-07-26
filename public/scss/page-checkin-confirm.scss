@@ -80,11 +80,9 @@
                 font-size: 26px;
                 font-weight: bold;
             }
-        }
-        &.is-ng .qrdetail-date {
-            color: #fff;
-            background-color: #e83828;
-            border-color: #e83828;
+            .msg {
+                display: block;
+            }
         }
         .qrdetail-ticket {
             font-size: 20px;
@@ -104,13 +102,6 @@
             }
 
         }
-    }
-
-    #btn_delete {
-        width: 200px;
-        height: 40px;
-        margin: 2em auto;
-        display: none; // QR読み取り後に表示
     }
 
     #checkinlogtable {
@@ -138,6 +129,28 @@
                 word-break: break-all;
             }
         }
+    }
+
+    &.is-ng-currentcheckin {
+        #qrdetail {
+            .qrdetail-date {
+                color: #fff;
+                background-color: #e83828;
+                border-color: #e83828;
+            }
+        }
+        #checkinlogtable {
+            tr:first-child {
+                background-color: #e83828;
+            }
+        }
+    }
+
+    #btn_delete {
+        width: 200px;
+        height: 40px;
+        margin: 2em auto;
+        display: none; // QR読み取り後に表示
     }
 
     footer {

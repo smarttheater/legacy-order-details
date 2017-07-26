@@ -37,6 +37,8 @@ $(function() {
         }
     });
 
+    var $body = $(document.body);
+
     // API通信状況表示用DOM
     var $apistatus_checkin = $('#apistatus_checkin');
     var $apistatus_delete = $('#apistatus_delete');
@@ -54,15 +56,13 @@ $(function() {
     var $checkinlogtablebody = $('#checkinlogtable').find('tbody');
     var renderResult = function(reservation) {
         // 状態初期化
-        $qrdetail.removeClass('is-ng');
+        $body.removeClass('is-ng-currentcheckin');
         audioNo.pause();
         audioNo.currentTime = 0.0;
         audioNo.volume = 1.0;
         audioYes.pause();
         audioYes.currentTime = 0.0;
         audioYes.volume = 1.0;
-        // NGチェックインフラグ
-        var is_ng = false;
         // 「本日」を表示するための比較用文字列
         var ddmm_today = moment().format('MM/DD');
         // チケットの入塔日文字列
@@ -70,12 +70,15 @@ $(function() {
         ddmm_ticket = (ddmm_today === ddmm_ticket) ? '本日' : ddmm_ticket;
         // ユーザーグループごとのカウントを入れるオブジェクト
         var countByCheckinGroup = {};
-        // チェックイン履歴HTML配列 (中身を入れてから降順に表示するため配列)
+
+        // チェックイン履歴HTML配列 (多重チェックインの行のみNG=赤色にする。過去チェックインの時刻は判定しない)
         var checkinLogHtmlArray = reservation.checkins.map(function(checkin) {
             if (!checkin || !checkin._id) { return true; }
             // チェックイン実行日
             var ddmm = moment(checkin._id).format('MM/DD');
             ddmm = (ddmm_today === ddmm) ? '本日' : ddmm;
+            // NGフラグ
+            var is_ng = false;
             // グループごとのチェックインをカウント
             if (isNaN(countByCheckinGroup[checkin.where])) {
                 countByCheckinGroup[checkin.where] = 1;
@@ -93,8 +96,24 @@ $(function() {
                 '</tr>'
             );
         });
-        if (is_ng) {
-            $qrdetail.addClass('is-ng');
+        // チェックインログを降順で表示
+        $checkinlogtablebody.html(checkinLogHtmlArray.reverse().join(''));
+
+
+        // 今実行されたチェックイン(checkinsの最新)の判定
+        var currentCheckin = reservation.checkins[reservation.checkins.length - 1];
+        // 判定されたエラー
+        var errmsg = [];
+        var moment_start = moment(reservation.performance_day + reservation.performance_start_time, 'YYYYMMDDHHmm');
+        var moment_end = moment(reservation.performance_day + reservation.performance_end_time, 'YYYYMMDDHHmm');
+        if (!moment(currentCheckin._id).isBetween(moment_start, moment_end)) {
+            errmsg.push('入塔時間外');
+        }
+        if (countByCheckinGroup[currentCheckin.where] > 1) {
+            errmsg.push('多重チェックイン');
+        }
+        if (errmsg.length) {
+            $body.addClass('is-ng-currentcheckin'); // チェックイン履歴の一番上が赤くなる
             audioNo.play();
         } else {
             audioYes.play();
@@ -117,18 +136,17 @@ $(function() {
         if (/車椅子/.test(ticketName)) {
             ticketClassName += ' ticket-wheelchair';
         }
-        // 予約情報を表示
+        // 今実行されたチェックインの予約情報を表示 (エラーだった場合はエラー原因も出す)
         $qrdetail.html(
             '<div class="qrdetail-date">' +
                 '<p class="inner">' +
                     '<span class="day">' + ddmm_ticket + '</span>' +
                     '<span class="time">' + moment(reservation.performance_start_time, 'HHmm').format('HH:mm') + '～' + moment(reservation.performance_end_time, 'HHmm').format('HH:mm') + '</span>' +
+                    '<span class="msg">' + errmsg.join('<br>') + '</span>' +
                 '</p>' +
             '</div>' +
             '<div class="' + ticketClassName + '"><p class="inner">' + ticketName + '</div>'
         );
-        // チェックインログを降順で表示
-        $checkinlogtablebody.html(checkinLogHtmlArray.reverse().join(''));
     };
 
 
@@ -287,6 +305,7 @@ $(function() {
             // 画面上では取り消したことにする
             currentReservation.checkins.pop();
             $targetCheckinRow.remove();
+            $body.removeClass('is-ng-currentcheckin');
 
             // 取り消すチェックインが無くなったので取り消しボタンを隠す
             if (!currentReservation.checkins.length) {
