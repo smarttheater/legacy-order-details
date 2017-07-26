@@ -810,27 +810,21 @@ function getConcernedUnarrivedArray(concernedReservedArray: any[], checkin: any)
         });
     });
 
-// const ticketInfos: any = {
-//     '000004': { description: '1'},
-//     '000005': { description: '1'},
-//     '000006': { description: '1'}
-// };
-
-// checkin.arrived
-// Object {000004: 1}
-
-// concernedUnarrivedArray(特殊チケット)
-// unarrive
-// Object {id: "1", name: "wheelchair", unarrivedNum: 2}
-
-// "1"という区分に含まれるチケットID [4,5,6]
-// 2重ループ？4,5,6をチェック
-
-    // 未入場者数 = 来場予定者数 - チェックポイント通過者数
-    concernedUnarrivedArray.forEach((unarrive: any) => {
-        const arrivedNum : number = checkin.arrived.hasOwnProperty(unarrive.id) ? (<any>checkin.arrived)[unarrive.id] : 0;
-        unarrive.unarrivedNum = unarrive.unarrivedNum - arrivedNum;
-    });
+    // 到着チケットをチェックし、同じdescriptionの予約数からチェックイン数を引く
+    for (const tycketType of Object.keys(checkin.arrived)){
+        if (!ticketInfos.hasOwnProperty(tycketType)) {
+            continue;
+        }
+        // チケット情報からdescriptionを取得
+        const description: string = ticketInfos[tycketType].description;
+        concernedUnarrivedArray.forEach((unarrive: any) => {
+            if (description === unarrive.id) {
+                // 未入場者数 = 来場予定者数 - チェックポイント通過者数
+                const arrivedNum : number = checkin.arrived[tycketType];
+                unarrive.unarrivedNum = unarrive.unarrivedNum - arrivedNum;
+            }
+        });
+    }
 
     return concernedUnarrivedArray;
 }
