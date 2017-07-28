@@ -19,16 +19,29 @@ $(function() {
     /* 表示中の予約 */
     var currentReservation = {};
 
-    /* チェックインOK時効果音 */
+    /* チェックイン時効果音 */
     var audioYes = new Audio('/audio/yes01.mp3');
     audioYes.load();
-
-    /* チェックインNG時効果音 */
     var audioNo = new Audio('/audio/no01.mp3');
     audioNo.load();
+    // ※iOSの制約のため非同期イベントでAudioを再生するには一度ユーザーイベントからAudioを再生しておく必要がある (一度でも再生すれば以降は自由に再生できる)
+    // 運用マニュアルに「ログイン後に一回時計をタップして音声を初期化する」を追加？
+    var flg_audioInit = false;
+    $('.timecontainer').click(function() {
+        if (!flg_audioInit) {
+            audioYes.volume = 0.0;
+            audioYes.play();
+            audioNo.volume = 0.0;
+            audioNo.play();
+            flg_audioInit = true;
+        }
+    });
+
+    var $body = $(document.body);
 
     // API通信状況表示用DOM
-    var $apistatus = $('#apistatus');
+    var $apistatus_checkin = $('#apistatus_checkin');
+    var $apistatus_delete = $('#apistatus_delete');
 
     // チェックイン取り消しボタンDOM
     var btn_delete = document.getElementById('btn_delete');
@@ -43,13 +56,13 @@ $(function() {
     var $checkinlogtablebody = $('#checkinlogtable').find('tbody');
     var renderResult = function(reservation) {
         // 状態初期化
-        $qrdetail.removeClass('is-ng');
+        $body.removeClass('is-ng-currentcheckin');
         audioNo.pause();
         audioNo.currentTime = 0.0;
+        audioNo.volume = 1.0;
         audioYes.pause();
         audioYes.currentTime = 0.0;
-        // NGチェックインフラグ
-        var is_ng = false;
+        audioYes.volume = 1.0;
         // 「本日」を表示するための比較用文字列
         var ddmm_today = moment().format('MM/DD');
         // チケットの入塔日文字列
@@ -57,13 +70,15 @@ $(function() {
         ddmm_ticket = (ddmm_today === ddmm_ticket) ? '本日' : ddmm_ticket;
         // ユーザーグループごとのカウントを入れるオブジェクト
         var countByCheckinGroup = {};
-        // チェックイン履歴HTML配列 (中身を入れてから昇順に表示するため配列)
-        var checkinLogHtmlArray = [];
-        reservation.checkins.forEach(function(checkin) {
+
+        // チェックイン履歴HTML配列 (多重チェックインの行のみNG=赤色にする。過去チェックインの時刻は判定しない)
+        var checkinLogHtmlArray = reservation.checkins.map(function(checkin) {
             if (!checkin || !checkin._id) { return true; }
             // チェックイン実行日
             var ddmm = moment(checkin._id).format('MM/DD');
             ddmm = (ddmm_today === ddmm) ? '本日' : ddmm;
+            // NGフラグ
+            var is_ng = false;
             // グループごとのチェックインをカウント
             if (isNaN(countByCheckinGroup[checkin.where])) {
                 countByCheckinGroup[checkin.where] = 1;
@@ -72,7 +87,7 @@ $(function() {
                 is_ng = true;
                 countByCheckinGroup[checkin.where]++;
             }
-            checkinLogHtmlArray.push(
+            return (
                 '<tr class="' + ((is_ng) ? 'tr-ng' : '') + '">' +
                     '<td class="td-day">' + ddmm + '</td>' +
                     '<td class="td-time">' + moment(checkin._id).format('HH:mm') + '</td>' +
@@ -81,8 +96,24 @@ $(function() {
                 '</tr>'
             );
         });
-        if (is_ng) {
-            $qrdetail.addClass('is-ng');
+        // チェックインログを降順で表示
+        $checkinlogtablebody.html(checkinLogHtmlArray.reverse().join(''));
+
+
+        // 今実行されたチェックイン(checkinsの最新)の判定
+        var currentCheckin = reservation.checkins[reservation.checkins.length - 1];
+        // 判定されたエラー
+        var errmsg = [];
+        var moment_start = moment(reservation.performance_day + reservation.performance_start_time, 'YYYYMMDDHHmm');
+        var moment_end = moment(reservation.performance_day + reservation.performance_end_time, 'YYYYMMDDHHmm');
+        if (!moment(currentCheckin._id).isBetween(moment_start, moment_end)) {
+            errmsg.push('入塔時間外');
+        }
+        if (countByCheckinGroup[currentCheckin.where] > 1) {
+            errmsg.push('多重チェックイン');
+        }
+        if (errmsg.length) {
+            $body.addClass('is-ng-currentcheckin'); // チェックイン履歴の一番上が赤くなる
             audioNo.play();
         } else {
             audioYes.play();
@@ -105,18 +136,17 @@ $(function() {
         if (/車椅子/.test(ticketName)) {
             ticketClassName += ' ticket-wheelchair';
         }
-        // 予約情報を表示
+        // 今実行されたチェックインの予約情報を表示 (エラーだった場合はエラー原因も出す)
         $qrdetail.html(
             '<div class="qrdetail-date">' +
                 '<p class="inner">' +
                     '<span class="day">' + ddmm_ticket + '</span>' +
                     '<span class="time">' + moment(reservation.performance_start_time, 'HHmm').format('HH:mm') + '～' + moment(reservation.performance_end_time, 'HHmm').format('HH:mm') + '</span>' +
+                    '<span class="msg">' + errmsg.join('<br>') + '</span>' +
                 '</p>' +
             '</div>' +
             '<div class="' + ticketClassName + '"><p class="inner">' + ticketName + '</div>'
         );
-        // チェックインログを降順で表示
-        $checkinlogtablebody.html(checkinLogHtmlArray.reverse().join(''));
     };
 
 
@@ -146,7 +176,6 @@ $(function() {
                 }
             }).fail(function(jqxhr, textStatus, error) {
                 console.log(jqxhr, textStatus, error);
-                $apistatus.html('[' + moment().format('HH:mm:ss') + '] QR情報取得API通信エラー発生中');
                 $dfd.reject('通信エラー発生', textStatus);
             });
         }
@@ -155,7 +184,7 @@ $(function() {
 
 
     /**
-     * チェックインをAPIに報告する(enteringReservationQrStrArrayの最新から消化していく)
+     * チェックインをAPIに報告する(enteringReservationQrStrArrayの先頭から消化していく)
      * @function syncCheckinWithApi
      * @returns {void}
      */
@@ -192,10 +221,11 @@ $(function() {
             delete enteringReservationsByQrStr[targetQr];
         }).fail(function(jqxhr, textStatus, error) {
             console.log(jqxhr, textStatus, error);
-            $apistatus.html('[' + moment().format('HH:mm:ss') + '] チェックインAPI通信エラー発生中');
+            $apistatus_checkin.html('[' + moment().format('HH:mm:ss') + '] チェックインAPI通信エラー発生中');
             // エラーメッセージ表示
             // alert(jqxhr.responseJSON.errors[0].detail);
         }).always(function() {
+            $apistatus_checkin.html('チェックイン通信中: ' + enteringReservationQrStrArray.length + '件');
             setTimeout(function() {
                 busy_syncCheckinWithApi = false;
                 syncCheckinWithApi();
@@ -235,8 +265,10 @@ $(function() {
             currentReservation = $.extend(true, {}, reservation);
             btn_delete.style.display = 'table';
         }).fail(function(errMsg) {
+            audioNo.play();
             alert(errMsg);
         }).always(function() {
+            $apistatus_checkin.html('チェックイン通信中: ' + enteringReservationQrStrArray.length + '件');
             busy_check = false;
         });
     };
@@ -272,18 +304,24 @@ $(function() {
             }
             // 画面上では取り消したことにする
             currentReservation.checkins.pop();
-            $qrdetail.find('.qrdetail-date').remove();
             $targetCheckinRow.remove();
+            $body.removeClass('is-ng-currentcheckin');
+
             // 取り消すチェックインが無くなったので取り消しボタンを隠す
             if (!currentReservation.checkins.length) {
                 btn_delete.style.display = 'none';
+                $qrdetail.html('QRコードを読み取ってください');
+            } else {
+                $qrdetail.find('.qrdetail-date').remove();
             }
+
+            $apistatus_delete.html('チェックイン取り消し通信中: ' + cancelingCheckinReservationQrStrArray.length + '件');
         }, 0);
     };
 
 
     /**
-     * 対象予約の最新チェックインの取り消しをAPIに要求する(cancelingCheckinReservationQrStrArrayの最新から消化していく)
+     * 対象予約の最新チェックインの取り消しをAPIに要求する(cancelingCheckinReservationQrStrArrayの先頭から消化していく)
      * @function syncDeleteCheckinWithApi
      * @returns {void}
      */
@@ -312,7 +350,7 @@ $(function() {
             // とりあえずこの予約QRの順番は一旦終了
             cancelingCheckinReservationQrStrArray.splice(0, 1);
             if (!data.status) {
-                $apistatus.html('[' + moment().format('HH:mm:ss') + '] チェックイン取り消しAPIエラー発生(' + data.error + ') = ' + targetQr);
+                $apistatus_delete.html('[' + moment().format('HH:mm:ss') + '] チェックイン取り消しAPIエラー発生(' + data.error + ') = ' + targetQr);
                 // 予約の状態の問題かもしれない失敗が起きたのでとりあえず後回しにする
                 cancelingCheckinReservationQrStrArray.push(targetQr);
                 return false;
@@ -321,10 +359,11 @@ $(function() {
             delete cancelingCheckinReservationsByQrStr[targetQr];
         }).fail(function(jqxhr, textStatus, error) {
             console.log(jqxhr, textStatus, error);
-            $apistatus.html('[' + moment().format('HH:mm:ss') + '] チェックイン取り消しAPI通信エラー発生中');
+            $apistatus_delete.html('[' + moment().format('HH:mm:ss') + '] チェックイン取り消しAPI通信エラー発生中');
             // エラーメッセージ表示
             // alert(jqxhr.responseJSON.errors[0].detail);
         }).always(function() {
+            $apistatus_delete.html('チェックイン取り消し通信中: ' + cancelingCheckinReservationQrStrArray.length + '件');
             setTimeout(function() {
                 busy_syncDeleteCheckinWithApi = false;
                 syncDeleteCheckinWithApi();
@@ -354,7 +393,6 @@ $(function() {
                 console.log('No Data: /checkin/performance/reservations', data);
             }
         }).fail(function(jqxhr, textStatus, error) {
-            $apistatus.html('[' + moment().format('HH:mm:ss') + '] 予約状況取得API通信エラー発生中<br>');
             console.log(jqxhr, textStatus, error);
         }).always(function() {
             if (typeof cb === 'function') { cb(); }
@@ -383,7 +421,7 @@ $(function() {
     dom_clock.innerHTML = moment().format('HH:mm');
     setInterval(function() {
         dom_clock.innerHTML = moment().format('HH:mm');
-    }, 60000);
+    }, 10000);
 
     // 予約情報取得
     getReservations(function() {
@@ -395,6 +433,16 @@ $(function() {
 
     // チェックイン取り消しボタン
     btn_delete.onclick = deleteNewestCheckin;
+
+    // 離脱警告 (AsWeb3でonbeforeunloadは不可なのでナビバー非表示にして移動はこのログアウト以外封じる)
+    document.getElementById('btn_logout').onclick = function(e) {
+        e.preventDefault();
+        if ((enteringReservationQrStrArray.length || cancelingCheckinReservationQrStrArray.length)
+        && !confirm('通信処理中のチェックインがありますが破棄して移動しますか？')) {
+            return false;
+        }
+        location.replace('/checkin/logout');
+    };
 
     // QR読み取りイベント (※1文字ずつkeypressされてくる)
     var tempQrStr = '';
@@ -416,6 +464,7 @@ $(function() {
             tempQrStr += String.fromCharCode(e.keyCode); // ※AsReaderのイベントにはcharCodeが無い
         }
     });
+
     // for debug
     $('.pointname').click(function() {
         check('20170726-300000035-0');

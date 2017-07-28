@@ -5,9 +5,14 @@ page-checkin page-login
 <%- contentFor('body') %>
 <form method="post" class="form-horizontal form-login">
     <div class="form-group form-inline">
-        <label for="username" class="col-sm-3 control-label label-title">ID</label>
+        <label for="username" class="col-sm-3 control-label label-title">チェックポイント</label>
         <div class="col-sm-9">
-            <input type="text" name="username" id="username" class="form-control" value="<%= req.body.username %>">
+            <select name="username" id="username" class="form-control">
+                <option value="">選択してください</option>
+                <% usernames.forEach((username) => { %>
+                <option value="<%- username.id %>" <%- (req.body.username === username.id) ? 'selected' : '' %>><%- username.ja %></option>
+                <% }); %>
+            </select>
             <p class="error message" style="text-align:left;">
                 <% if (errors && errors.username) { %>
                     <%- errors.username.msg %>
@@ -26,11 +31,6 @@ page-checkin page-login
                 <% } %>
             </p>
         </div>
-    </div>
-
-    <div class="radios-group form-group form-inline">
-        <label><input type="radio" name="group" value="DAITEN_AUTH" checked><span>大展望台</span></label>
-        <label><input type="radio" name="group" value="TOPDECK_AUTH"><span>TOP DECK</span></label>
     </div>
 
     <button class="btn btn-next">ログイン</button>

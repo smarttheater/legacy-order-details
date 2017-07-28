@@ -239,12 +239,12 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         cancellationFee = cancelCharge * reservations.length;
         // 金額変更(エラー時はchangeTran内部で例外発生)
         await GMO.CreditService.changeTran({
-            shopId: process.env.GMO_SHOP_ID,
-            shopPass: process.env.GMO_SHOP_PASS,
-            accessId: reservations[0].gmo_access_id,
-            accessPass: reservations[0].gmo_access_pass,
+            shopId: <string>process.env.GMO_SHOP_ID,
+            shopPass: <string>process.env.GMO_SHOP_PASS,
+            accessId: <string>reservations[0].gmo_access_id,
+            accessPass: <string>reservations[0].gmo_access_pass,
             //jobCd: GMO.Util.JOB_CD_CAPTURE,
-            jobCd: reservations[0].gmo_status,
+            jobCd: <string>reservations[0].gmo_status,
             amount: cancellationFee
         });
     } catch (err) {
@@ -369,7 +369,7 @@ async function sendEmail(to: string, text: string): Promise<void> {
         new sendgrid.mail.Content('text/plain', text)
     );
 
-    const sg = sendgrid(process.env.SENDGRID_API_KEY);
+    const sg = sendgrid(<string>process.env.SENDGRID_API_KEY);
     const request = sg.emptyRequest({
         host: 'api.sendgrid.com',
         method: 'POST',
