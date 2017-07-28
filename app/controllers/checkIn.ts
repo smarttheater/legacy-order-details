@@ -375,6 +375,12 @@ function parseQR(qrStr: string): any {
 // tslint:disable-next-line:max-func-body-length
 export async function getPassList(req: Request, res: Response): Promise<void> {
     try {
+        if (req.staffUser === undefined) {
+            throw new Error('staffUser not defined.');
+        }
+        if (!req.staffUser.isAuthenticated()) {
+            throw new Error('staffUser not authenticated.');
+        }
         // 対象日時セット(引数化の可能性あり)
         const selectType: string = 'day';
         //const selectType: string = 'time';

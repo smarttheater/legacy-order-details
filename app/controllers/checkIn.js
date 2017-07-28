@@ -384,6 +384,12 @@ function parseQR(qrStr) {
 function getPassList(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            if (req.staffUser === undefined) {
+                throw new Error('staffUser not defined.');
+            }
+            if (!req.staffUser.isAuthenticated()) {
+                throw new Error('staffUser not authenticated.');
+            }
             // 対象日時セット(引数化の可能性あり)
             const selectType = 'day';
             //const selectType: string = 'time';

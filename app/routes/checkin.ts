@@ -35,6 +35,6 @@ checkinRouter.post('/reservation/:qr', base, userAuthentication, checkInControll
 checkinRouter.delete('/reservation/:qr', base, userAuthentication, checkInController.removeCheckIn);
 
 // api・予約通過確認
-checkinRouter.get('/pass/list', checkInController.getPassList);
+checkinRouter.get('/pass/list', base, userAuthentication, checkInController.getPassList);
 
 export default checkinRouter;
