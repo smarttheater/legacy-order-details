@@ -20,12 +20,15 @@ const cookieName = 'remember_checkin_admin';
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
     if (req.staffUser !== undefined && req.staffUser.isAuthenticated()) {
         res.redirect(checkInHome);
+
         return;
     }
 
     const owners: any[] = await TTTS.Models.Owner.find({ notes: '1' }).exec();
-    if (!owners.length) {
+    //if (!owners.length) {
+    if (owners.length === undefined || owners.length <= 0) {
         next(new Error(Message.Common.unexpectedError));
+
         return;
     }
 
@@ -43,8 +46,8 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
             //         username: req.body.username
             //     }
             // ).exec();
-            const owner: any = owners.filter((owner: any) => {
-                return (owner.username === req.body.username);
+            const owner: any = owners.filter((own: any) => {
+                return (own.username === req.body.username);
             })[0];
 
             if (!owner) {
@@ -90,7 +93,9 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
         displayId: 'Aa-1',
         title: '入場管理ログイン',
         errors: errors,
-        usernames: owners.map((owner) => { return { id: owner.username, ja: owner.name.ja }; }),
+        usernames: owners.map((owner) => {
+            return { id: owner.username, ja: owner.name.ja };
+        }),
         layout: 'layouts/checkIn/layout'
     });
 }

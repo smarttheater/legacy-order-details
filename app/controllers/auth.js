@@ -29,7 +29,8 @@ function login(req, res, next) {
             return;
         }
         const owners = yield TTTS.Models.Owner.find({ notes: '1' }).exec();
-        if (!owners.length) {
+        //if (!owners.length) {
+        if (owners.length === undefined || owners.length <= 0) {
             next(new Error(Message.Common.unexpectedError));
             return;
         }
@@ -46,8 +47,8 @@ function login(req, res, next) {
                 //         username: req.body.username
                 //     }
                 // ).exec();
-                const owner = owners.filter((owner) => {
-                    return (owner.username === req.body.username);
+                const owner = owners.filter((own) => {
+                    return (own.username === req.body.username);
                 })[0];
                 if (!owner) {
                     errors = { username: { msg: 'IDもしくはパスワードの入力に誤りがあります' } };
@@ -84,7 +85,9 @@ function login(req, res, next) {
             displayId: 'Aa-1',
             title: '入場管理ログイン',
             errors: errors,
-            usernames: owners.map((owner) => { return { id: owner.username, ja: owner.name.ja }; }),
+            usernames: owners.map((owner) => {
+                return { id: owner.username, ja: owner.name.ja };
+            }),
             layout: 'layouts/checkIn/layout'
         });
     });
