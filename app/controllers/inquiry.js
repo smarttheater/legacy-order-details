@@ -31,8 +31,13 @@ const util = require("util");
 // const NAME_MAX_LENGTH_TEL: number = 20;
 // セッションキー
 const SESSION_KEY_INQUIRY_RESERVATIONS = 'ttts-ticket-inquiry-reservations';
+const SESSION_KEY_INQUIRY_CANCELLATIONFEE = 'ttts-ticket-inquiry-cancellationfee';
 // ログ出力
 const logger = log4js.getLogger('system');
+// キャンセル料の閾値(日付)
+const cancelDays = conf.get('cancelDays');
+// キャンセル料
+const cancelInfos = conf.get('cancelInfos');
 /**
  * 予約照会検索
  * @memberof inquiry
@@ -158,10 +163,23 @@ function result(req, res, next) {
                 // ＠＠＠＠＠
                 ticketInfos[key].info = `${ticketInfo.ticket_type_name[locale]} ${ticketInfo.charge} × ${ticketInfo.count}${leaf}`;
             });
+            // キャンセル料
+            const today = moment().format('YYYYMMDD');
+            //const today = '20170731';
+            const indexDay = getCancelIndex(reservations[0], today);
+            const enableCancel = indexDay >= 0;
+            let cancellationFee = '**********';
+            if (enableCancel) {
+                const fee = getCancellationFee(reservations, indexDay);
+                req.session[SESSION_KEY_INQUIRY_CANCELLATIONFEE] = fee;
+                cancellationFee = numeral(fee).format('0,0');
+            }
             res.render('inquiry/result', {
                 moment: moment,
                 reservationDocuments: reservations,
                 ticketInfos: ticketInfos,
+                enableCancel: enableCancel,
+                cancellationFee: cancellationFee,
                 layout: 'layouts/inquiry/layout'
             });
         }
@@ -209,24 +227,13 @@ exports.print = print;
  * @param {Response} res
  * @returns {Promise<void>}
  */
+// tslint:disable-next-line:max-func-body-length
 function cancel(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const errorMessage = req.__('Message.UnexpectedError');
-        // 検証(プログラムでセットした値なので""の時はシステムエラー扱い)
-        validateForCancel(req);
-        const validatorResult = yield req.getValidationResult();
-        const validations = req.validationErrors(true);
-        if (!validatorResult.isEmpty()) {
-            res.json({
-                success: false,
-                validation: validations,
-                error: errorMessage
-            });
-            return;
-        }
+        let errorMessage = req.__('Message.UnexpectedError');
+        let cancellationFee = 0;
         // 予約取得
         let reservations;
-        let cancellationFee = 0;
         try {
             reservations = req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
             if (reservations[0].payment_method !== gmo_service_1.Util.PAY_TYPE_CREDIT) {
@@ -237,9 +244,37 @@ function cancel(req, res) {
                 });
                 return;
             }
+            cancellationFee = req.session[SESSION_KEY_INQUIRY_CANCELLATIONFEE];
+        }
+        catch (err) {
+            res.json({
+                success: false,
+                validation: null,
+                error: errorMessage
+            });
+            return;
+        }
+        // 検証
+        //const today = moment().format('YYYYMMDD');
+        //const today = '20170729';
+        //const indexDay: number = getCancelIndex(reservations[0], today);
+        const validations = yield validateForCancel(req, cancellationFee);
+        if (Object.keys(validations).length > 0) {
+            if (validations.hasOwnProperty('cancelDays')) {
+                errorMessage = validations.cancelDays.msg;
+            }
+            res.json({
+                success: false,
+                validation: validations,
+                error: errorMessage
+            });
+            return;
+        }
+        // キャンセル
+        //let cancellationFee: number = 0;
+        try {
             // キャンセル料セット
-            const cancelCharge = Number(conf.get('cancelCharge'));
-            cancellationFee = cancelCharge * reservations.length;
+            //cancellationFee = getCancellationFee(reservations, indexDay);
             // 金額変更(エラー時はchangeTran内部で例外発生)
             yield GMO.CreditService.changeTran({
                 shopId: process.env.GMO_SHOP_ID,
@@ -301,6 +336,22 @@ function cancel(req, res) {
 }
 exports.cancel = cancel;
 /**
+ * キャンセル料取得
+ *
+ * @param {any} reservations
+ * @param {number} indexDay
+ * @return {number} unset
+ */
+function getCancellationFee(reservations, indexDay) {
+    let cancellationFee = 0;
+    for (const reservation of reservations) {
+        // キャンセル料取得
+        const cancelCharge = cancelInfos[reservation.ticket_type][indexDay];
+        cancellationFee += cancelCharge;
+    }
+    return cancellationFee;
+}
+/**
  * 更新時削除フィールド取得
  *
  * @param {any} reservation
@@ -339,15 +390,49 @@ function validate(req) {
     // 電話番号
     req.checkBody('purchaserTel', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
 }
+function getCancelIndex(reservation, today) {
+    const performanceDay = reservation.performance_day;
+    // // キャンセル可能日付(ex:入塔予約日の3日前までOK)取得
+    // const limitDays: number = cancelDays[cancelDays.length - 1];
+    // const limitDay = moment(performanceDay, 'YYYYMMDD').add(limitDays * -1, 'days').format('YYYYMMDD');
+    // // 本日＞キャンセル可能日付はエラー(キャンセル不可)
+    // if (today > limitDay) {
+    //     return -1;
+    // }
+    // 本日が入塔予約日の3日前以内
+    for (let index = cancelDays.length - 1; index >= 0; index -= 1) {
+        const limitDays = cancelDays[index];
+        const limitDay = moment(performanceDay, 'YYYYMMDD').add(limitDays * -1, 'days').format('YYYYMMDD');
+        // キャンセル期限日 <= 本日 <= 来塔予定日
+        if (limitDay <= today && today <= performanceDay) {
+            return index;
+        }
+    }
+    return -1;
+}
 /**
  * キャンセル検証
  * @function updateValidation
  * @param {Request} req
- * @returns {void}
+ * @param {number} cancellationFee
+ * @returns {any}
  */
-function validateForCancel(req) {
-    // 購入番号
-    req.checkBody('payment_no', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.PaymentNo') })).notEmpty();
+function validateForCancel(req, cancellationFee) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // 購入番号
+        req.checkBody('payment_no', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.PaymentNo') })).notEmpty();
+        // 検証
+        const validatorResult = yield req.getValidationResult();
+        const errors = (!validatorResult.isEmpty()) ? req.validationErrors(true) : {};
+        // 入塔予定日+キャンセル可能日が本日日付を過ぎていたらエラー
+        // if (indexDay < 0) {
+        //     (<any>errors).cancelDays = {msg: 'キャンセルできる期限を過ぎています。'};
+        // }
+        if (cancellationFee < 0) {
+            errors.cancelDays = { msg: 'キャンセルできる期限を過ぎています。' };
+        }
+        return errors;
+    });
 }
 /**
  * メールを送信する

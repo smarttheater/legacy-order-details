@@ -48,7 +48,12 @@
 
                     <h3>キャンセル料</h3>
                     <div>
-                        <p class="cancelfee">&yen;400</p>
+                        <p class="cancelfee">
+                        <% if(enableCancel) { %>
+                          &yen
+                        <% } %>
+                        <%- cancellationFee %>
+                        </p>
                     </div>
                 </form>
 
