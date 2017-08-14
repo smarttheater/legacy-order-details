@@ -27,10 +27,12 @@ const SESSION_KEY_INQUIRY_CANCELLATIONFEE: string = 'ttts-ticket-inquiry-cancell
 // ログ出力
 const logger = log4js.getLogger('system');
 
-// キャンセル料の閾値(日付)
-const cancelDays: number[] = conf.get('cancelDays');
+// // キャンセル料の閾値(日付)
+// const cancelDays: number[] = conf.get('cancelDays');
+// // キャンセル料
+// const cancelInfos: any = conf.get('cancelInfos');
 // キャンセル料
-const cancelInfos: any = conf.get('cancelInfos');
+const cancelCharges: any = conf.get('cancelCharges');
 
 /**
  * 予約照会検索
@@ -157,23 +159,19 @@ export async function result(req: Request, res: Response, next: NextFunction): P
             // ＠＠＠＠＠
             (<any>ticketInfos)[key].info = `${ticketInfo.ticket_type_name[locale]} ${ticketInfo.charge} × ${ticketInfo.count}${leaf}`;
         });
-        // キャンセル料
+        // キャンセル料取得
         const today = moment().format('YYYYMMDD');
-        //const today = '20170731';
-        const indexDay: number = getCancelIndex(reservations[0], today);
-        const enableCancel: boolean =  indexDay >= 0;
-        let cancellationFee: string = '**********';
-        if (enableCancel) {
-            const fee: number = getCancellationFee(reservations, indexDay);
-            (<any>req.session)[SESSION_KEY_INQUIRY_CANCELLATIONFEE] = fee;
-            cancellationFee = numeral(fee).format('0,0');
-        }
+        //const today = '20170729';
+        const fee: number = getCancellationFee(reservations, today);
+        (<any>req.session)[SESSION_KEY_INQUIRY_CANCELLATIONFEE] = fee;
+        const cancellationFee: string = numeral(fee).format('0,0');
 
+        // 画面描画
         res.render('inquiry/result', {
             moment: moment,
             reservationDocuments: reservations,
             ticketInfos: ticketInfos,
-            enableCancel: enableCancel,
+            enableCancel: true,
             cancellationFee: cancellationFee,
             layout: 'layouts/inquiry/layout'
         });
@@ -240,6 +238,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
 
             return;
         }
+        // キャンセル料セット
         cancellationFee = (<any>req.session)[SESSION_KEY_INQUIRY_CANCELLATIONFEE];
     } catch (err) {
         res.json({
@@ -251,9 +250,6 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         return;
     }
     // 検証
-    //const today = moment().format('YYYYMMDD');
-    //const today = '20170729';
-    //const indexDay: number = getCancelIndex(reservations[0], today);
     const validations: any = await validateForCancel(req, cancellationFee);
     if (Object.keys(validations).length > 0) {
         if (validations.hasOwnProperty('cancelDays')) {
@@ -269,10 +265,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     }
 
     // キャンセル
-    //let cancellationFee: number = 0;
     try {
-        // キャンセル料セット
-        //cancellationFee = getCancellationFee(reservations, indexDay);
         // 金額変更(エラー時はchangeTran内部で例外発生)
         await GMO.CreditService.changeTran({
             shopId: <string>process.env.GMO_SHOP_ID,
@@ -335,21 +328,54 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     }
 }
 /**
- * キャンセル料取得
+ * キャンセル料合計取得
  *
  * @param {any} reservations
- * @param {number} indexDay
- * @return {number} unset
+ * @param {string} today
+ * @return {number}
  */
-function getCancellationFee(reservations: any[], indexDay: number): number {
+function getCancellationFee(reservations: any[], today: string): number {
     let cancellationFee: number = 0;
     for (const reservation of reservations){
-        // キャンセル料取得
-        const cancelCharge: number = cancelInfos[reservation.ticket_type][indexDay];
-        cancellationFee += cancelCharge;
+        // キャンセル料合計
+        cancellationFee += getCancelCharge(reservation, today);
     }
 
     return cancellationFee;
+}
+/**
+ * キャンセル料取得
+ *
+ * @param {any} reservation
+ * @param {string} today
+ * @param {number} index
+ */
+function getCancelCharge( reservation: any, today: string): number {
+    //  "000001": [{"days": 3, "charge": 600},{"days": 10, "charge": 300}],
+    const cancelInfo: any[] = cancelCharges[reservation.ticket_type];
+    let cancelCharge: number = cancelInfo[cancelInfo.length - 1].charge;
+
+    const performanceDay = reservation.performance_day;
+    let dayTo = performanceDay;
+    let index: number = 0;
+    // 本日が入塔予約日の3日前以内
+    for (index = 0; index < cancelInfo.length; index += 1) {
+        const limitDays: number = cancelInfo[index].days;
+        const dayFrom = moment(performanceDay, 'YYYYMMDD').add(limitDays * -1, 'days').format('YYYYMMDD');
+        // 本日が一番大きい設定日を過ぎていたら-1(キャンセル料は全額)
+        if ( index === 0 && today > dayFrom) {
+            cancelCharge = reservation.charge;
+            break;
+        }
+        // 日付終了日 >= 本日 >= 日付開始日
+        if (dayTo >= today && today > dayFrom) {
+            cancelCharge =  cancelInfo[index - 1].charge;
+            break;
+        }
+        dayTo = dayFrom;
+    }
+
+    return cancelCharge;
 }
 /**
  * 更新時削除フィールド取得
@@ -392,29 +418,6 @@ function validate(req: Request): void {
     req.checkBody('purchaserTel', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
 }
 
-function getCancelIndex(reservation: any, today: string) {
-    const performanceDay = reservation.performance_day;
-    // // キャンセル可能日付(ex:入塔予約日の3日前までOK)取得
-    // const limitDays: number = cancelDays[cancelDays.length - 1];
-    // const limitDay = moment(performanceDay, 'YYYYMMDD').add(limitDays * -1, 'days').format('YYYYMMDD');
-    // // 本日＞キャンセル可能日付はエラー(キャンセル不可)
-    // if (today > limitDay) {
-
-    //     return -1;
-    // }
-    // 本日が入塔予約日の3日前以内
-    for (let index: number = cancelDays.length - 1; index >= 0; index -= 1) {
-        const limitDays: number = cancelDays[index];
-        const limitDay = moment(performanceDay, 'YYYYMMDD').add(limitDays * -1, 'days').format('YYYYMMDD');
-        // キャンセル期限日 <= 本日 <= 来塔予定日
-        if (limitDay <= today && today <= performanceDay) {
-
-            return index;
-        }
-    }
-
-    return -1;
-}
 /**
  * キャンセル検証
  * @function updateValidation

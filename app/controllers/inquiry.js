@@ -34,10 +34,12 @@ const SESSION_KEY_INQUIRY_RESERVATIONS = 'ttts-ticket-inquiry-reservations';
 const SESSION_KEY_INQUIRY_CANCELLATIONFEE = 'ttts-ticket-inquiry-cancellationfee';
 // ログ出力
 const logger = log4js.getLogger('system');
-// キャンセル料の閾値(日付)
-const cancelDays = conf.get('cancelDays');
+// // キャンセル料の閾値(日付)
+// const cancelDays: number[] = conf.get('cancelDays');
+// // キャンセル料
+// const cancelInfos: any = conf.get('cancelInfos');
 // キャンセル料
-const cancelInfos = conf.get('cancelInfos');
+const cancelCharges = conf.get('cancelCharges');
 /**
  * 予約照会検索
  * @memberof inquiry
@@ -163,22 +165,18 @@ function result(req, res, next) {
                 // ＠＠＠＠＠
                 ticketInfos[key].info = `${ticketInfo.ticket_type_name[locale]} ${ticketInfo.charge} × ${ticketInfo.count}${leaf}`;
             });
-            // キャンセル料
+            // キャンセル料取得
             const today = moment().format('YYYYMMDD');
-            //const today = '20170731';
-            const indexDay = getCancelIndex(reservations[0], today);
-            const enableCancel = indexDay >= 0;
-            let cancellationFee = '**********';
-            if (enableCancel) {
-                const fee = getCancellationFee(reservations, indexDay);
-                req.session[SESSION_KEY_INQUIRY_CANCELLATIONFEE] = fee;
-                cancellationFee = numeral(fee).format('0,0');
-            }
+            //const today = '20170729';
+            const fee = getCancellationFee(reservations, today);
+            req.session[SESSION_KEY_INQUIRY_CANCELLATIONFEE] = fee;
+            const cancellationFee = numeral(fee).format('0,0');
+            // 画面描画
             res.render('inquiry/result', {
                 moment: moment,
                 reservationDocuments: reservations,
                 ticketInfos: ticketInfos,
-                enableCancel: enableCancel,
+                enableCancel: true,
                 cancellationFee: cancellationFee,
                 layout: 'layouts/inquiry/layout'
             });
@@ -244,6 +242,7 @@ function cancel(req, res) {
                 });
                 return;
             }
+            // キャンセル料セット
             cancellationFee = req.session[SESSION_KEY_INQUIRY_CANCELLATIONFEE];
         }
         catch (err) {
@@ -255,9 +254,6 @@ function cancel(req, res) {
             return;
         }
         // 検証
-        //const today = moment().format('YYYYMMDD');
-        //const today = '20170729';
-        //const indexDay: number = getCancelIndex(reservations[0], today);
         const validations = yield validateForCancel(req, cancellationFee);
         if (Object.keys(validations).length > 0) {
             if (validations.hasOwnProperty('cancelDays')) {
@@ -271,10 +267,7 @@ function cancel(req, res) {
             return;
         }
         // キャンセル
-        //let cancellationFee: number = 0;
         try {
-            // キャンセル料セット
-            //cancellationFee = getCancellationFee(reservations, indexDay);
             // 金額変更(エラー時はchangeTran内部で例外発生)
             yield GMO.CreditService.changeTran({
                 shopId: process.env.GMO_SHOP_ID,
@@ -336,20 +329,51 @@ function cancel(req, res) {
 }
 exports.cancel = cancel;
 /**
- * キャンセル料取得
+ * キャンセル料合計取得
  *
  * @param {any} reservations
- * @param {number} indexDay
- * @return {number} unset
+ * @param {string} today
+ * @return {number}
  */
-function getCancellationFee(reservations, indexDay) {
+function getCancellationFee(reservations, today) {
     let cancellationFee = 0;
     for (const reservation of reservations) {
-        // キャンセル料取得
-        const cancelCharge = cancelInfos[reservation.ticket_type][indexDay];
-        cancellationFee += cancelCharge;
+        // キャンセル料合計
+        cancellationFee += getCancelCharge(reservation, today);
     }
     return cancellationFee;
+}
+/**
+ * キャンセル料取得
+ *
+ * @param {any} reservation
+ * @param {string} today
+ * @param {number} index
+ */
+function getCancelCharge(reservation, today) {
+    //  "000001": [{"days": 3, "charge": 600},{"days": 10, "charge": 300}],
+    const cancelInfo = cancelCharges[reservation.ticket_type];
+    let cancelCharge = cancelInfo[cancelInfo.length - 1].charge;
+    const performanceDay = reservation.performance_day;
+    let dayTo = performanceDay;
+    let index = 0;
+    // 本日が入塔予約日の3日前以内
+    for (index = 0; index < cancelInfo.length; index += 1) {
+        const limitDays = cancelInfo[index].days;
+        const dayFrom = moment(performanceDay, 'YYYYMMDD').add(limitDays * -1, 'days').format('YYYYMMDD');
+        // 本日が一番大きい設定日を過ぎていたら-1(キャンセル料は全額)
+        if (index === 0 && today > dayFrom) {
+            cancelCharge = reservation.charge;
+            break;
+        }
+        // 日付終了日 >= 本日 >= 日付開始日
+        if (dayTo >= today && today > dayFrom) {
+            cancelCharge = cancelInfo[index - 1].charge;
+            break;
+        }
+        dayTo = dayFrom;
+    }
+    return cancelCharge;
 }
 /**
  * 更新時削除フィールド取得
@@ -389,26 +413,6 @@ function validate(req) {
     req.checkBody('paymentNo', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.PaymentNo') })).notEmpty();
     // 電話番号
     req.checkBody('purchaserTel', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
-}
-function getCancelIndex(reservation, today) {
-    const performanceDay = reservation.performance_day;
-    // // キャンセル可能日付(ex:入塔予約日の3日前までOK)取得
-    // const limitDays: number = cancelDays[cancelDays.length - 1];
-    // const limitDay = moment(performanceDay, 'YYYYMMDD').add(limitDays * -1, 'days').format('YYYYMMDD');
-    // // 本日＞キャンセル可能日付はエラー(キャンセル不可)
-    // if (today > limitDay) {
-    //     return -1;
-    // }
-    // 本日が入塔予約日の3日前以内
-    for (let index = cancelDays.length - 1; index >= 0; index -= 1) {
-        const limitDays = cancelDays[index];
-        const limitDay = moment(performanceDay, 'YYYYMMDD').add(limitDays * -1, 'days').format('YYYYMMDD');
-        // キャンセル期限日 <= 本日 <= 来塔予定日
-        if (limitDay <= today && today <= performanceDay) {
-            return index;
-        }
-    }
-    return -1;
 }
 /**
  * キャンセル検証
