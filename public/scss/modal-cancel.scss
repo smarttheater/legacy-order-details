@@ -22,6 +22,9 @@
         padding: 0;
         margin-top: 1em;
     }
+    .echo {
+        margin-bottom: 1em;
+    }
     form {
         >h3 {
             padding: 0 1em;
@@ -55,6 +58,18 @@
             line-height: 2;
         }
     }
+    .btn {
+        width: 200px;
+        height: 45px;
+    }
+    .btn-cancelrsrv {
+        @include btn-red;
+        margin: 2em auto;
+    }
+    .btns2clm {
+        max-width: 600px;
+        margin-bottom: 2em;
+    }
     #btn_execcancel {
         @include btn-big;
         .show-processing {
@@ -68,12 +83,9 @@
             }
         }
     }
-    .modal-footer {
-        padding-top: 0;
-    }
 }
 
-#modal_completed {
+#modal_cancelcompleted {
     color: #ce0000;
     h2 {
         font-weight: bold;

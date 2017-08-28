@@ -10,6 +10,8 @@ import * as errorController from '../controllers/error';
 //import authRouter from './auth';
 import checkinRouter from './checkin';
 import inquiryRouter from './inquiry';
+import utilRouter from './util';
+
 /**
  * URLルーティング
  *
@@ -28,6 +30,8 @@ export default (app: Application) => {
     app.use('/checkin', base, checkinRouter);
     // チケット照会
     app.use('/inquiry', base, inquiryRouter);
+    // Util
+    app.use('/util', base, utilRouter);
 
     // 404
     app.get('/error/notFound', base, errorController.notFound);

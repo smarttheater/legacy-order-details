@@ -5,6 +5,7 @@ const errorController = require("../controllers/error");
 //import authRouter from './auth';
 const checkin_1 = require("./checkin");
 const inquiry_1 = require("./inquiry");
+const util_1 = require("./util");
 /**
  * URLルーティング
  *
@@ -22,6 +23,8 @@ exports.default = (app) => {
     app.use('/checkin', base, checkin_1.default);
     // チケット照会
     app.use('/inquiry', base, inquiry_1.default);
+    // Util
+    app.use('/util', base, util_1.default);
     // 404
     app.get('/error/notFound', base, errorController.notFound);
     app.use((_, res) => { res.redirect('/error/notFound'); });
