@@ -39,7 +39,7 @@ const logger = log4js.getLogger('system');
 // // キャンセル料
 // const cancelInfos: any = conf.get('cancelInfos');
 // キャンセル料
-const cancelCharges = conf.get('cancelCharges');
+//const cancelCharges: any = conf.get('cancelCharges');
 /**
  * 予約照会検索
  * @memberof inquiry
@@ -352,7 +352,8 @@ function getCancellationFee(reservations, today) {
  */
 function getCancelCharge(reservation, today) {
     //  "000001": [{"days": 3, "charge": 600},{"days": 10, "charge": 300}],
-    const cancelInfo = cancelCharges[reservation.ticket_type];
+    //const cancelInfo: any[] = cancelCharges[reservation.ticket_type];
+    const cancelInfo = reservation.ticket_cancel_charge;
     let cancelCharge = cancelInfo[cancelInfo.length - 1].charge;
     const performanceDay = reservation.performance_day;
     let dayTo = performanceDay;
