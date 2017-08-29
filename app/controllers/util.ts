@@ -4,10 +4,10 @@
  * @namespace util
  */
 
-import { Request, Response } from 'express';
-import { Models, ReservationUtil, PerformanceStatusesModel } from '@motionpicture/ttts-domain';
-import * as moment from 'moment';
+import { Models, PerformanceStatusesModel, ReservationUtil } from '@motionpicture/ttts-domain';
 import * as conf from 'config';
+import { Request, Response } from 'express';
+import * as moment from 'moment';
 
 // チケット情報(descriptionは予約データに持つべき(ticket_description))
 const ticketInfos: any = conf.get('ticketInfos');
@@ -30,20 +30,23 @@ const descriptionInfos: any = conf.get('descriptionInfos');
  * @param {Response} res
  * @returns {Promise<void>}
  */
- export async function performancestatus(req: Request, res: Response): Promise<void> {
+export async function performancestatus(req: Request, res: Response): Promise<void> {
     let error: null | string = null;
     let data: any[] = [];
 
     try {
         // dayはYYYYMMDD
+        // tslint:disable-next-line:no-magic-numbers
         if (!req.query.day || req.query.day.length !== 8) {
             throw new Error();
         }
 
         // パフォーマンス一覧を取得
         const query = Models.Performance.find({ day: req.query.day }, 'day start_time end_time');
-        const performances = <any[]>await query.lean(true).exec().catch((err) => { error = err; })
-        if (!Array.isArray(performances) || !performances.length) {
+        const performances = <any[]>await query.lean(true).exec().catch((err) => { error = err; });
+        // 2017/08/29 update for tslint
+        //if (!Array.isArray(performances) || !performances.length) {
+        if (!Array.isArray(performances) || performances.length > 0) {
             throw new Error();
         }
 
@@ -55,12 +58,19 @@ const descriptionInfos: any = conf.get('descriptionInfos');
 
         // 個々のパフォーマンスオブジェクトに追加
         data = performances.map((performance) => {
-            performance.seat_status = (<any>performanceStatuses)[performance._id] || null;
+            // 2017/08/29 update for tslint
+            //performance.seat_status = (<any>performanceStatuses)[performance._id] || null;
+            performance.seat_status = (<any>performanceStatuses)[performance._id] !== undefined ?
+                                      (<any>performanceStatuses)[performance._id] : null;
+            //---
             delete performance._id;
+
             return performance;
-        })
+        });
     } catch (e) {
-        error = e.message || error;
+        // 2017/08/29 update for tslint
+        //error = e.message || error;
+        error = (e && e.message !== undefined) ? e.message : error;
     }
 
     res.json({
@@ -68,7 +78,6 @@ const descriptionInfos: any = conf.get('descriptionInfos');
         data
     });
 }
-
 
 /**
  * 予約通過確認(api)

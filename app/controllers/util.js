@@ -14,8 +14,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ttts_domain_1 = require("@motionpicture/ttts-domain");
-const moment = require("moment");
 const conf = require("config");
+const moment = require("moment");
 // チケット情報(descriptionは予約データに持つべき(ticket_description))
 const ticketInfos = conf.get('ticketInfos');
 // const ticketInfos: any = {
@@ -41,13 +41,16 @@ function performancestatus(req, res) {
         let data = [];
         try {
             // dayはYYYYMMDD
+            // tslint:disable-next-line:no-magic-numbers
             if (!req.query.day || req.query.day.length !== 8) {
                 throw new Error();
             }
             // パフォーマンス一覧を取得
             const query = ttts_domain_1.Models.Performance.find({ day: req.query.day }, 'day start_time end_time');
             const performances = yield query.lean(true).exec().catch((err) => { error = err; });
-            if (!Array.isArray(performances) || !performances.length) {
+            // 2017/08/29 update for tslint
+            //if (!Array.isArray(performances) || !performances.length) {
+            if (!Array.isArray(performances) || performances.length > 0) {
                 throw new Error();
             }
             // 空席数を取得
@@ -57,13 +60,19 @@ function performancestatus(req, res) {
             }
             // 個々のパフォーマンスオブジェクトに追加
             data = performances.map((performance) => {
-                performance.seat_status = performanceStatuses[performance._id] || null;
+                // 2017/08/29 update for tslint
+                //performance.seat_status = (<any>performanceStatuses)[performance._id] || null;
+                performance.seat_status = performanceStatuses[performance._id] !== undefined ?
+                    performanceStatuses[performance._id] : null;
+                //---
                 delete performance._id;
                 return performance;
             });
         }
         catch (e) {
-            error = e.message || error;
+            // 2017/08/29 update for tslint
+            //error = e.message || error;
+            error = (e && e.message !== undefined) ? e.message : error;
         }
         res.json({
             error,
