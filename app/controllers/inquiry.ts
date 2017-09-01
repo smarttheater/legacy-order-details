@@ -8,7 +8,6 @@
 import { Util as GMOUtil } from '@motionpicture/gmo-service';
 import * as GMO from '@motionpicture/gmo-service';
 import { Models, ReservationUtil, ScreenUtil} from '@motionpicture/ttts-domain';
-//import { Models, ScreenUtil} from '@motionpicture/ttts-domain';
 import * as conf from 'config';
 import { NextFunction, Request, Response } from 'express';
 import * as log4js from 'log4js';
@@ -16,23 +15,14 @@ import * as moment from 'moment';
 import * as numeral from 'numeral';
 import * as sendgrid from 'sendgrid';
 import * as util from 'util';
+import * as Text from '../../common/Const/Text';
+import * as ticket from '../../common/Util/ticket';
 
-// // 購入番号 半角9
-// const NAME_MAX_LENGTH_PAYMENTNO: number = 9;
-// // Tel 半角20
-// const NAME_MAX_LENGTH_TEL: number = 20;
 // セッションキー
 const SESSION_KEY_INQUIRY_RESERVATIONS: string = 'ttts-ticket-inquiry-reservations';
 const SESSION_KEY_INQUIRY_CANCELLATIONFEE: string = 'ttts-ticket-inquiry-cancellationfee';
 // ログ出力
 const logger = log4js.getLogger('system');
-
-// // キャンセル料の閾値(日付)
-// const cancelDays: number[] = conf.get('cancelDays');
-// // キャンセル料
-// const cancelInfos: any = conf.get('cancelInfos');
-// キャンセル料
-//const cancelCharges: any = conf.get('cancelCharges');
 
 /**
  * 予約照会検索
@@ -135,30 +125,7 @@ export async function result(req: Request, res: Response, next: NextFunction): P
             return;
         }
         // 券種ごとに合計枚数算出
-        const keyName: string = 'ticket_type';
-        const ticketInfos: {} = {};
-        for ( const reservation of reservations) {
-            // チケットタイプセット
-            const dataValue = reservation[keyName];
-            // チケットタイプごとにチケット情報セット
-            if (!ticketInfos.hasOwnProperty(dataValue)) {
-                (<any>ticketInfos)[dataValue] = {
-                    ticket_type_name: reservation.ticket_type_name,
-                    charge: `\\${numeral(reservation.charge).format('0,0')}`,
-                    count: 1
-                };
-            } else {
-                (<any>ticketInfos)[dataValue].count += 1;
-            }
-        }
-        const locale = (<any>req.session).locale;
-        const leaf: string = req.__('Label.Leaf');
-        // 券種ごとの表示情報編集
-        Object.keys(ticketInfos).forEach((key) => {
-            const ticketInfo = (<any>ticketInfos)[key];
-            // ＠＠＠＠＠
-            (<any>ticketInfos)[key].info = `${ticketInfo.ticket_type_name[locale]} ${ticketInfo.charge} × ${ticketInfo.count}${leaf}`;
-        });
+        const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
         // キャンセル料取得
         const today = moment().format('YYYYMMDD');
         //const today = '20170729';
@@ -289,7 +256,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     }
     try {
         // キャンセルメール送信
-        await sendEmail(reservations[0].purchaser_email, getCancelMail(reservations));
+        await sendEmail(reservations[0].purchaser_email, getCancelMail(req, reservations, cancellationFee));
 
         logger.info('-----update db start-----');
         // 予約データ解放(AVAILABLEに変更)
@@ -481,83 +448,64 @@ async function sendEmail(to: string, text: string): Promise<void> {
 /**
  * キャンセルメール本文取得
  * @function getCancelMail
- * @param {any[]}reservationsto
+ * @param {Request} req
+ * @param {any[]}reservations
  * @returns {string}
  */
-function getCancelMail(reservations: any[]) : string {
-    const reservation = reservations[0];
-    const ticketTypeJa: string = reservations.map((r) => r.ticket_type_detail_str.ja.replace(/\\/g, '￥')).join('\n');
-    const ticketTypeEn: string = reservations.map((r) => r.ticket_type_detail_str.en.replace(/\\/g, '￥')).join('\n');
-
+function getCancelMail(req: Request, reservations: any[], fee: number) : string {
     const mail : string[] = [];
-    mail.push('TTTS_EVENT_NAMEチケット キャンセル完了のお知らせ');
-    mail.push('Notice of Completion of Cancel for TTTS Tickets');
+    const locale: string = (<any>req.session).locale;
+    const cancellationFee: string = numeral(fee).format('0,0');
 
-    mail.push(`${reservation.purchaser_name.ja} 様`);
-    mail.push(`Dear ${reservation.purchaser_name.en},`);
+    // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
+    mail.push(req.__('Email.TitleCan'));
+    mail.push('');
 
-    mail.push('TTTS_EVENT_NAMEの鑑賞キャンセルを受け付けました');
-    mail.push('キャンセルした内容は以下の通りとなりますのでご確認ください。');
-    mail.push('皆さまに大変ご迷惑をおかけしております事、深くお詫び申し上げます。');
-    mail.push('We have received your request for TTTS tickets cancellation.');
-    mail.push('Please check your cancellation details as follows. ');
-    mail.push('We sincerely apologize for the inconvenience we caused you.');
-    mail.push('--------------------');
+    // XXXX XXXX 様
+    mail.push(req.__('Mr{{name}}', {name: reservations[0].purchaser_name[locale]}));
+    mail.push('');
 
-    mail.push('作品名 (Title) ');
-    mail.push(reservation.film_name.ja);
-    mail.push(reservation.film_name.en);
+    // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
+    mail.push(req.__('Email.Head1').replace('$theater_name$', reservations[0].theater_name[locale]));
+    // お客様がキャンセルされましたチケットの情報は下記の通りです。
+    mail.push(req.__('Email.Head2Can'));
+    mail.push('');
 
-    mail.push('購入番号 (Transaction number) :');
-    mail.push(reservation.payment_no);
+    // 購入番号
+    mail.push(`${req.__('Label.PaymentNo')} : ${reservations[0].payment_no}`);
+    // ご来塔日時
+    const day: string = moment(reservations[0].performance_day, 'YYYYMMDD').format('YYYY/MM/DD');
+    // tslint:disable-next-line:no-magic-numbers
+    const time: string = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
+    mail.push(`${req.__('Label.Day')} : ${day} ${time}`);
+    // 券種、枚数
+    mail.push(`${req.__('Label.TicketType')} ${req.__('Label.TicketCount')}`);
+    // 券種ごとに合計枚数算出
+    const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
+    Object.keys(ticketInfos).forEach((key: string) => {
+        mail.push(ticketInfos[key].info);
+    });
+    mail.push('-------------------------------------');
+    // 合計枚数
+    mail.push(req.__('Email.TotalTicketCount').replace('$reservations_length$', reservations.length.toString()));
+    // キャンセル料
+    mail.push(req.__('Email.CancellationFee').replace('$cancellationFee$', cancellationFee));
+    mail.push('-------------------------------------');
+    mail.push('');
 
-// 劇場 (Location) :
-// <%- reservations[0].get('location_str').ja %>
-// <%- reservations[0].get('theater_address').ja %>
-// <%- reservations[0].get('theater_name').en %> <%- reservations[0].get('screen_name').en %>
-// <%- reservations[0].get('theater_address').en %>
+    // なお、このメールは、「$theater_name$」の予約システムでチケットをキャンセル…
+    mail.push(req.__('Email.Foot1Can').replace('$theater_name$', reservations[0].theater_name[locale]));
+    // ※尚、このメールアドレスは送信専用となっておりますでので、ご返信頂けません。
+    mail.push(req.__('Email.Foot2'));
+    // ご不明※な点がございましたら、下記番号までお問合わせ下さい。
+    mail.push(req.__('Email.Foot3'));
+    mail.push('');
 
-    mail.push('時間 (Date and time) ');
-    mail.push(reservation.performance_start_str.ja);
-    mail.push(reservation.performance_start_str.en);
+    // お問い合わせはこちら
+    mail.push(req.__('Email.Access1'));
+    mail.push(reservations[0].theater_name[locale]);
+    // TEL
+    mail.push(`${req.__('Email.Access2')} : ${conf.get('official_tel_number')}`);
 
-    mail.push('券種 (Type of ticket) :');
-    mail.push(ticketTypeJa);
-    mail.push(ticketTypeEn);
-
-    if (reservation.payment_method === GMOUtil.PAY_TYPE_CVS) {
-        mail.push('コンビニ決済手数料 (Handling charge) :');
-        mail.push(`${ReservationUtil.CHARGE_CVS}x${reservations.length}`);
-    }
-
-    mail.push('購入枚数 (Number of tickets purchased) :');
-    mail.push(reservations.length.toString());
-    mail.push(`${reservations.length} ticket(s)`);
-
-    const totalCharge = reservations.reduce((a, b) => Number(a) + Number(b.charge), 0);
-    if (totalCharge > 0) {
-        mail.push('合計金額 (Total) :');
-        mail.push(`${numeral(totalCharge).format('0,0')}(税込)`);
-        mail.push(`${numeral(totalCharge).format('0,0')} yen (including tax)`);
-    }
-
-    const seatCode: any[] = reservations.map((r) => r.seat_code);
-    mail.push('座席番号 (Seat number) :');
-    mail.push(seatCode.join('、'));
-
-    mail.push('お客様ならびに関係する皆様に多大なるご迷惑、ご心配をお掛けしたことを重ねてお詫び申し上げます。');
-    mail.push('Again, we are deeply sorry for the anxiety and inconvenience we caused you and all parties concerned. ');
-    mail.push('TTTS_EVENT_NAME  TTTS 2016');
-    mail.push('本メールアドレスは送信専用です。返信はできませんのであらかじめご了承ください。');
-    mail.push('本メールに心当たりのない方やチケットに関してご不明な点は、下記電話番号までお問い合わせください。');
-    mail.push('チケットのお問合せ：050-3786-0368　/12:00～18:00（休業：土/日/祝日　TTTS_EVENT_NAME開催期間中は無休）');
-    mail.push(`オフィシャルサイト： ${conf.get('official_website_url')}`);
-    mail.push('This email was sent from a send-only address. Please do not reply to this message.');
-    // tslint:disable-next-line:max-line-length
-    mail.push('If you are not the intended recipient of this email or have any questions about tickets, contact us at the telephone number below.');
-    // tslint:disable-next-line:max-line-length
-    mail.push('For inquiries about tickets: 050-3786-0368/12:00 p.m. to 6:00 p.m. (Closed on Saturdays, Sundays, and national holidays, except during TTTS)');
-    mail.push(`Official website: ${conf.get('official_website_url')}`);
-
-    return(mail.join('\n'));
+    return(mail.join(Text.Common.newline));
 }
