@@ -130,8 +130,15 @@ function result(req, res, next) {
                 next(new Error(messageNotFound));
                 return;
             }
+            // "予約"のデータのみセット(Extra分を削除)
+            const reservationDocuments = [];
+            reservations.forEach((reservation) => {
+                if (reservation.status === ttts_domain_1.ReservationUtil.STATUS_RESERVED) {
+                    reservationDocuments.push(reservation);
+                }
+            });
             // 券種ごとに合計枚数算出
-            const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
+            const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservationDocuments));
             // キャンセル料取得
             const today = moment().format('YYYYMMDD');
             //const today = '20170729';
@@ -141,7 +148,7 @@ function result(req, res, next) {
             // 画面描画
             res.render('inquiry/result', {
                 moment: moment,
-                reservationDocuments: reservations,
+                reservationDocuments: reservationDocuments,
                 ticketInfos: ticketInfos,
                 enableCancel: true,
                 cancellationFee: cancellationFee,
@@ -305,6 +312,9 @@ exports.cancel = cancel;
 function getCancellationFee(reservations, today) {
     let cancellationFee = 0;
     for (const reservation of reservations) {
+        if (reservation.status !== ttts_domain_1.ReservationUtil.STATUS_RESERVED) {
+            continue;
+        }
         // キャンセル料合計
         cancellationFee += getCancelCharge(reservation, today);
     }
