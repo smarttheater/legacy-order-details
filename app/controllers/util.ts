@@ -46,7 +46,7 @@ export async function performancestatus(req: Request, res: Response): Promise<vo
         const performances = <any[]>await query.lean(true).exec().catch((err) => { error = err; });
         // 2017/08/29 update for tslint
         //if (!Array.isArray(performances) || !performances.length) {
-        if (!Array.isArray(performances) || performances.length > 0) {
+        if (!Array.isArray(performances) || performances.length < 1) {
             throw new Error();
         }
 
