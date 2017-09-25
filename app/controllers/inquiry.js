@@ -103,7 +103,7 @@ function renderSearch(res, message, errors) {
         message: message,
         errors: errors,
         event: {
-            start: '2016-10-25T00:00:00+09:00',
+            start: moment(),
             end: '2017-12-31T23:59:59+09:00'
         },
         layout: 'layouts/inquiry/layout'

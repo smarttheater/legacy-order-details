@@ -170,7 +170,7 @@ $(function() {
         } else {
             $.get('/checkin/reservation/' + qrStr).done(function(data) {
                 if (data.error || !data.status || !data.reservation) {
-                    $dfd.reject('予約データ異常' + JSON.stringify({error: data.error, status: data.status}));
+                    $dfd.reject('存在しない予約データです。予約管理より確認してください。' + JSON.stringify({error: data.error, status: data.status}));
                 } else {
                     $dfd.resolve(data.reservation);
                 }
