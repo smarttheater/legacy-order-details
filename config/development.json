@@ -1,12 +1,12 @@
 {
     "official_website_url": "http://motionpicture.jp",
     "meta": {
-        "keywords": "TTTS_EVENT_NAME, 2016, TTTS, コンペティション,Competiton,",
-        "description": "TTTS_EVENT_NAMEは2016年10月25日（火）から11月3日（木・祝）の10日間開催いたします。"
+        "keywords": "TOKYO TOWER TOP DECK TOUR",
+        "description": "TOKYO TOWER TOP DECK TOUR"
     },
     "email": {
         "from": "noreply@default.ttts.motionpicture.jp",
-        "fromname": "TTTS_EVENT_NAME Online Ticket [dev]"
+        "fromname": "TTTS_EVENT_NAME Online Ticket"
     },
     "gmo_payment_api_link_multi_entry": "https://pt01.mul-pay.jp/link/tshop00026838/Multi/Entry",
     "datetimes": {
