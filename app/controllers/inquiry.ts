@@ -248,8 +248,8 @@ export async function cancel(req: Request, res: Response): Promise<void> {
             shopPass: <string>process.env.GMO_SHOP_PASS,
             accessId: <string>reservations[0].gmo_access_id,
             accessPass: <string>reservations[0].gmo_access_pass,
-            //jobCd: GMO.Util.JOB_CD_CAPTURE,
-            jobCd: <string>reservations[0].gmo_status,
+            jobCd: GMO.Util.JOB_CD_CAPTURE,
+            //jobCd: <string>reservations[0].gmo_status,
             amount: cancellationFee
         });
     } catch (err) {

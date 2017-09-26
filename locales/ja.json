@@ -167,9 +167,9 @@
 		"Unsent": "送信できませんでした",
 		"PleaseReadBarcode": "QRコードを読み取ってください",
 		"seatsLimit{{limit}}": "選択出来る座席は{{limit}}席までとなります",
-		"UnexpectedError": "＠＠＠システムエラーが発生しました。ご不便をおかけして申し訳ありませんがしばらく経ってから再度お試しください。＠＠＠",
+		"UnexpectedError": "システムエラーが発生しました。ご不便をおかけして申し訳ありませんがしばらく経ってから再度お試しください。",
 		"Expired": "期限切れです",
-		"NotFound": "＠＠＠お探しのページが見つかりません＠＠＠",
+		"NotFound": "お探しのページが見つかりません",
 		"UnavailableSeat": "指定できない座席です",
 		"SelectedSeatsUnavailable": "選択された座席は指定できません",
 		"NoMoreReservation": "既に選択出来る座席の上限に達しています",
@@ -186,7 +186,7 @@
 		"invalidPaymentNoOrLast4DigitsOfTel": "購入番号または電話番号下4ケタに誤りがあります",
 		"cardNumber": "※半角数字、ハイフン「-」なしで入力してください",
 		"securitycode": "セキュリティーコードについて",
-		"ReservationNotFound": "＠＠＠ご指定の予約データは見つかりませんでした＠＠＠"
+		"ReservationNotFound": "ご指定の予約データは見つかりませんでした"
 	},
 	"{{price}} yen": "{{price}} 円",
 	"Mr{{name}}": "{{name}} 様",

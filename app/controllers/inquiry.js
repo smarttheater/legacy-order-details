@@ -248,8 +248,8 @@ function cancel(req, res) {
                 shopPass: process.env.GMO_SHOP_PASS,
                 accessId: reservations[0].gmo_access_id,
                 accessPass: reservations[0].gmo_access_pass,
-                //jobCd: GMO.Util.JOB_CD_CAPTURE,
-                jobCd: reservations[0].gmo_status,
+                jobCd: GMO.Util.JOB_CD_CAPTURE,
+                //jobCd: reservations[0].gmo_status,
                 amount: cancellationFee
             });
         }
