@@ -450,7 +450,13 @@ function groupingCheckinsByWhere(dataByPerformance) {
     Object.keys(dataByPerformance).forEach((performanceId) => {
         const dataCheckin = {};
         dataByPerformance[performanceId].reservations.forEach((reservation) => {
+            const tempCheckinWhereArray = [];
             reservation.checkins.forEach((checkin) => {
+                // 同一ポイントでの重複チェックインを除外 ※チェックポイントに現れた物理的な人数を数えるのが目的なのでチェックイン行為の重複はここでは問題にしない
+                if (tempCheckinWhereArray.indexOf(checkin.where) !== -1) {
+                    return true;
+                }
+                tempCheckinWhereArray.push(checkin.where);
                 if (!dataCheckin.hasOwnProperty(checkin.where)) {
                     //dataCheckin[checkin.where] = [];
                     dataCheckin[checkin.where] = { checkins: [], arrived: {} };
@@ -473,6 +479,7 @@ function groupingCheckinsByWhere(dataByPerformance) {
                 checkin.ticket_type = reservation.ticket_type; // ticket_type(00099)
                 //checkin.ticket_type_name = reservation.ticket_type_name;
                 dataCheckin[checkin.where].checkins.push(checkin);
+                return true;
             });
         });
         dataCheckins[performanceId] = dataCheckin;
