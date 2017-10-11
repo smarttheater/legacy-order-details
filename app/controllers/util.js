@@ -45,11 +45,9 @@ function performancestatus(req, res) {
             if (!req.query.day || req.query.day.length !== 8) {
                 throw new Error();
             }
-            // パフォーマンス一覧を取得
-            const query = ttts_domain_1.Models.Performance.find({ day: req.query.day }, 'day start_time end_time');
+            // パフォーマンス一覧を取得 (start_time昇順ソート)
+            const query = ttts_domain_1.Models.Performance.find({ day: req.query.day }, 'day start_time end_time').sort({ start_time: 1 });
             const performances = yield query.lean(true).exec().catch((err) => { error = err; });
-            // 2017/08/29 update for tslint
-            //if (!Array.isArray(performances) || !performances.length) {
             if (!Array.isArray(performances) || performances.length < 1) {
                 throw new Error();
             }
@@ -58,20 +56,15 @@ function performancestatus(req, res) {
             if (typeof performanceStatuses !== 'object') {
                 throw new Error('typeof performanceStatuses !== "object"');
             }
-            // 個々のパフォーマンスオブジェクトに追加
+            // 空席数を個々のパフォーマンスオブジェクトに追加
             data = performances.map((performance) => {
-                // 2017/08/29 update for tslint
-                //performance.seat_status = (<any>performanceStatuses)[performance._id] || null;
                 performance.seat_status = performanceStatuses[performance._id] !== undefined ?
                     performanceStatuses[performance._id] : null;
-                //---
                 delete performance._id;
                 return performance;
             });
         }
         catch (e) {
-            // 2017/08/29 update for tslint
-            //error = e.message || error;
             error = (e && e.message !== undefined) ? e.message : error;
         }
         res.json({

@@ -249,7 +249,7 @@ function cancel(req, res) {
                 accessId: reservations[0].gmo_access_id,
                 accessPass: reservations[0].gmo_access_pass,
                 jobCd: GMO.Util.JOB_CD_CAPTURE,
-                //jobCd: reservations[0].gmo_status,
+                //jobCd: <string>reservations[0].gmo_status,
                 amount: cancellationFee
             });
         }
