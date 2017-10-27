@@ -3,6 +3,14 @@ $(function() {
     /* チェックインに入れる情報 */
     var checkPointGroup = document.getElementById('input_pointgroup').value;
     var checkUserName = document.getElementById('input_username').value;
+    if (!checkPointGroup || !checkUserName) {
+        alert('ログインしたIDに紐付いたチェックポイント情報が読み取れませんでした。ログイン情報を確認してください。');
+        return window.location.replace('/checkin/logout')
+    }
+
+    /* 通過判定分岐用 */
+    // var is_DAITEN_AUTH = (checkPointGroup === 'DAITEN_AUTH');
+    var is_TOPDECK_AUTH = (checkPointGroup === 'TOPDECK_AUTH');
 
     /* 取得済み予約キャッシュ */
     var reservationsById = {};
@@ -100,18 +108,28 @@ $(function() {
         $checkinlogtablebody.html(checkinLogHtmlArray.reverse().join(''));
 
 
-        // 今実行されたチェックイン(checkinsの最新)の判定
+        // 今実行されたチェックイン(checkinsの最新)
         var currentCheckin = reservation.checkins[reservation.checkins.length - 1];
         // 判定されたエラー
         var errmsg = [];
+
+        // 予約パフォーマンスの時間枠
         var moment_start = moment(reservation.performance_day + reservation.performance_start_time, 'YYYYMMDDHHmm');
         var moment_end = moment(reservation.performance_day + reservation.performance_end_time, 'YYYYMMDDHHmm');
+        // トップデッキの入り口では予約時間枠の10分後までならOKとする
+        if (is_TOPDECK_AUTH) {
+            moment_end.add('10', 'm');
+        }
+
+        // checkinの_id(タイムスタンプ)がパフォーマンスの時間枠外だったらNG
         if (!moment(currentCheckin._id).isBetween(moment_start, moment_end)) {
             errmsg.push('入塔時間外');
         }
+        // 同一グループでのチェックインが重複してたらNG
         if (countByCheckinGroup[currentCheckin.where] > 1) {
             errmsg.push('多重チェックイン');
         }
+
         if (errmsg.length) {
             $body.addClass('is-ng-currentcheckin'); // チェックイン履歴の一番上が赤くなる
             audioNo.play();
@@ -467,6 +485,9 @@ $(function() {
 
     // for debug
     $('.pointname').click(function() {
+        if (document.documentElement.className.indexOf('development') === -1) {
+            return false;
+        }
         check('20170726-300000035-0');
     });
 });
