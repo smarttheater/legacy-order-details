@@ -267,8 +267,17 @@ function cancel(req, res) {
             // キャンセルメール送信
             yield sendEmail(reservations[0].purchaser_email, getCancelMail(req, reservations, cancellationFee));
             logger.info('-----update db start-----');
-            // 予約データ解放(AVAILABLEに変更)
             const promises = (reservations.map((reservation) => __awaiter(this, void 0, void 0, function* () {
+                // 2017/11 本体チケットかつ特殊チケットの時、時間ごとの予約データ解放(AVAILABLEに変更)
+                if (reservation.ticket_ttts_extension.category !== ttts_domain_1.TicketTypeGroupUtil.TICKET_TYPE_CATEGORY_NORMAL &&
+                    reservation.seat_code === reservation.reservation_ttts_extension.seat_code_base) {
+                    yield ttts_domain_1.Models.ReservationPerHour.findOneAndUpdate({ reservation_id: reservation._id.toString() }, {
+                        $set: { status: ttts_domain_1.ReservationUtil.STATUS_AVAILABLE },
+                        $unset: { expired_at: 1, reservation_id: 1 }
+                    }, { new: true }).exec();
+                    logger.info('ReservationPerHour clear reservation_id=', reservation._id.toString());
+                }
+                // 予約データ解放(AVAILABLEに変更)
                 yield ttts_domain_1.Models.Reservation.findByIdAndUpdate(reservation._id, {
                     $set: { status: ttts_domain_1.ReservationUtil.STATUS_AVAILABLE },
                     $unset: getUnsetFields(reservation)

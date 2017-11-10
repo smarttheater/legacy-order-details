@@ -7,7 +7,7 @@
  */
 import { Util as GMOUtil } from '@motionpicture/gmo-service';
 import * as GMO from '@motionpicture/gmo-service';
-import { Models, ReservationUtil, ScreenUtil} from '@motionpicture/ttts-domain';
+import { Models, ReservationUtil, ScreenUtil, TicketTypeGroupUtil } from '@motionpicture/ttts-domain';
 import * as conf from 'config';
 import { NextFunction, Request, Response } from 'express';
 import * as log4js from 'log4js';
@@ -268,13 +268,26 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         await sendEmail(reservations[0].purchaser_email, getCancelMail(req, reservations, cancellationFee));
 
         logger.info('-----update db start-----');
-        // 予約データ解放(AVAILABLEに変更)
         const promises = ((<any>reservations).map(async(reservation: any) => {
+            // 2017/11 本体チケットかつ特殊チケットの時、時間ごとの予約データ解放(AVAILABLEに変更)
+            if (reservation.ticket_ttts_extension.category !== TicketTypeGroupUtil.TICKET_TYPE_CATEGORY_NORMAL &&
+                reservation.seat_code === reservation.reservation_ttts_extension.seat_code_base) {
+                await Models.ReservationPerHour.findOneAndUpdate(
+                    { reservation_id: reservation._id.toString() },
+                    {
+                        $set: {status: ReservationUtil.STATUS_AVAILABLE},
+                        $unset: {expired_at: 1, reservation_id: 1}
+                    },
+                    { new: true }
+                ).exec();
+                logger.info('ReservationPerHour clear reservation_id=', reservation._id.toString());
+            }
+            // 予約データ解放(AVAILABLEに変更)
             await Models.Reservation.findByIdAndUpdate(
                 reservation._id,
                 {
-                     $set: { status: ReservationUtil.STATUS_AVAILABLE },
-                     $unset: getUnsetFields(reservation)
+                    $set: { status: ReservationUtil.STATUS_AVAILABLE },
+                    $unset: getUnsetFields(reservation)
                 }
             ).exec();
             logger.info('Reservation clear =', JSON.stringify(reservation));

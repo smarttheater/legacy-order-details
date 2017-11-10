@@ -24,10 +24,11 @@ export default (req: Request, res: Response, next: NextFunction) => {
 
     // util用apiはあけておく
     if (req.originalUrl === '/util/performancestatus' ||
-        req.originalUrl === '/util/pass/list'){
+        req.originalUrl === '/util/pass/list') {
         next();
+
         return;
-    } 
+    }
 
     // SendGridイベント通知に対してはオープンにする
     if (req.originalUrl === '/sendGrid/event/notify') {
