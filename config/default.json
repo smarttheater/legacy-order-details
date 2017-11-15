@@ -43,7 +43,8 @@
             "error": "ALL"
         }
     },
-    //"cancelCharge" : 400,
+    "cancelCharge" : 1000,
+    "cancellableDays" : 3,
     "ticketInfos" : {
         "000004": { "description": "1"},
         "000005": { "description": "1"},

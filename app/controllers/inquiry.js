@@ -31,6 +31,10 @@ const SESSION_KEY_INQUIRY_RESERVATIONS = 'ttts-ticket-inquiry-reservations';
 const SESSION_KEY_INQUIRY_CANCELLATIONFEE = 'ttts-ticket-inquiry-cancellationfee';
 // ログ出力
 const logger = log4js.getLogger('system');
+// キャンセル料(1予約あたり1000円固定)
+const CANCEL_CHARGE = Number(conf.get('cancelCharge'));
+// キャンセル可能な日数(3日前まで)
+const CANCELLABLE_DAYS = Number(conf.get('cancellableDays'));
 /**
  * 予約照会検索
  * @memberof inquiry
@@ -140,9 +144,11 @@ function result(req, res, next) {
             // 券種ごとに合計枚数算出
             const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservationDocuments));
             // キャンセル料取得
-            const today = moment().format('YYYYMMDD');
-            //const today = '20170729';
-            const fee = getCancellationFee(reservations, today);
+            // 2017/11/15 キャンセル料は1予約あたり1000円固定
+            //const today = moment().format('YYYYMMDD');
+            //const fee: number = getCancellationFee(reservations, today);
+            const fee = CANCEL_CHARGE;
+            //---
             req.session[SESSION_KEY_INQUIRY_CANCELLATIONFEE] = fee;
             const cancellationFee = numeral(fee).format('0,0');
             // 画面描画
@@ -228,7 +234,8 @@ function cancel(req, res) {
             return;
         }
         // 検証
-        const validations = yield validateForCancel(req, cancellationFee);
+        //const validations: any = await validateForCancel(req, cancellationFee);
+        const validations = yield validateForCancel(req, reservations[0].performance_day);
         if (Object.keys(validations).length > 0) {
             if (validations.hasOwnProperty('cancelDays')) {
                 errorMessage = validations.cancelDays.msg;
@@ -318,17 +325,17 @@ exports.cancel = cancel;
  * @param {string} today
  * @return {number}
  */
-function getCancellationFee(reservations, today) {
-    let cancellationFee = 0;
-    for (const reservation of reservations) {
-        if (reservation.status !== ttts_domain_1.ReservationUtil.STATUS_RESERVED) {
-            continue;
-        }
-        // キャンセル料合計
-        cancellationFee += getCancelCharge(reservation, today);
-    }
-    return cancellationFee;
-}
+// function getCancellationFee(reservations: any[], today: string): number {
+//     let cancellationFee: number = 0;
+//     for (const reservation of reservations){
+//         if (reservation.status !== ReservationUtil.STATUS_RESERVED) {
+//             continue;
+//         }
+//         // キャンセル料合計
+//         cancellationFee += getCancelCharge(reservation, today);
+//     }
+//     return cancellationFee;
+// }
 /**
  * キャンセル料取得
  *
@@ -336,32 +343,30 @@ function getCancellationFee(reservations, today) {
  * @param {string} today
  * @param {number} index
  */
-function getCancelCharge(reservation, today) {
-    //  "000001": [{"days": 3, "charge": 600},{"days": 10, "charge": 300}],
-    //const cancelInfo: any[] = cancelCharges[reservation.ticket_type];
-    const cancelInfo = reservation.ticket_cancel_charge;
-    let cancelCharge = cancelInfo[cancelInfo.length - 1].charge;
-    const performanceDay = reservation.performance_day;
-    let dayTo = performanceDay;
-    let index = 0;
-    // 本日が入塔予約日の3日前以内
-    for (index = 0; index < cancelInfo.length; index += 1) {
-        const limitDays = cancelInfo[index].days;
-        const dayFrom = moment(performanceDay, 'YYYYMMDD').add(limitDays * -1, 'days').format('YYYYMMDD');
-        // 本日が一番大きい設定日を過ぎていたら-1(キャンセル料は全額)
-        if (index === 0 && today > dayFrom) {
-            cancelCharge = reservation.charge;
-            break;
-        }
-        // 日付終了日 >= 本日 >= 日付開始日
-        if (dayTo >= today && today > dayFrom) {
-            cancelCharge = cancelInfo[index - 1].charge;
-            break;
-        }
-        dayTo = dayFrom;
-    }
-    return cancelCharge;
-}
+// function getCancelCharge( reservation: any, today: string): number {
+//     const cancelInfo: any[] = reservation.ticket_cancel_charge;
+//     let cancelCharge: number = cancelInfo[cancelInfo.length - 1].charge;
+//     const performanceDay = reservation.performance_day;
+//     let dayTo = performanceDay;
+//     let index: number = 0;
+//     // 本日が入塔予約日の3日前以内
+//     for (index = 0; index < cancelInfo.length; index += 1) {
+//         const limitDays: number = cancelInfo[index].days;
+//         const dayFrom = moment(performanceDay, 'YYYYMMDD').add(limitDays * -1, 'days').format('YYYYMMDD');
+//         // 本日が一番大きい設定日を過ぎていたら-1(キャンセル料は全額)
+//         if ( index === 0 && today > dayFrom) {
+//             cancelCharge = reservation.charge;
+//             break;
+//         }
+//         // 日付終了日 >= 本日 >= 日付開始日
+//         if (dayTo >= today && today > dayFrom) {
+//             cancelCharge =  cancelInfo[index - 1].charge;
+//             break;
+//         }
+//         dayTo = dayFrom;
+//     }
+//     return cancelCharge;
+// }
 /**
  * 更新時削除フィールド取得
  *
@@ -405,10 +410,10 @@ function validate(req) {
  * キャンセル検証
  * @function updateValidation
  * @param {Request} req
- * @param {number} cancellationFee
+ * @param {string} day
  * @returns {any}
  */
-function validateForCancel(req, cancellationFee) {
+function validateForCancel(req, day) {
     return __awaiter(this, void 0, void 0, function* () {
         // 購入番号
         req.checkBody('payment_no', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.PaymentNo') })).notEmpty();
@@ -416,10 +421,13 @@ function validateForCancel(req, cancellationFee) {
         const validatorResult = yield req.getValidationResult();
         const errors = (!validatorResult.isEmpty()) ? req.validationErrors(true) : {};
         // 入塔予定日+キャンセル可能日が本日日付を過ぎていたらエラー
-        // if (indexDay < 0) {
+        // if (cancellationFee < 0) {
         //     (<any>errors).cancelDays = {msg: 'キャンセルできる期限を過ぎています。'};
         // }
-        if (cancellationFee < 0) {
+        // 入塔予定日の3日前までキャンセル可能(3日前を過ぎていたらエラー)
+        const today = moment().format('YYYY/MM/DD');
+        const maxCancellableDay = moment(day, 'YYYY/MM/DD').add('days', CANCELLABLE_DAYS * -1).format('YYYY/MM/DD');
+        if (maxCancellableDay < today) {
             errors.cancelDays = { msg: 'キャンセルできる期限を過ぎています。' };
         }
         return errors;
