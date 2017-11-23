@@ -48,11 +48,14 @@ export async function search(req: Request, res: Response, next: NextFunction): P
 
             return;
         }
+        // conditions['name.ja'] = { $regex: `^${filmNameJa}` };
+
         //存在チェック
         const conditions = {
             performance_day: req.body.day,
             payment_no: req.body.paymentNo,
-            purchaser_tel: req.body.purchaserTel
+            //purchaser_tel: req.body.purchaserTel
+            purchaser_tel: { $regex: `${req.body.purchaserTel}$` }
         };
         try {
             // 総数検索
