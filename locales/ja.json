@@ -155,6 +155,7 @@
 		"RequiredAgree": "同意してください",
 		"required{{fieldName}}": "{{fieldName}}が未入力です",
 		"maxLength{{fieldName}}{{max}}": "{{fieldName}}は{{max}}文字以内で入力してください",
+		"minLength{{fieldName}}{{min}}": "{{fieldName}}は{{min}}文字で入力してください",
 		"invalid{{fieldName}}": "{{fieldName}}が不適切です",
 		"regexTelRange{{fieldName}}{{min}}{{max}}": "{{fieldName}}は{{min}}桁以上{{max}}桁以内で入力してください",
 		"match{{fieldName}}": "{{fieldName}}が一致しません",
