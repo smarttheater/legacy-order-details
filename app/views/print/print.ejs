@@ -3,13 +3,38 @@
 <head>
 <meta charset="utf-8">
 <title>Tokyo Tower PRINT TICKET</title>
+<style>
+@page {
+    size: A4 portrait;
+    margin: 0;
+}
+html,
+body {
+    width: 210mm;
+    height: 297mm;
+}
+</style>
 <link href="/css/print.css" rel="stylesheet">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="/js/lib/url.min.js"></script>
+<script src="/js/common.js"></script>
 </head>
 <body>
 
+<div class="noprint">
+    <%- include('../common/_select_locale.ejs') %>
+</div>
+
 <%
-moment.locale(locale);
+let momentLocale = locale;
+if (momentLocale === 'zh-hans') {
+    momentLocale = 'zh-cn';
+} else if (momentLocale === 'zh-hant') {
+    momentLocale = 'zh-tw';
+}
+moment.locale(momentLocale);
 for (let reservation of reservations) {
+    let isStaffReservation = (reservation.purchaser_group === '04');
 %>
 <div class="printcontent">
 
@@ -18,20 +43,20 @@ for (let reservation of reservations) {
             <img src="/images/common/logo.png">
         </div>
         <div class="title">
-            チケット兼領収書
+            <%- __('Label.TicketAndReceipt') %>
         </div>
     </div>
 
     <div class="pr-thanks">
-        この度はご購入いただき誠にありがとうございます。鑑賞当日はこちらのチケットをご持参してQRコードをご提示頂いてご入場下さい。<br>
+        <%- __('Message.TicketInfoMsg') %><br>
     </div>
 
     <div class="pr-qrcode pr-bg">
         <img class="pr-bg-image" src="/images/print/bg_gray.png">
         <div class="pr-bg-content inner">
             <h2>
-                こちらのQRコードを入場口の認証スタッフにご提示してご入場ください。<br>
-                <span class="smalltext">(QR コードは、入塔口と大展望台入塔口もしくはTOP DECK 入塔口の2 箇所でご提示していただきます。)</span>
+                <%- __('Message.TicketQRInfo') %><br>
+                <span class="smalltext"><%- __('Message.TicketQRAuthInfo') %></span>
             </h2>
             <div class="wrapper-qrimg pr-bg">
                 <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>">
@@ -47,45 +72,50 @@ for (let reservation of reservations) {
                 <tr>
                     <td class="main-info">
                         <div class="pr-rsrvnum">
-                            <h3>購入番号</h3>
+                        <h3><%- __('Label.PaymentNo') %></h3>
                             <strong><%- reservation.get('payment_no') %></strong>
                         </div>
 
                         <div class="pr-time">
-                            <h3>ご来塔ご予約日</h3>
+                            <h3><%- __('Label.PurchaseContentDay') %></h3>
                             <strong><%- moment(reservation.get('performance_day'), 'YYYYMMDD').format('LL (ddd)') %></strong>
                         </div>
 
                         <div class="pr-time">
-                            <h3>入塔受付時間</h3>
+                            <h3><%- __('Label.PurchaseContentTime') %></h3>
                             <strong><%- moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') %> - <%- moment(reservation.get('performance_end_time'), 'HHmm').format('HH:mm') %>(JST)</strong>
-                            <p class="smalltext timenotice">※混雑する場合がございますので、<span class="bold">入塔受付時間の15分前には各入塔口にお越し下さい。</span></p>
+                        </div>
+
+                        <div class="pr-time">
+                            <h3><%- __('Label.PurchaseEntryTime') %></h3>
+                            <strong><%- moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') %> - <%- moment(reservation.get('performance_end_time'), 'HHmm').format('HH:mm') %>(JST)</strong>
+                            <%
+                            var time = moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm');
+                            var timeEarly = moment(reservation.get('performance_start_time'), 'HHmm').add(-30, 'minutes').format('HH:mm');
+                            if (moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') !== "09:00") { %>
+                                <p class="smalltext timenotice">※<%- __('Message.EntryFootTown') %><br><%- timeEarly %>～<%- time %></p>
+                            <% } %>
                         </div>
 
                         <div class="pr-ticket">
-                            <h3>券種</h3>
-                            <strong><%- reservation.get('ticket_type_name')[locale] %> / &yen;<%- reservation.get('ticket_type_charge') %></strong>
+                            <h3><%- __('Label.TicketType') %></h3>
+                            <strong><%- reservation.get('ticket_type_name')[locale] %> / <%- ((!isStaffReservation) ? '&yen;' + reservation.get('ticket_type_charge') + '&nbsp;' : '') %>(<%- reservation.seat_code %>)</strong>
                         </div>
 
                         <div class="pr-term">
-                            <h4>ご注意事項</h4>
+                            <h4><%- __('Label.ImportantNotes') %></h4>
                             <p>
-                                ※チケットのキャンセルは、ご来塔日の３日前までにお手続きを行ってください。<br>
-                                ※チケットのキャンセル時に、キャンセル料を徴収させていただきます。<br>
-                                ※入塔受付時間を過ぎた場合、ご入塔いただけない場合があります。<br>
-                                ※ご来塔日当日のご予約時間の変更は、お受付いたしかねます。<br>
-                                ※交通渋滞による来塔遅延、その他いかなる場合でも、当日のチケット変更およびキャンセル・払い戻しはいたしません。<br>
-                                ※購入したチケットの転売は、固く禁止しております。転売が原因となるお客様間の不利益や損害などに対して、一切の責任を負わないものとします。
+                                <%- __('Message.TicketNotesContents') %>
                             </p>
                         </div>
 
                         <div class="pr-contact">
-                            <h4>チケットのお問い合わせ</h4>
+                            <h4><%- __('Label.ContactUsForTickets') %></h4>
                             <p>
-                                03-3433-5111 / 9:00 am ～ 17:00 pm ( 年中無休)
+                                03-3433-5111 / 9:00 am ～ 17:00 pm (<%- __('Label.ContactAvailableDay') %>)
                             </p>
 
-                            <h4>オフィシャルサイト</h4>
+                            <h4><%- __('Label.OfficialSite') %></h4>
                             <p>
                                 https://www.tokyotower.co.jp
                             </p>
@@ -118,8 +148,8 @@ for (let reservation of reservations) {
                         <hr>
 
                         <div class="stafftable">
-                            <h3>QR認証場所</h3>
-                            <h4><img class="mark" src="/images/print/staff_mark.svg">：QR認証場所</h4>
+                            <h3><%- __('Label.StaffPosition') %></h3>
+                            <h4><img class="mark" src="/images/print/staff_mark.svg">：<%- __('Label.StaffPosition') %></h4>
                             <table>
                                 <tbody>
                                     <tr>
@@ -127,10 +157,11 @@ for (let reservation of reservations) {
                                             <img src="/images/print/staff_map_1.svg">
                                         </td>
                                         <td>
-                                            <h4>フットタウン 1F</h4>
-                                            <p>フットタウン1Fの展望台直通エレベーター前にて、QRコードの認証を行います。</p>
+                                            <h4><%- __('Label.FootTown') %></h4>
+                                            <p><%- __('Message.FootTownInfo') %></p>
                                         </td>
                                     </tr>
+                                    <!--
                                     <tr>
                                         <td>
                                             <img src="/images/print/staff_map_2.svg">
@@ -140,6 +171,7 @@ for (let reservation of reservations) {
                                             <p>フットタウンRFの昇り階段入り口にて、QRコードの認証を行います。</p>
                                         </td>
                                     </tr>
+                                    -->
                                 </tbody>
                             </table>
                         </div>

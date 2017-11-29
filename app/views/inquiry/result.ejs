@@ -35,6 +35,12 @@ page-inquiry page-result page-complete
             </td>
         </tr>
         <tr>
+            <th>ツアーナンバー</th>
+            <td>
+                <%- reservationDocuments[0].performance_ttts_extension.tour_number %>
+            </td>
+        </tr>
+        <tr>
             <th><%- __('Label.QrCode') %></th>
             <td>
                 <% reservationDocuments.forEach((reservation, index) => {

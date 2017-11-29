@@ -35,9 +35,8 @@ export async function performancestatus(req: Request, res: Response): Promise<vo
     let data: any[] = [];
 
     try {
-        // dayはYYYYMMDD
-        // tslint:disable-next-line:no-magic-numbers
-        if (!req.query.day || req.query.day.length !== 8) {
+        // dayはYYYYMMDDの数字8文字
+        if (!/^\d{8}$/.test(req.query.day)) {
             throw new Error();
         }
 

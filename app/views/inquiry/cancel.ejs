@@ -26,6 +26,10 @@
                         <%- day.format('LL(ddd) ') %> <%- start %>～<%- end %>
                         <hr>
 
+                        <h4>ツアーナンバー</h4>
+                        <%- reservationDocuments[0].performance_ttts_extension.tour_number %>
+                        <hr>
+
                         <h4>券種/枚数</h4>
                         <% Object.keys(ticketInfos).forEach(function(key) { %>
                             <p><%- ticketInfos[key].info %></p>

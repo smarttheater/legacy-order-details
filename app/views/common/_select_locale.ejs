@@ -1,0 +1,10 @@
+<select name="locale" id="select_locale">
+<%
+    const locales = conf.get('locales');
+    Object.keys(locales).forEach(function(locale) {
+%>
+        <option value="<%= locale %>"><%= locales[locale] %></option>
+<%
+    });
+%>
+</select>

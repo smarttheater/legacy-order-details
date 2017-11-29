@@ -285,6 +285,7 @@ $(function() {
         }).fail(function(errMsg) {
             audioNo.play();
             alert(errMsg);
+            $qrdetail.html('次のQRを読み取ってください');            
         }).always(function() {
             $apistatus_checkin.html('チェックイン通信中: ' + enteringReservationQrStrArray.length + '件');
             busy_check = false;

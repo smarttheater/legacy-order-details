@@ -1,11 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * デフォルトルーター
+ *
+ * @function router
+ * @ignore
+ */
+const conf = require("config");
 const baseController = require("../controllers/base");
 const errorController = require("../controllers/error");
+const languageController = require("../controllers/language");
 //import authRouter from './auth';
 const checkin_1 = require("./checkin");
 const inquiry_1 = require("./inquiry");
 const util_1 = require("./util");
+// 本体サイトのトップページの言語別URL
+const topUrlByLocale = conf.get('official_url_top_by_locale');
+// 本体サイトのプライバシーポリシーページの言語別URL
+const privacyPolicyUrlByLocale = conf.get('official_url_privacypolicy_by_locale');
+// 本体サイトのお問い合わせページの言語別URL
+const contactUrlByLocale = conf.get('official_url_contact_by_locale');
 /**
  * URLルーティング
  *
@@ -17,6 +31,8 @@ const util_1 = require("./util");
  */
 exports.default = (app) => {
     const base = baseController.setLocals;
+    // 言語切替
+    app.get('/language/update/:locale', languageController.update);
     // 入場
     //app.use('/checkin', base, authRouter);
     // 入場
@@ -25,6 +41,36 @@ exports.default = (app) => {
     app.use('/inquiry', base, inquiry_1.default);
     // Util
     app.use('/util', base, util_1.default);
+    // 利用規約ページ
+    app.get('/terms/', (req, res) => {
+        res.locals.req = req;
+        res.locals.conf = conf;
+        res.locals.validation = null;
+        res.locals.title = 'Tokyo Tower';
+        res.locals.description = 'TTTS Terms';
+        res.locals.keywords = 'TTTS Terms';
+        return res.render('common/terms/', {
+            layout: 'layouts/inquiry/layout'
+        });
+    });
+    // 本体サイトのプライバシーポリシーページの対応言語版(無ければ英語版)に転送
+    app.get('/privacypolicy', (req, res) => {
+        const locale = (req.getLocale()) || 'en';
+        const url = (privacyPolicyUrlByLocale[locale] || privacyPolicyUrlByLocale.en);
+        return res.redirect(url);
+    });
+    // 本体サイトのお問い合わせページの対応言語版(無ければ英語版)に転送
+    app.get('/contact', (req, res) => {
+        const locale = (req.getLocale()) || 'en';
+        const url = (contactUrlByLocale[locale] || contactUrlByLocale.en);
+        return res.redirect(url);
+    });
+    // 本体サイトトップページの対応言語版(無ければ英語版)に転送
+    app.get('/returntop', (req, res) => {
+        const locale = (req.getLocale()) || 'en';
+        const url = (topUrlByLocale[locale] || topUrlByLocale.en);
+        return res.redirect(url);
+    });
     // 404
     app.get('/error/notFound', base, errorController.notFound);
     app.use((_, res) => { res.redirect('/error/notFound'); });

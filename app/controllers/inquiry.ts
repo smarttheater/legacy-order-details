@@ -188,7 +188,7 @@ export async function print(req: Request, res: Response, next: NextFunction) {
             return ScreenUtil.sortBySeatCode(a.get('seat_code'), b.get('seat_code'));
         });
 
-        res.render('reserve/print', {
+        res.render('print/print', {
             layout: false,
             reservations: reservations
         });
@@ -197,6 +197,37 @@ export async function print(req: Request, res: Response, next: NextFunction) {
         next(new Error(req.__('Message.UnexpectedError')));
     }
 }
+/**
+ * PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
+ */
+export async function pcthermalprint(req: Request, res: Response, next: NextFunction) {
+    try {
+        const ids: string[] = JSON.parse(req.query.ids);
+        const reservations = await Models.Reservation.find(
+            {
+                _id: { $in: ids },
+                status: ReservationUtil.STATUS_RESERVED
+            }
+        ).exec();
+
+        if (reservations.length === 0) {
+            return next(new Error(req.__('Message.NotFound')));
+        }
+
+        reservations.sort((a, b) => {
+            return ScreenUtil.sortBySeatCode(a.get('seat_code'), b.get('seat_code'));
+        });
+
+        res.render('print/print_pcthermal', {
+            layout: false,
+            reservations: reservations
+        });
+    } catch (error) {
+        console.error(error);
+        next(new Error(req.__('Message.UnexpectedError')));
+    }
+}
+
 
 /**
  * 予約キャンセル処理

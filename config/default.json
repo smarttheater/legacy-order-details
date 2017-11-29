@@ -2,12 +2,37 @@
     "locales": {
         "ja": "日本語",
         "en": "ENGLISH",
-        "cs": "中文(简体)",
-        "ct": "中文(繁體)",
-        "kr": "한국어"
+        "zh-hans": "中文(简体)",
+        "zh-hant": "中文(繁體)",
+        "ko": "한국어"
     },
-    "official_website_url": "http://motionpicture.jp",
+    "official_website_url": "https://www.tokyotower.co.jp/",
     "official_tel_number": "03-1234-5678",
+    "official_url_top_by_locale": {
+        "ja": "https://www.tokyotower.co.jp/",        
+        "en": "https://www.tokyotower.co.jp/en.html",
+        "zh-hans": "https://www.tokyotower.co.jp/cn.html",
+        "zh-hant": "https://www.tokyotower.co.jp/zh.html",
+        "ko": "https://www.tokyotower.co.jp/kr.html"
+    },
+    "official_url_ticketinfo_by_locale": {
+        "ja": "https://www.tokyotower.co.jp/price/index.html",
+        "en": "https://www.tokyotower.co.jp/price/en.html",
+        "zh-hans": "https://www.tokyotower.co.jp/price/cn.html",
+        "zh-hant": "https://www.tokyotower.co.jp/price/zh.html",
+        "ko": "https://www.tokyotower.co.jp/price/kr.html"
+    },
+    "official_url_privacypolicy_by_locale": {
+        "ja": "https://www.tokyotower.co.jp/privacypolicy/index.html",        
+        "en": "https://www.tokyotower.co.jp/privacypolicy/en.html",
+        "zh-hans": "https://www.tokyotower.co.jp/privacypolicy/cn.html",
+        "zh-hant": "https://www.tokyotower.co.jp/privacypolicy/zh.html",
+        "ko": "https://www.tokyotower.co.jp/privacypolicy/kr.html"
+    },
+    "official_url_contact_by_locale": {
+        "ja": "https://www.tokyotower.co.jp/contact/index.html",
+        "en": "https://www.tokyotower.co.jp/contact/en.html"
+    },
     "meta": {
         "keywords": "TOKYO TOWER TOP DECK TOUR",
         "description": "TOKYO TOWER TOP DECK TOUR"

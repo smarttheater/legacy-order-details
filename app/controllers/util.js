@@ -40,9 +40,8 @@ function performancestatus(req, res) {
         let error = null;
         let data = [];
         try {
-            // dayはYYYYMMDD
-            // tslint:disable-next-line:no-magic-numbers
-            if (!req.query.day || req.query.day.length !== 8) {
+            // dayはYYYYMMDDの数字8文字
+            if (!/^\d{8}$/.test(req.query.day)) {
                 throw new Error();
             }
             // パフォーマンス一覧を取得 (start_time昇順ソート)

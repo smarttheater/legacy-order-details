@@ -1,8 +1,10 @@
 /* global Url */
 'use strict';
+window.ttts = {};
+window.ttts.mode = (location.href.indexOf('staff') === -1) ? 'customer' : 'staff';
 
 // プライベートブラウジング時のsessionStorage.setItemエラー回避用
-window.setSessionStorage = function(key, value) {
+window.ttts.setSessionStorage = function(key, value) {
     if (!window.sessionStorage) return;
     try {
         window.sessionStorage.setItem(key, value);
@@ -17,17 +19,17 @@ $(function() {
     // var CSSBREAKPOINT_TABLET = 800;
     var fn_checkPageWidthIsMobile = function() { return (window.innerWidth <= CSSBREAKPOINT_MOBILE); };
     // var fn_checkPageWidthIsNotPc = function () { return (window.innerWidth >= CSSBREAKPOINT_TABLET); };
-    var domurl = new Url();
 
     // 言語切替
     var select_locale = document.getElementById('select_locale');
     if (select_locale) {
+        var domurl = new Url();
         var currentLocale = domurl.query.locale || window.sessionStorage.getItem('locale') || '';
         if (currentLocale && select_locale.querySelector('option[value=' + currentLocale + ']')) { select_locale.value = currentLocale; }
         select_locale.onchange = function() {
             domurl.query.locale = null;
-            window.setSessionStorage('locale', this.value);
-            location.replace('/language/update/' + this.value + '?cb=' + domurl.toString());
+            window.ttts.setSessionStorage('locale', this.value);
+            location.replace('/language/update/' + this.value + '?cb=' + encodeURIComponent(decodeURIComponent(domurl.toString())));
         };
     }
 
