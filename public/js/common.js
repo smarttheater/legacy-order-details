@@ -20,19 +20,6 @@ $(function() {
     var fn_checkPageWidthIsMobile = function() { return (window.innerWidth <= CSSBREAKPOINT_MOBILE); };
     // var fn_checkPageWidthIsNotPc = function () { return (window.innerWidth >= CSSBREAKPOINT_TABLET); };
 
-    // 言語切替
-    var select_locale = document.getElementById('select_locale');
-    if (select_locale) {
-        var domurl = new Url();
-        var currentLocale = domurl.query.locale || window.sessionStorage.getItem('locale') || '';
-        if (currentLocale && select_locale.querySelector('option[value=' + currentLocale + ']')) { select_locale.value = currentLocale; }
-        select_locale.onchange = function() {
-            domurl.query.locale = null;
-            window.ttts.setSessionStorage('locale', this.value);
-            location.replace('/language/update/' + this.value + '?cb=' + encodeURIComponent(decodeURIComponent(domurl.toString())));
-        };
-    }
-
     /*
     汎用イベント
     */

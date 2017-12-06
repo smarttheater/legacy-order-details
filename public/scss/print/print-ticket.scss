@@ -279,6 +279,16 @@ body {
     }
 
     .pr-date {
+        margin-bottom: 1em;
+        p {
+            font-size: 1.5em;
+            font-weight: bold;
+            line-height: 1.5;
+        }
+    }
+
+    .pr-tournumber {
+        margin-bottom: 1em;        
         p {
             font-size: 1.5em;
             font-weight: bold;

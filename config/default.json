@@ -2,9 +2,17 @@
     "locales": {
         "ja": "日本語",
         "en": "ENGLISH",
+        "zh-hant": "中文(繁體)",        
         "zh-hans": "中文(简体)",
-        "zh-hant": "中文(繁體)",
-        "ko": "한국어"
+        "ko": "한국어",
+        "th": "ภาษาไทย",
+        "id": "Bahasa Indonesia",
+        "vi": "Tiếng Việt",
+        "fr": "Français",
+        "de": "Deutsch",
+        "it": "Italiano",
+        "es": "Español",
+        "ru": "Русский"
     },
     "official_website_url": "https://www.tokyotower.co.jp/",
     "official_tel_number": "03-1234-5678",

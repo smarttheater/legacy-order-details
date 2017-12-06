@@ -21,7 +21,7 @@ body {
 <%
 moment.locale(locale);
 for (let reservation of reservations) {
-    let isStaffReservation = (reservation.purchaser_group === '04');
+    let isNoCharge = (reservation.payment_method === 'F');
 %>
 <div class="pcthermarlprintcontent">
 
@@ -49,17 +49,19 @@ for (let reservation of reservations) {
         </p>
     </div>
 
-    <p class="pr-notice">
-        ※混雑する場合がございますので、15分前にお越し下さい。<br>
-        please come 15 min before to avoid the crowds.
-    </p>
-                       
+    <div class="pr-tournumber">
+        <h3>ツアーナンバー<br>-TOUR NUMBER-</h3>
+        <p>
+            <%- reservation.performance_ttts_extension.tour_number %><br>
+        </p>
+    </div>
+
     <div class="pr-ticket">
         <h3>券種・金額<br>-TICKET-</h3>
         <p>
             <%- reservation.ticket_type_name.ja %><br>
             <%- reservation.ticket_type_name.en %><br>
-            <%- ((!isStaffReservation) ? ('￥' + reservation.ticket_type_charge + ' ') : '') + '(' + reservation.seat_code + ')' %>
+            <%- ((!isNoCharge) ? ('￥' + reservation.ticket_type_charge + ' ') : '') + '(' + reservation.seat_code + ')' %>
         </p>
     </div>
 

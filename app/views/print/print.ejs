@@ -34,7 +34,7 @@ if (momentLocale === 'zh-hans') {
 }
 moment.locale(momentLocale);
 for (let reservation of reservations) {
-    let isStaffReservation = (reservation.purchaser_group === '04');
+    let isNoCharge = (reservation.payment_method === 'F');
 %>
 <div class="printcontent">
 
@@ -77,8 +77,8 @@ for (let reservation of reservations) {
                         </div>
 
                         <div class="pr-time">
-                            <h3><%- __('Label.PurchaseContentDay') %></h3>
-                            <strong><%- moment(reservation.get('performance_day'), 'YYYYMMDD').format('LL (ddd)') %></strong>
+                            <h3><%- __('Label.PurchaseContentDay') %> / ツアーナンバー</h3>
+                            <strong><%- moment(reservation.get('performance_day'), 'YYYYMMDD').format('LL (ddd)') %> / <%- reservation.performance_ttts_extension.tour_number %></strong>
                         </div>
 
                         <div class="pr-time">
@@ -99,7 +99,7 @@ for (let reservation of reservations) {
 
                         <div class="pr-ticket">
                             <h3><%- __('Label.TicketType') %></h3>
-                            <strong><%- reservation.get('ticket_type_name')[locale] %> / <%- ((!isStaffReservation) ? '&yen;' + reservation.get('ticket_type_charge') + '&nbsp;' : '') %>(<%- reservation.seat_code %>)</strong>
+                            <strong><%- reservation.get('ticket_type_name')[locale] %> / <%- ((!isNoCharge) ? '&yen;' + reservation.get('ticket_type_charge') + '&nbsp;' : '') %>(<%- reservation.seat_code %>)</strong>
                         </div>
 
                         <div class="pr-term">
