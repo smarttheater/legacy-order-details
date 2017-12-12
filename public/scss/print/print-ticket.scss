@@ -12,11 +12,18 @@
 * {
     box-sizing: border-box!important;
 }
+
 html,
 body {
     background-color: white;
     margin: 0;
     padding: 0;
+}
+
+@media print {
+    .noprint {
+        display: none !important;
+    }
 }
 
 .printcontent {
@@ -57,9 +64,10 @@ body {
         margin-bottom: 14px;
         display: table;
         margin: auto;
-        .logo {
-            width: 124px;
+       
+        .logo-ttts {
             display: table-cell;
+            width: 124px;
         }
         .title {
             display: table-cell;
@@ -67,7 +75,11 @@ body {
             text-align: left;
             font-size: 20px;
             font-weight: bold;
-            padding-left: 20px;
+            padding: 0 10px;
+        }
+        .logo-tour {
+            display: table-cell;
+            width: 60px;
         }
     }
     .pr-thanks {
@@ -92,10 +104,12 @@ body {
             h2 {
                 font-weight: bold;
                 font-size: 16px;
-                .smalltext {
+                >span {
                     font-weight: normal;
+                    font-size: 14px;
+                    line-height: 1.4;
                     display: block;
-                    margin-top: 3px;
+                    margin-top: 10px;
                 }
             }
             .wrapper-qrimg {
@@ -153,9 +167,11 @@ body {
             vertical-align: bottom;
         }
         td {
-            width: 50%;
             vertical-align: top;
             padding: 10px 10px 10px 0;
+            &:first-child {
+                width: 190px;
+            }
             img {
                 width: 180px;
             }
@@ -174,22 +190,16 @@ body {
     .pr-rsrvnum {
         strong {
             display: block;
-            font-size: 22px;
+            font-size: 20px;
         }
     }
     .pr-time {
         strong {
-            font-size: 22px;
+            font-size: 20px;
         }
         .timenotice {
             margin-top:10px;
             font-size: 14px;
-        }
-    }
-    .pr-seat {
-        strong {
-            font-size: 50px;
-            display: inline;
         }
     }
     .pr-term {

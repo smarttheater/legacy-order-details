@@ -5,6 +5,9 @@ header {
     z-index: 128;
     height: 80px;
     user-select: none;
+    a:hover, a:focus {
+        text-decoration: none;
+    }
     .container {
         display: table;
         height: 100%;
@@ -16,11 +19,21 @@ header {
     .header-logo {
         display: table-cell;
         vertical-align: middle;
-        padding: 10px;
+        padding: 5px;
+        @media screen and (max-width: $breakpoint_mobile) {
+            text-align: center;
+        }
         img {
             width: 160px;
             @media screen and (max-width: $breakpoint_mobile) {
                 width:120px;
+            }
+        }
+        .logo-tour {
+            width: 60px;
+            @media screen and (max-width: $breakpoint_mobile) {
+                width: 36px;
+                margin-top: -5px;
             }
         }
     }
@@ -31,17 +44,56 @@ header {
     .header-lang {
         float: right;
         border-left: 1px solid #ddd;
-        width: 200px;
+        padding: 0 5px;
         margin: 10px 0;
 
         p {
-            font-size:14px;
+            font-size:12px;
             text-align: center;
             margin-bottom: 4px;
         }
     }
 }
-
+.menu-staff {
+    display: table;
+    height: 78px;
+    float: right;
+    >p, >a {
+        display: table-cell;
+        vertical-align: middle;
+        padding: 0 1em;
+    }
+    >a {
+        font-size: 14px;
+        &::before {
+            display: block;
+            width: 20px;
+            height: 20px;
+            margin: 5px auto;
+        }
+    }
+    .btn-newticket {
+        background-color: #eee;
+        color: #000;
+        &::before {
+            content: url(/images/common/icon-gray-search.svg);
+        }
+    }
+    .btn-mypage {
+        background-color: #eee;
+        color: #000;
+        &::before {
+            content: url(/images/common/icon-gray-search.svg);
+        }
+    }
+    .btn-logout {
+        background-color: #898989;
+        color: #fff;
+        &::before {
+            content: url(/images/common/icon-white-logout.svg);
+        }
+    }
+}
 .page-staff {
     .menu-langs {
         display: none;

@@ -28,8 +28,24 @@
         font-size: 1.1em;
         line-height: 2;
     }
+    .errmsg {
+        margin-top: 10px;
+        line-height: 1.4;
+    }
 }
 
 .btn-next {
-    width: 200px;
+    .show-processing {
+        display: none;
+    }
+    &.is-processing {
+        cursor: initial;
+        background-color: #ccc !important;
+        .hide-processing {
+            display: none;
+        }
+        .show-processing {
+            display: inline;
+        }
+    }
 }

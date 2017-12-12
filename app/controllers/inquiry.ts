@@ -76,7 +76,7 @@ export async function search(req: Request, res: Response, next: NextFunction): P
                 (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS] = reservations;
                 res.redirect('/inquiry/search/result');
             } else {
-                const message: string = req.__('Message.ReservationNotFound');
+                const message: string = req.__('MistakeInput');
                 renderSearch(res, message, {});
 
                 return;
@@ -120,7 +120,7 @@ function renderSearch(res: Response, message: string, errors: any): void {
  * @returns {Promise<void>}
  */
 export async function result(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const messageNotFound: string = req.__('Message.NotFound');
+    const messageNotFound: string = req.__('NotFound');
     try {
         if ( req === null) {
             next(new Error(messageNotFound));
@@ -179,7 +179,7 @@ export async function print(req: Request, res: Response, next: NextFunction) {
         ).exec();
 
         if (reservations.length === 0) {
-            next(new Error(req.__('Message.NotFound')));
+            next(new Error(req.__('NotFound')));
 
             return;
         }
@@ -194,7 +194,7 @@ export async function print(req: Request, res: Response, next: NextFunction) {
         });
     } catch (error) {
         console.error(error);
-        next(new Error(req.__('Message.UnexpectedError')));
+        next(new Error(req.__('UnexpectedError')));
     }
 }
 /**
@@ -211,7 +211,7 @@ export async function pcthermalprint(req: Request, res: Response, next: NextFunc
         ).exec();
 
         if (reservations.length === 0) {
-            return next(new Error(req.__('Message.NotFound')));
+            return next(new Error(req.__('NotFound')));
         }
 
         reservations.sort((a, b) => {
@@ -224,7 +224,7 @@ export async function pcthermalprint(req: Request, res: Response, next: NextFunc
         });
     } catch (error) {
         console.error(error);
-        next(new Error(req.__('Message.UnexpectedError')));
+        next(new Error(req.__('UnexpectedError')));
     }
 }
 
@@ -239,7 +239,7 @@ export async function pcthermalprint(req: Request, res: Response, next: NextFunc
  */
 // tslint:disable-next-line:max-func-body-length
 export async function cancel(req: Request, res: Response): Promise<void> {
-    let errorMessage: string = req.__('Message.UnexpectedError');
+    let errorMessage: string = req.__('UnexpectedError');
     let cancellationFee: number = 0;
     // 予約取得
     let reservations;
@@ -445,9 +445,9 @@ function getUnsetFields(reservation: any): any {
  */
 function validate(req: Request): void {
     // 購入番号
-    req.checkBody('paymentNo', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.PaymentNo') })).notEmpty();
+    req.checkBody('paymentNo', req.__('NoInput{{fieldName}}', { fieldName: req.__('PaymentNo') })).notEmpty();
     // 電話番号
-    //req.checkBody('purchaserTel', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
+    //req.checkBody('purchaserTel', req.__('NoInput{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
     req.checkBody('purchaserTel',
                   req.__('Message.minLength{{fieldName}}{{min}}', { fieldName: req.__('Label.Tel'), min: '4' })).len({min: 4});
 }
@@ -461,7 +461,7 @@ function validate(req: Request): void {
  */
 async function validateForCancel(req: Request, day: string): Promise<any> {
     // 購入番号
-    req.checkBody('payment_no', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.PaymentNo') })).notEmpty();
+    req.checkBody('payment_no', req.__('NoInput{{fieldName}}', { fieldName: req.__('PaymentNo') })).notEmpty();
 
     // 検証
     const validatorResult = await req.getValidationResult();
@@ -528,7 +528,7 @@ function getCancelMail(req: Request, reservations: any[], fee: number) : string 
     const cancellationFee: string = numeral(fee).format('0,0');
 
     // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
-    mail.push(req.__('Email.TitleCan'));
+    mail.push(req.__('EmailTitleCan'));
     mail.push('');
 
     // XXXX XXXX 様
@@ -536,20 +536,20 @@ function getCancelMail(req: Request, reservations: any[], fee: number) : string 
     mail.push('');
 
     // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
-    mail.push(req.__('Email.Head1').replace('$theater_name$', reservations[0].theater_name[locale]));
+    mail.push(req.__('EmailHead1').replace('$theater_name$', reservations[0].theater_name[locale]));
     // お客様がキャンセルされましたチケットの情報は下記の通りです。
-    mail.push(req.__('Email.Head2Can'));
+    mail.push(req.__('EmailHead2Can'));
     mail.push('');
 
     // 購入番号
-    mail.push(`${req.__('Label.PaymentNo')} : ${reservations[0].payment_no}`);
+    mail.push(`${req.__('PaymentNo')} : ${reservations[0].payment_no}`);
     // ご来塔日時
     const day: string = moment(reservations[0].performance_day, 'YYYYMMDD').format('YYYY/MM/DD');
     // tslint:disable-next-line:no-magic-numbers
     const time: string = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
     mail.push(`${req.__('Label.Day')} : ${day} ${time}`);
     // 券種、枚数
-    mail.push(`${req.__('Label.TicketType')} ${req.__('Label.TicketCount')}`);
+    mail.push(`${req.__('TicketType')} ${req.__('TicketCount')}`);
     // 券種ごとに合計枚数算出
     const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
     Object.keys(ticketInfos).forEach((key: string) => {
@@ -557,25 +557,25 @@ function getCancelMail(req: Request, reservations: any[], fee: number) : string 
     });
     mail.push('-------------------------------------');
     // 合計枚数
-    mail.push(req.__('Email.TotalTicketCount').replace('$reservations_length$', reservations.length.toString()));
+    mail.push(req.__('EmailTotalTicketCount').replace('$reservations_length$', reservations.length.toString()));
     // キャンセル料
     mail.push(req.__('Email.CancellationFee').replace('$cancellationFee$', cancellationFee));
     mail.push('-------------------------------------');
     mail.push('');
 
     // なお、このメールは、「$theater_name$」の予約システムでチケットをキャンセル…
-    mail.push(req.__('Email.Foot1Can').replace('$theater_name$', reservations[0].theater_name[locale]));
+    mail.push(req.__('EmailFoot1CanCan').replace('$theater_name$', reservations[0].theater_name[locale]));
     // ※尚、このメールアドレスは送信専用となっておりますでので、ご返信頂けません。
-    mail.push(req.__('Email.Foot2'));
+    mail.push(req.__('EmailFoot2'));
     // ご不明※な点がございましたら、下記番号までお問合わせ下さい。
-    mail.push(req.__('Email.Foot3'));
+    mail.push(req.__('EmailFoot3'));
     mail.push('');
 
     // お問い合わせはこちら
-    mail.push(req.__('Email.Access1'));
+    mail.push(req.__('EmailAccess1'));
     mail.push(reservations[0].theater_name[locale]);
     // TEL
-    mail.push(`${req.__('Email.Access2')} : ${conf.get('official_tel_number')}`);
+    mail.push(`${req.__('EmailAccess2')} : ${conf.get('official_tel_number')}`);
 
     return(mail.join(Text.Common.newline));
 }

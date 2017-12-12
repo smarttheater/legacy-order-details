@@ -22,7 +22,7 @@ $(function() {
         }).done(function(data) {
             if (!data.error) {
                 $modal_cancelreservation.modal('hide');
-                $('#modal_completed').modal({
+                $('#modal_cancelcompleted').modal({
                     backdrop: 'static',
                     keyboard: false
                 });

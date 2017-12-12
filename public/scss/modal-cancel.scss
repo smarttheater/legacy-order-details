@@ -1,6 +1,7 @@
-.modal-cancel {
+#modal_cancelreservation {
     .modal-header {
         position: relative;
+        padding: 1em;
         .btn-close {
             cursor: pointer;
             position: absolute;
@@ -9,6 +10,12 @@
             font-size: 48px;
             background-color: #3f3f3f;
             color: #fff;
+            &:hover {
+                background-color: #5f5f5f;
+            }
+            @media screen and (max-width: $breakpoint_tablet) {
+                font-size: 36px;
+            }
         }
         .modal-title {
             font-weight: bold;
@@ -22,12 +29,19 @@
         padding: 0;
         margin-top: 1em;
     }
+    .guidetext-cancelingnotice {
+        >span {
+            display: block;
+            color: red;
+        }
+    }
     .echo {
         margin-bottom: 1em;
     }
     form {
         >h3 {
             padding: 0 1em;
+            font-size: 16px;
             line-height: 2;
             background-color: #d6d6d6;
         }
@@ -49,18 +63,21 @@
     .cancelnotice {
         padding: 1em;
         >h3 {
+            font-size: 0.9em;
             font-weight: bold;
             margin-bottom: 10px;
         }
         >p {
             border: 1px solid #e9e9e9;
             padding: 1em;
+            font-size: 0.9em;
             line-height: 2;
         }
     }
     .btn {
         width: 200px;
         height: 45px;
+        margin: auto;
     }
     .btn-cancelrsrv {
         @include btn-red;
@@ -70,18 +87,31 @@
         max-width: 600px;
         margin-bottom: 2em;
     }
+    .modal-footer {
+        .btn-close {
+            margin-top: 3em;
+        }        
+    }
     #btn_execcancel {
-        @include btn-big;
         .show-processing {
             display: none;
         }
         &.is-processing {
             cursor: initial;
             background-color: #ccc !important;
+            .hide-processing {
+                display: none;
+            }
             .show-processing {
                 display: inline;
             }
         }
+    }
+    #error_cancel {
+        margin-bottom: 2em;
+        font-size: 20px;
+        color: red;
+        text-align: center;        
     }
 }
 
@@ -100,5 +130,12 @@
         p {
             margin-top: 2em;
         }
+        .cancelcomplete {
+            color: red;
+            line-height: 1.5;
+        }
+    }
+    .modal-footer {
+        padding-top: 0;        
     }
 }

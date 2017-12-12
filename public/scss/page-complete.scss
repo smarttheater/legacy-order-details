@@ -1,5 +1,12 @@
 // 購入完了ページ
 .page-complete {
+    .rednotice {
+        color: red;
+        text-align: center;
+        margin-bottom: 1em;
+        line-height: 1.5;
+    }
+
     .table-complete {
         max-width: 800px;
         width: 100%;
@@ -44,6 +51,11 @@
                 font-weight: bold;
                 color: #d00;
                 letter-spacing: 1px;
+            }
+            .tr-tourno {
+                p {
+                    font-size: 20px;
+                }
             }
             .wrapper-qrcodes {
                 display: inline-block;
@@ -103,14 +115,16 @@
     .mailnotice {
         max-width: 800px;
         width: 100%;
-        margin: 4em auto;
+        margin: 2em auto;
         font-size: 14px;
+        line-height: 1.4;
     }
 
     .enteringguide {
         background-color: #eee;
         padding: 1em;
         text-align: center;
+        line-height: 1.4;
         width: 50%;
         margin: 2em auto;
         @media screen and (max-width: $breakpoint_tablet) {
@@ -125,5 +139,20 @@
 
     .btn-blue {
         margin-bottom: 0;
+    }
+}
+
+#page_staff_reserve_complete {
+    .guidetext-customer,
+    .tr-email,
+    .tr-price,
+    .numbernotice,
+    .qrnotice,
+    .mailnotice,
+    .enteringguide {
+        display: none;
+    }
+    .thermalprint {
+        margin: 2em;
     }
 }

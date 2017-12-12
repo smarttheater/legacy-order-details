@@ -26,7 +26,7 @@ body {
 </div>
 
 <%
-let momentLocale = locale;
+let momentLocale = locale || 'en';
 if (momentLocale === 'zh-hans') {
     momentLocale = 'zh-cn';
 } else if (momentLocale === 'zh-hant') {
@@ -39,24 +39,27 @@ for (let reservation of reservations) {
 <div class="printcontent">
 
     <div class="pr-header">
-        <div class="logo">
+        <div class="logo-ttts">
             <img src="/images/common/logo.png">
         </div>
         <div class="title">
-            <%- __('Label.TicketAndReceipt') %>
+            <%- __('TicketAndReceipt') %>
         </div>
+        <div class="logo-tour">
+            <img src="/images/common/logo_tour_gold.svg">
+        </div>
+
     </div>
 
     <div class="pr-thanks">
-        <%- __('Message.TicketInfoMsg') %><br>
+        <%- __('TicketInfoMsg') %><br>
     </div>
 
     <div class="pr-qrcode pr-bg">
         <img class="pr-bg-image" src="/images/print/bg_gray.png">
         <div class="pr-bg-content inner">
             <h2>
-                <%- __('Message.TicketQRInfo') %><br>
-                <span class="smalltext"><%- __('Message.TicketQRAuthInfo') %></span>
+                <%- __('TicketQRInfo') %>
             </h2>
             <div class="wrapper-qrimg pr-bg">
                 <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>">
@@ -72,53 +75,51 @@ for (let reservation of reservations) {
                 <tr>
                     <td class="main-info">
                         <div class="pr-rsrvnum">
-                        <h3><%- __('Label.PaymentNo') %></h3>
+                        <h3><%- __('PaymentNo') %></h3>
                             <strong><%- reservation.get('payment_no') %></strong>
                         </div>
 
                         <div class="pr-time">
-                            <h3><%- __('Label.PurchaseContentDay') %> / ツアーナンバー</h3>
-                            <strong><%- moment(reservation.get('performance_day'), 'YYYYMMDD').format('LL (ddd)') %> / <%- reservation.performance_ttts_extension.tour_number %></strong>
+                            <h3><%- __('PurchaseContentDay') %></h3>
+                            <strong><%- moment(reservation.get('performance_day'), 'YYYYMMDD').format('LL (ddd)') %></strong>
                         </div>
 
                         <div class="pr-time">
-                            <h3><%- __('Label.PurchaseContentTime') %></h3>
+                            <h3><%- __('PurchaseContentTime') %></h3>
                             <strong><%- moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') %> - <%- moment(reservation.get('performance_end_time'), 'HHmm').format('HH:mm') %>(JST)</strong>
                         </div>
 
                         <div class="pr-time">
-                            <h3><%- __('Label.PurchaseEntryTime') %></h3>
+                            <h3><%- __('PurchaseEntryTime') %></h3>
                             <strong><%- moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') %> - <%- moment(reservation.get('performance_end_time'), 'HHmm').format('HH:mm') %>(JST)</strong>
                             <%
                             var time = moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm');
                             var timeEarly = moment(reservation.get('performance_start_time'), 'HHmm').add(-30, 'minutes').format('HH:mm');
                             if (moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') !== "09:00") { %>
-                                <p class="smalltext timenotice">※<%- __('Message.EntryFootTown') %><br><%- timeEarly %>～<%- time %></p>
                             <% } %>
                         </div>
 
+                        <div class="pr-time">
+                            <h3><%- __('TourNumber') %></h3>
+                            <strong><%- reservation.performance_ttts_extension.tour_number %></strong>
+                        </div>
+
                         <div class="pr-ticket">
-                            <h3><%- __('Label.TicketType') %></h3>
+                            <h3><%- __('TicketType') %></h3>
                             <strong><%- reservation.get('ticket_type_name')[locale] %> / <%- ((!isNoCharge) ? '&yen;' + reservation.get('ticket_type_charge') + '&nbsp;' : '') %>(<%- reservation.seat_code %>)</strong>
                         </div>
 
                         <div class="pr-term">
-                            <h4><%- __('Label.ImportantNotes') %></h4>
+                            <h4><%- __('ImportantNotes') %></h4>
                             <p>
-                                <%- __('Message.TicketNotesContents') %>
+                                <%- __('TicketNotesContents') %>
                             </p>
                         </div>
 
                         <div class="pr-contact">
-                            <h4><%- __('Label.ContactUsForTickets') %></h4>
-                            <p>
-                                03-3433-5111 / 9:00 am ～ 17:00 pm (<%- __('Label.ContactAvailableDay') %>)
-                            </p>
-
-                            <h4><%- __('Label.OfficialSite') %></h4>
-                            <p>
-                                https://www.tokyotower.co.jp
-                            </p>
+                            <h4><%- __('ContactUs') %></h4>
+                            <p><%- __('ContactAvailableDay') %></p>
+                            <h4><%- __('OfficialSiteWithUrl') %></h4>
                         </div>
 
 
@@ -130,16 +131,16 @@ for (let reservation of reservations) {
                         </p>
 
                         <div class="accesstable">
-                            <h4>地下鉄、JR</h4>
+                            <h4><%- __('RailWay') %></h4>
                             <table>
                                 <tbody>
                                     <tr><td>
-                                        ① 都営大江戸線 赤羽橋駅 徒歩5 分<br>
-                                        ② 東京メトロ日比谷線 神谷町駅 徒歩７分<br>
-                                        ③ 都営三田線 御成門駅 徒歩6 分<br>
-                                        ④ 都営浅草線 大門駅 徒歩10 分<br>
+                                        ① <%- __('Akabanebashi') %><br>
+                                        ② <%- __('Kamiyacho') %><br>
+                                        ③ <%- __('Onarimon') %><br>
+                                        ④ <%- __('Daimon') %><br>
                                     </td><td>
-                                        ⑤ JR 山手線 浜松町駅 徒歩15 分<br>
+                                        ⑤ <%- __('Hamamatsucho') %><br>
                                     </td></tr>
                                 </tbody>
                             </table>
@@ -148,8 +149,8 @@ for (let reservation of reservations) {
                         <hr>
 
                         <div class="stafftable">
-                            <h3><%- __('Label.StaffPosition') %></h3>
-                            <h4><img class="mark" src="/images/print/staff_mark.svg">：<%- __('Label.StaffPosition') %></h4>
+                            <h3><%- __('StaffPosition') %></h3>
+                            <h4><img class="mark" src="/images/print/staff_mark.svg">：<%- __('StaffPosition') %></h4>
                             <table>
                                 <tbody>
                                     <tr>
@@ -157,21 +158,19 @@ for (let reservation of reservations) {
                                             <img src="/images/print/staff_map_1.svg">
                                         </td>
                                         <td>
-                                            <h4><%- __('Label.FootTown') %></h4>
-                                            <p><%- __('Message.FootTownInfo') %></p>
+                                            <h4><%- __('FootTown') %></h4>
+                                            <p><%- __('FootTownInfo') %></p>
                                         </td>
                                     </tr>
-                                    <!--
                                     <tr>
                                         <td>
                                             <img src="/images/print/staff_map_2.svg">
                                         </td>
                                         <td>
-                                            <h4>フットタウン RF</h4>
-                                            <p>フットタウンRFの昇り階段入り口にて、QRコードの認証を行います。</p>
+                                            <h4><%- __('TopDeckGate') %></h4>
+                                            <p><%- __('TopDeckGateInfo') %></p>
                                         </td>
                                     </tr>
-                                    -->
                                 </tbody>
                             </table>
                         </div>

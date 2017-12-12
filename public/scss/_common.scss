@@ -151,7 +151,7 @@ select {
 
 .visible-pc {
     @media screen and (max-width: $breakpoint_tablet) {
-        display:none;
+        display:none !important;
     }
 }
 

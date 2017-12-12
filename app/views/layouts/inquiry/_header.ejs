@@ -7,15 +7,19 @@ if (req.hasOwnProperty('route')) {
 %>
 <header>
     <div class="container">
-        <a href="javascript:void(0);" class="header-logo"><img src="/images/common/logo.png" alt="CHEVRE"></a>
+
+        <a href="javascript:void(0);" class="header-logo">
+            <img src="/images/common/logo.png" alt="Tokyo Tower">
+            <img class="logo-tour" src="/images/common/logo_tour_gold.svg" alt="Tokyo Tower Top Deck Tour">
+        </a>
+
         <div class="header-menu">
-            <% if (routeName.indexOf('/inquiry/search/') > -1 && routeName.indexOf('/result') > -1) { %>
-            <a class="navbar-brand" href="/inquiry/search">戻る</a>
-            <% } %>
+    
         </div>
+
         <div class="header-lang">
             <p>Language</p>
-            <%- include('../../common/_select_locale.ejs'); %>
+            <%- include('../../common/_select_locale.ejs') %>
         </div>
     </div>
 </header>

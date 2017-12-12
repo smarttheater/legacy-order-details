@@ -20,6 +20,8 @@ const topUrlByLocale = conf.get('official_url_top_by_locale');
 const privacyPolicyUrlByLocale = conf.get('official_url_privacypolicy_by_locale');
 // 本体サイトのお問い合わせページの言語別URL
 const contactUrlByLocale = conf.get('official_url_contact_by_locale');
+// 本体サイトの入場案内ページの言語別URL
+const aboutEnteringUrlByLocale = conf.get('official_url_aboutentering_by_locale');
 /**
  * URLルーティング
  *
@@ -49,27 +51,33 @@ exports.default = (app) => {
         res.locals.title = 'Tokyo Tower';
         res.locals.description = 'TTTS Terms';
         res.locals.keywords = 'TTTS Terms';
-        return res.render('common/terms/', {
+        res.render('common/terms/', {
             layout: 'layouts/inquiry/layout'
         });
     });
+    // 本体サイトの入場案内ページの対応言語版(無ければ英語版)に転送
+    app.get('/aboutenter', (req, res) => {
+        const locale = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url = aboutEnteringUrlByLocale[locale];
+        res.redirect(url);
+    });
     // 本体サイトのプライバシーポリシーページの対応言語版(無ければ英語版)に転送
     app.get('/privacypolicy', (req, res) => {
-        const locale = (req.getLocale()) || 'en';
-        const url = (privacyPolicyUrlByLocale[locale] || privacyPolicyUrlByLocale.en);
-        return res.redirect(url);
+        const locale = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url = privacyPolicyUrlByLocale[locale];
+        res.redirect(url);
     });
     // 本体サイトのお問い合わせページの対応言語版(無ければ英語版)に転送
     app.get('/contact', (req, res) => {
-        const locale = (req.getLocale()) || 'en';
-        const url = (contactUrlByLocale[locale] || contactUrlByLocale.en);
-        return res.redirect(url);
+        const locale = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url = contactUrlByLocale[locale];
+        res.redirect(url);
     });
     // 本体サイトトップページの対応言語版(無ければ英語版)に転送
     app.get('/returntop', (req, res) => {
-        const locale = (req.getLocale()) || 'en';
-        const url = (topUrlByLocale[locale] || topUrlByLocale.en);
-        return res.redirect(url);
+        const locale = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url = topUrlByLocale[locale];
+        res.redirect(url);
     });
     // 404
     app.get('/error/notFound', base, errorController.notFound);
