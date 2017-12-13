@@ -10,7 +10,6 @@ const bodyParser = require("body-parser");
 const conf = require("config");
 const cookieParser = require("cookie-parser");
 const express = require("express");
-// tslint:disable-next-line:no-var-requires no-require-imports
 const expressValidator = require("express-validator");
 const i18n = require("i18n");
 const log4js = require("log4js");

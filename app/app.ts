@@ -9,8 +9,7 @@ import * as bodyParser from 'body-parser';
 import * as conf from 'config';
 import * as cookieParser from 'cookie-parser';
 import * as express from 'express';
-// tslint:disable-next-line:no-var-requires no-require-imports
-import expressValidator = require('express-validator');
+import * as expressValidator from 'express-validator';
 import * as i18n from 'i18n';
 import * as log4js from 'log4js';
 import * as _ from 'underscore';
