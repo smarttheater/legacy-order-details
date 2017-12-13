@@ -54,33 +54,34 @@ export default (app: Application) => {
         res.locals.description = 'TTTS Terms';
         res.locals.keywords = 'TTTS Terms';
 
-        return res.render('common/terms/', {
-            layout: 'layouts/inquiry/layout'
-        });
+        res.render('common/terms/', {layout: 'layouts/inquiry/layout'});
     });
 
     // 本体サイトのプライバシーポリシーページの対応言語版(無ければ英語版)に転送
     app.get('/privacypolicy', (req: Request, res: Response) => {
-        const locale: string = (req.getLocale()) || 'en';
-        const url: string = (privacyPolicyUrlByLocale[locale] || privacyPolicyUrlByLocale.en);
+        const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url: string = (privacyPolicyUrlByLocale[locale] !== undefined) ?
+                             privacyPolicyUrlByLocale[locale] : privacyPolicyUrlByLocale.en;
 
-        return res.redirect(url);
+        res.redirect(url);
     });
 
     // 本体サイトのお問い合わせページの対応言語版(無ければ英語版)に転送
     app.get('/contact', (req: Request, res: Response) => {
-        const locale: string = (req.getLocale()) || 'en';
-        const url: string = (contactUrlByLocale[locale] || contactUrlByLocale.en);
+        const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url: string = (contactUrlByLocale[locale] !== undefined) ?
+                             contactUrlByLocale[locale] : contactUrlByLocale.en;
 
-        return res.redirect(url);
+        res.redirect(url);
     });
 
     // 本体サイトトップページの対応言語版(無ければ英語版)に転送
     app.get('/returntop', (req: Request, res: Response) => {
-        const locale: string = (req.getLocale()) || 'en';
-        const url: string = (topUrlByLocale[locale] || topUrlByLocale.en);
+        const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url: string = (topUrlByLocale[locale] !== undefined) ?
+                             topUrlByLocale[locale] : topUrlByLocale.en;
 
-        return res.redirect(url);
+        res.redirect(url);
     });
 
     // 404

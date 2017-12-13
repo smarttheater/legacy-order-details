@@ -13,7 +13,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const ttts_domain_1 = require("@motionpicture/ttts-domain");
+const ttts = require("@motionpicture/ttts-domain");
 const createDebug = require("debug");
 const Message = require("../../common/Const/Message");
 const checkinAdmin_1 = require("../models/user/checkinAdmin");
@@ -35,7 +35,7 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
     // 自動ログインチェック
     if (req.cookies[cookieName] !== undefined) {
         try {
-            const authenticationDoc = yield ttts_domain_1.Models.Authentication.findOne({
+            const authenticationDoc = yield ttts.Models.Authentication.findOne({
                 token: req.cookies[cookieName],
                 owner: { $ne: null }
             }).exec();
@@ -44,11 +44,12 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
             }
             else {
                 // トークン再生成
-                const token = ttts_domain_1.CommonUtil.createToken();
+                const token = ttts.CommonUtil.createToken();
                 yield authenticationDoc.update({ token: token }).exec();
                 // tslint:disable-next-line:no-cookies
                 res.cookie(cookieName, token, { path: '/', httpOnly: true, maxAge: 604800000 });
-                const owner = yield ttts_domain_1.Models.Owner.findOne({ _id: authenticationDoc.get('owner') }).exec();
+                const ownerRepo = new ttts.repository.Owner(ttts.mongoose.connection);
+                const owner = yield ownerRepo.ownerModel.findOne({ _id: authenticationDoc.get('owner') }).exec();
                 // ログインしてリダイレクト
                 if (owner !== null) {
                     req.session[checkinAdmin_1.default.AUTH_SESSION_NAME] = owner.toObject();

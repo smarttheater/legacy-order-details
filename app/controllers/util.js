@@ -13,9 +13,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const ttts_domain_1 = require("@motionpicture/ttts-domain");
+const ttts = require("@motionpicture/ttts-domain");
 const conf = require("config");
 const moment = require("moment");
+const redisClient = ttts.redis.createClient({
+    host: process.env.TTTS_PERFORMANCE_STATUSES_REDIS_HOST,
+    // tslint:disable-next-line:no-magic-numbers
+    port: parseInt(process.env.TTTS_PERFORMANCE_STATUSES_REDIS_PORT, 10),
+    password: process.env.TTTS_PERFORMANCE_STATUSES_REDIS_KEY,
+    tls: { servername: process.env.TTTS_PERFORMANCE_STATUSES_REDIS_HOST }
+});
 // チケット情報(descriptionは予約データに持つべき(ticket_description))
 const ticketInfos = conf.get('ticketInfos');
 // const ticketInfos: any = {
@@ -45,13 +52,15 @@ function performancestatus(req, res) {
                 throw new Error();
             }
             // パフォーマンス一覧を取得 (start_time昇順ソート)
-            const query = ttts_domain_1.Models.Performance.find({ day: req.query.day }, 'day start_time end_time').sort({ start_time: 1 });
+            const performanceRepo = new ttts.repository.Performance(ttts.mongoose.connection);
+            const query = performanceRepo.performanceModel.find({ day: req.query.day }, 'day start_time end_time').sort({ start_time: 1 });
             const performances = yield query.lean(true).exec().catch((err) => { error = err; });
             if (!Array.isArray(performances) || performances.length < 1) {
                 throw new Error();
             }
             // 空席数を取得
-            const performanceStatuses = yield ttts_domain_1.PerformanceStatusesModel.find().catch((err) => { error = err; });
+            const performanceStatusesRepo = new ttts.repository.PerformanceStatuses(redisClient);
+            const performanceStatuses = yield performanceStatusesRepo.find().catch((err) => { error = err; });
             if (typeof performanceStatuses !== 'object') {
                 throw new Error('typeof performanceStatuses !== "object"');
             }
@@ -106,9 +115,10 @@ function getPassList(req, res) {
             // 取得対象のパフォーマンス取得
             const performanceInfo = yield getTargetPerformances(timeInfo);
             // 予約情報取得
-            const reservations = yield ttts_domain_1.Models.Reservation.find({
+            const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+            const reservations = yield reservationRepo.reservationModel.find({
                 performance: { $in: performanceInfo.ids },
-                status: ttts_domain_1.ReservationUtil.STATUS_RESERVED
+                status: ttts.factory.reservationStatusType.ReservationConfirmed
             }).exec();
             // パフォーマンス単位に予約情報をグルーピング
             //  パフォーマンスID: performance: performance,
@@ -125,7 +135,8 @@ function getPassList(req, res) {
             //                        arrived: { '00099': 0, '00098': 1, },
             const dataCheckins = groupingCheckinsByWhere(dataByPerformance);
             // チェックポイント名称取得
-            const owners = yield ttts_domain_1.Models.Owner.find({ notes: '1' }).exec();
+            const ownerRepo = new ttts.repository.Owner(ttts.mongoose.connection);
+            const owners = yield ownerRepo.ownerModel.find({ notes: '1' }).exec();
             const checkpointNames = {};
             owners.map((owner) => {
                 checkpointNames[owner.group] = owner.get('description');
@@ -138,7 +149,7 @@ function getPassList(req, res) {
             Object.keys(dataByPerformance).forEach((performanceId) => {
                 // パフォーマンス情報セット
                 const performance = dataByPerformance[performanceId].performance;
-                const reservedNum = getStatusCount(dataByPerformance[performanceId].reservations, ttts_domain_1.ReservationUtil.STATUS_RESERVED);
+                const reservedNum = getStatusCount(dataByPerformance[performanceId].reservations, ttts.factory.reservationStatusType.ReservationConfirmed);
                 const schedule = {
                     performanceId: performanceId,
                     start_time: performance.start_time,
@@ -221,7 +232,8 @@ function getStartTime(selectType, now) {
         }
         const start = now.format('HHmm');
         // 直近のパフォーマンス(開始時刻)取得
-        const performances = yield ttts_domain_1.Models.Performance.find({
+        const performanceRepo = new ttts.repository.Performance(ttts.mongoose.connection);
+        const performances = yield performanceRepo.performanceModel.find({
             day: day,
             start_time: { $lte: start }
         }).exec();
@@ -270,7 +282,8 @@ function getTargetPerformances(timeInfo) {
             conditions.start_time = conditionsTime;
         }
         // 対象パフォーマンス取得
-        const performances = yield ttts_domain_1.Models.Performance.find(conditions).exec();
+        const performanceRepo = new ttts.repository.Performance(ttts.mongoose.connection);
+        const performances = yield performanceRepo.performanceModel.find(conditions).exec();
         // id抽出
         const dicPerformances = [];
         const ids = performances.map((performance) => {
@@ -419,7 +432,7 @@ function groupingReservationsByPerformance(dicPerformances, performanceIds, rese
 function getTicketTypes(group) {
     return __awaiter(this, void 0, void 0, function* () {
         // 券種取得(ticket_typesをjoinして名称etcも取得)
-        const ticketTypeGroup = yield ttts_domain_1.Models.TicketTypeGroup.findOne({ _id: group }).populate('ticket_types').exec();
+        const ticketTypeGroup = yield ttts.Models.TicketTypeGroup.findOne({ _id: group }).populate('ticket_types').exec();
         return (ticketTypeGroup !== null) ? ticketTypeGroup.get('ticket_types') : null;
     });
 }

@@ -5,9 +5,7 @@
  *
  * @namespace inquiry
  */
-import { Util as GMOUtil } from '@motionpicture/gmo-service';
-import * as GMO from '@motionpicture/gmo-service';
-import { Models, ReservationUtil, ScreenUtil, TicketTypeGroupUtil } from '@motionpicture/ttts-domain';
+import * as ttts from '@motionpicture/ttts-domain';
 import * as conf from 'config';
 import { NextFunction, Request, Response } from 'express';
 import * as log4js from 'log4js';
@@ -48,30 +46,21 @@ export async function search(req: Request, res: Response, next: NextFunction): P
 
             return;
         }
-        // conditions['name.ja'] = { $regex: `^${filmNameJa}` };
 
-        //存在チェック
+        //存在チェック(電話番号は下4桁)
         const conditions = {
             performance_day: req.body.day,
             payment_no: req.body.paymentNo,
-            //purchaser_tel: req.body.purchaserTel
             purchaser_tel: { $regex: `${req.body.purchaserTel}$` }
         };
         try {
-            // 総数検索
-            const count = await Models.Reservation.count(
+            // 予約検索
+            const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+            const reservations = await reservationRepo.reservationModel.find(
                 conditions
             ).exec();
             // データ有りの時
-            if ( count > 0) {
-                // データ検索
-                const reservations = await Models.Reservation.find(
-                    conditions
-                ).exec();
-                // 座席コードでソート(必要？)
-                reservations.sort((a, b) => {
-                    return ScreenUtil.sortBySeatCode(a.get('seat_code'), b.get('seat_code'));
-                });
+            if (reservations !== undefined && reservations.length > 0) {
                 // 予約照会・検索結果画面へ遷移
                 (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS] = reservations;
                 res.redirect('/inquiry/search/result');
@@ -81,7 +70,7 @@ export async function search(req: Request, res: Response, next: NextFunction): P
 
                 return;
             }
-        }catch (error) {
+        } catch (error) {
             next(error);
 
             return;
@@ -122,7 +111,7 @@ function renderSearch(res: Response, message: string, errors: any): void {
 export async function result(req: Request, res: Response, next: NextFunction): Promise<void> {
     const messageNotFound: string = req.__('Message.NotFound');
     try {
-        if ( req === null) {
+        if (req === null) {
             next(new Error(messageNotFound));
         }
         const reservations = (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS];
@@ -135,7 +124,7 @@ export async function result(req: Request, res: Response, next: NextFunction): P
         // "予約"のデータのみセット(Extra分を削除)
         const reservationDocuments: any[] = [];
         (<any[]>reservations).forEach((reservation) => {
-            if ( reservation.status === ReservationUtil.STATUS_RESERVED) {
+            if (reservation.status === ttts.factory.reservationStatusType.ReservationConfirmed) {
                 reservationDocuments.push(reservation);
             }
         });
@@ -171,22 +160,25 @@ export async function result(req: Request, res: Response, next: NextFunction): P
 export async function print(req: Request, res: Response, next: NextFunction) {
     try {
         const ids: string[] = JSON.parse(req.query.ids);
-        const reservations = await Models.Reservation.find(
+        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+        const reservations = await reservationRepo.reservationModel.find(
             {
                 _id: { $in: ids },
-                status: ReservationUtil.STATUS_RESERVED
+                status: ttts.factory.reservationStatusType.ReservationConfirmed
             }
-        ).exec();
+        )
+        .sort(
+            {
+                seat_code: 1
+            }
+        )
+        .exec();
 
         if (reservations.length === 0) {
             next(new Error(req.__('Message.NotFound')));
 
             return;
         }
-
-        reservations.sort((a, b) => {
-            return ScreenUtil.sortBySeatCode(a.get('seat_code'), b.get('seat_code'));
-        });
 
         res.render('print/print', {
             layout: false,
@@ -203,20 +195,25 @@ export async function print(req: Request, res: Response, next: NextFunction) {
 export async function pcthermalprint(req: Request, res: Response, next: NextFunction) {
     try {
         const ids: string[] = JSON.parse(req.query.ids);
-        const reservations = await Models.Reservation.find(
+        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+        const reservations = await reservationRepo.reservationModel.find(
             {
                 _id: { $in: ids },
-                status: ReservationUtil.STATUS_RESERVED
+                status: ttts.factory.reservationStatusType.ReservationConfirmed
             }
-        ).exec();
+        )
+        .sort(
+            {
+                seat_code: 1
+            }
+        )
+        .exec();
 
         if (reservations.length === 0) {
-            return next(new Error(req.__('Message.NotFound')));
-        }
+            next(new Error(req.__('Message.NotFound')));
 
-        reservations.sort((a, b) => {
-            return ScreenUtil.sortBySeatCode(a.get('seat_code'), b.get('seat_code'));
-        });
+            return;
+        }
 
         res.render('print/print_pcthermal', {
             layout: false,
@@ -227,7 +224,6 @@ export async function pcthermalprint(req: Request, res: Response, next: NextFunc
         next(new Error(req.__('Message.UnexpectedError')));
     }
 }
-
 
 /**
  * 予約キャンセル処理
@@ -245,15 +241,6 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     let reservations;
     try {
         reservations = (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS];
-        if (reservations[0].payment_method !== GMOUtil.PAY_TYPE_CREDIT) {
-            res.json({
-                success: false,
-                validation: null,
-                error: `${errorMessage}(not credit data)`
-            });
-
-            return;
-        }
         // キャンセル料セット
         cancellationFee = (<any>req.session)[SESSION_KEY_INQUIRY_CANCELLATIONFEE];
     } catch (err) {
@@ -266,7 +253,6 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         return;
     }
     // 検証
-    //const validations: any = await validateForCancel(req, cancellationFee);
     const validations: any = await validateForCancel(req, reservations[0].performance_day);
     if (Object.keys(validations).length > 0) {
         if (validations.hasOwnProperty('cancelDays')) {
@@ -284,13 +270,12 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     // キャンセル
     try {
         // 金額変更(エラー時はchangeTran内部で例外発生)
-        await GMO.CreditService.changeTran({
+        await ttts.GMO.services.credit.changeTran({
             shopId: <string>process.env.GMO_SHOP_ID,
             shopPass: <string>process.env.GMO_SHOP_PASS,
             accessId: <string>reservations[0].gmo_access_id,
             accessPass: <string>reservations[0].gmo_access_pass,
-            jobCd: GMO.Util.JOB_CD_CAPTURE,
-            //jobCd: <string>reservations[0].gmo_status,
+            jobCd: ttts.GMO.utils.util.JobCd.Capture,
             amount: cancellationFee
         });
     } catch (err) {
@@ -298,7 +283,6 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         res.json({
             success: false,
             validation: null,
-            //error: err.message
             error: errorMessage
         });
 
@@ -309,14 +293,16 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         await sendEmail(reservations[0].purchaser_email, getCancelMail(req, reservations, cancellationFee));
 
         logger.info('-----update db start-----');
+        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+        const stockRepo = new ttts.repository.Stock(ttts.mongoose.connection);
         const promises = ((<any>reservations).map(async(reservation: any) => {
             // 2017/11 本体チケットかつ特殊チケットの時、時間ごとの予約データ解放(AVAILABLEに変更)
-            if (reservation.ticket_ttts_extension.category !== TicketTypeGroupUtil.TICKET_TYPE_CATEGORY_NORMAL &&
+            if (reservation.ticket_ttts_extension.category !== ttts.TicketTypeGroupUtil.TICKET_TYPE_CATEGORY_NORMAL &&
                 reservation.seat_code === reservation.reservation_ttts_extension.seat_code_base) {
-                await Models.ReservationPerHour.findOneAndUpdate(
+                await ttts.Models.ReservationPerHour.findOneAndUpdate(
                     { reservation_id: reservation._id.toString() },
                     {
-                        $set: {status: ReservationUtil.STATUS_AVAILABLE},
+                        $set: {status: ttts.factory.itemAvailability.InStock},
                         $unset: {expired_at: 1, reservation_id: 1}
                     },
                     { new: true }
@@ -324,21 +310,27 @@ export async function cancel(req: Request, res: Response): Promise<void> {
                 logger.info('ReservationPerHour clear reservation_id=', reservation._id.toString());
             }
             // 予約データ解放(AVAILABLEに変更)
-            await Models.Reservation.findByIdAndUpdate(
+            await reservationRepo.reservationModel.findByIdAndUpdate(
                 reservation._id,
                 {
-                    $set: { status: ReservationUtil.STATUS_AVAILABLE },
+                    $set: {status: ttts.factory.reservationStatusType.ReservationCancelled},
                     $unset: getUnsetFields(reservation)
                 }
             ).exec();
             logger.info('Reservation clear =', JSON.stringify(reservation));
+
+            // 在庫を空きに(在庫IDに対して、元の状態に戻す)
+            await stockRepo.stockModel.findByIdAndUpdate(
+                reservation.get('stock'),
+                { availability: reservation.get('stock_availability_before') }
+            ).exec();
         }));
         await Promise.all(promises);
 
         // キャンセルリクエスト保管
-        await Models.CustomerCancelRequest.create({
+        await ttts.Models.CustomerCancelRequest.create({
             reservation: reservations[0],
-            tickets: (<any>Models.CustomerCancelRequest).getTickets(reservations),
+            tickets: (<any>ttts.Models.CustomerCancelRequest).getTickets(reservations),
             cancel_name: `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}`,
             cancellation_fee: cancellationFee
         });
@@ -447,7 +439,6 @@ function validate(req: Request): void {
     // 購入番号
     req.checkBody('paymentNo', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.PaymentNo') })).notEmpty();
     // 電話番号
-    //req.checkBody('purchaserTel', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
     req.checkBody('purchaserTel',
                   req.__('Message.minLength{{fieldName}}{{min}}', { fieldName: req.__('Label.Tel'), min: '4' })).len({min: 4});
 }

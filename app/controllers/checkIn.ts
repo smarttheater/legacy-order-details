@@ -5,12 +5,9 @@
  *
  * @namespace checkIn
  */
-import { Models } from '@motionpicture/ttts-domain';
-import { ReservationUtil } from '@motionpicture/ttts-domain';
-//import { FilmUtil } from '@motionpicture/ttts-domain';
+import * as ttts from '@motionpicture/ttts-domain';
 import { NextFunction, Request, Response } from 'express';
 import * as moment from 'moment';
-import * as mongoose from 'mongoose';
 import * as _ from 'underscore';
 
 // /**
@@ -127,7 +124,7 @@ export async function getReservations(req: Request, res: Response): Promise<void
     try {
         const performanceId: string = (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : '';
         const conditions: any = {
-            status: ReservationUtil.STATUS_RESERVED
+            status: ttts.factory.reservationStatusType.ReservationConfirmed
         };
         if (performanceId !== '') {
             conditions.performance = performanceId;
@@ -139,17 +136,18 @@ export async function getReservations(req: Request, res: Response): Promise<void
             conditions.performance_start_time = { $lte: time };
             conditions.performance_end_time = { $gte: time };
         }
-        const reservations = await Models.Reservation.find(
+        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+        const reservations = await reservationRepo.reservationModel.find(
             conditions
         ).exec();
 
         const reservationsById: {
-            [id: string]: mongoose.Document
+            [id: string]: ttts.mongoose.Document
         } = {};
         const reservationIdsByQrStr: {
             [qr: string]: string
         } = {};
-        reservations.forEach((reservation) => {
+        reservations.forEach((reservation: any) => {
             reservationsById[reservation.get('_id').toString()] = reservation;
             reservationIdsByQrStr[reservation.get('qr_str')] = reservation.get('_id').toString();
         });
@@ -225,7 +223,6 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
         const checkins: any[] = reservation.checkins;
         // tslint:disable-next-line:no-magic-numbers
         const unixTimestamp: number = parseInt(req.body['checkin[_id]'], 10);
-        // const unixTimestamp = (new Date()).getTime();
         // チェックイン情報追加
         checkins.push(
             {
@@ -235,19 +232,13 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
                 why: '',
                 how: req.body['checkin[how]']
             }
-        // {
-        //     _id: unixTimestamp,
-        //     when: unixTimestamp,
-        //     where: req.staffUser.get('group'),
-        //     why: '',
-        //     how: req.staffUser.get('name').ja !== undefined ? req.staffUser.get('name').ja : null
-        // }
         );
         // 予約更新
         const update = {
             checkins: checkins
         };
-        await Models.Reservation.findByIdAndUpdate(reservation._id, update).exec();
+        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+        await reservationRepo.reservationModel.findByIdAndUpdate(reservation._id, update).exec();
         res.json({
             status: true
         });
@@ -299,7 +290,8 @@ export async function removeCheckIn(req: Request, res: Response): Promise<void> 
         }
         // 予約更新
         const update = {checkins: checkins};
-        await Models.Reservation.findByIdAndUpdate(reservation._id, update).exec();
+        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+        await reservationRepo.reservationModel.findByIdAndUpdate(reservation._id, update).exec();
         res.json({
             status: true
         });
@@ -322,9 +314,10 @@ export async function removeCheckIn(req: Request, res: Response): Promise<void> 
  */
 async function getReservationByQR(qr: string): Promise<any> {
     const conditions: any =  parseQR(qr);
-    conditions.status =  ReservationUtil.STATUS_RESERVED;
+    conditions.status =  ttts.factory.reservationStatusType.ReservationConfirmed;
+    const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
 
-    return (await Models.Reservation.findOne(
+    return (reservationRepo.reservationModel.findOne(
         conditions
     ).exec());
 }
@@ -337,14 +330,14 @@ async function getReservationByQR(qr: string): Promise<any> {
 function parseQR(qrStr: string): any {
     const qr: string[] = qrStr.split('-');
     const qrInfo: any = {};
-    if ( qr.length > 0) {
+    if (qr.length > 0) {
         qrInfo.performance_day = qr[0];
     }
-    if ( qr.length > 1) {
+    if (qr.length > 1) {
         qrInfo.payment_no = qr[1];
     }
     // tslint:disable-next-line:no-magic-numbers
-    if ( qr.length > 2) {
+    if (qr.length > 2) {
         // tslint:disable-next-line:no-magic-numbers
         qrInfo.payment_seat_index = qr[2];
     }

@@ -15,8 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  *
  * @namespace checkIn
  */
-const ttts_domain_1 = require("@motionpicture/ttts-domain");
-const ttts_domain_2 = require("@motionpicture/ttts-domain");
+const ttts = require("@motionpicture/ttts-domain");
 const moment = require("moment");
 const _ = require("underscore");
 // /**
@@ -134,7 +133,7 @@ function getReservations(req, res) {
         try {
             const performanceId = (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : '';
             const conditions = {
-                status: ttts_domain_2.ReservationUtil.STATUS_RESERVED
+                status: ttts.factory.reservationStatusType.ReservationConfirmed
             };
             if (performanceId !== '') {
                 conditions.performance = performanceId;
@@ -147,7 +146,8 @@ function getReservations(req, res) {
                 conditions.performance_start_time = { $lte: time };
                 conditions.performance_end_time = { $gte: time };
             }
-            const reservations = yield ttts_domain_1.Models.Reservation.find(conditions).exec();
+            const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+            const reservations = yield reservationRepo.reservationModel.find(conditions).exec();
             const reservationsById = {};
             const reservationIdsByQrStr = {};
             reservations.forEach((reservation) => {
@@ -231,7 +231,6 @@ function addCheckIn(req, res) {
             const checkins = reservation.checkins;
             // tslint:disable-next-line:no-magic-numbers
             const unixTimestamp = parseInt(req.body['checkin[_id]'], 10);
-            // const unixTimestamp = (new Date()).getTime();
             // チェックイン情報追加
             checkins.push({
                 _id: unixTimestamp,
@@ -239,20 +238,13 @@ function addCheckIn(req, res) {
                 where: req.body['checkin[where]'],
                 why: '',
                 how: req.body['checkin[how]']
-            }
-            // {
-            //     _id: unixTimestamp,
-            //     when: unixTimestamp,
-            //     where: req.staffUser.get('group'),
-            //     why: '',
-            //     how: req.staffUser.get('name').ja !== undefined ? req.staffUser.get('name').ja : null
-            // }
-            );
+            });
             // 予約更新
             const update = {
                 checkins: checkins
             };
-            yield ttts_domain_1.Models.Reservation.findByIdAndUpdate(reservation._id, update).exec();
+            const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+            yield reservationRepo.reservationModel.findByIdAndUpdate(reservation._id, update).exec();
             res.json({
                 status: true
             });
@@ -308,7 +300,8 @@ function removeCheckIn(req, res) {
             }
             // 予約更新
             const update = { checkins: checkins };
-            yield ttts_domain_1.Models.Reservation.findByIdAndUpdate(reservation._id, update).exec();
+            const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+            yield reservationRepo.reservationModel.findByIdAndUpdate(reservation._id, update).exec();
             res.json({
                 status: true
             });
@@ -334,8 +327,9 @@ exports.removeCheckIn = removeCheckIn;
 function getReservationByQR(qr) {
     return __awaiter(this, void 0, void 0, function* () {
         const conditions = parseQR(qr);
-        conditions.status = ttts_domain_2.ReservationUtil.STATUS_RESERVED;
-        return (yield ttts_domain_1.Models.Reservation.findOne(conditions).exec());
+        conditions.status = ttts.factory.reservationStatusType.ReservationConfirmed;
+        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+        return (reservationRepo.reservationModel.findOne(conditions).exec());
     });
 }
 /**

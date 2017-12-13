@@ -5,22 +5,22 @@
  * @module app
  * @global
  */
+const ttts = require("@motionpicture/ttts-domain");
 const bodyParser = require("body-parser");
 const conf = require("config");
 const cookieParser = require("cookie-parser");
 const express = require("express");
-const i18n = require("i18n");
-const log4js = require("log4js");
-const mongoose = require("mongoose");
-const _ = require("underscore");
 // tslint:disable-next-line:no-var-requires no-require-imports
 const expressValidator = require("express-validator");
-//import * as checkInAuthController from './controllers/auth';
+const i18n = require("i18n");
+const log4js = require("log4js");
+const _ = require("underscore");
 // ミドルウェア
 const basicAuth_1 = require("./middlewares/basicAuth");
 const benchmarks_1 = require("./middlewares/benchmarks");
 const session_1 = require("./middlewares/session");
 const userAuthentication_1 = require("./middlewares/userAuthentication");
+const mongooseConnectionOptions_1 = require("../mongooseConnectionOptions");
 // ルーター
 //import authCheckinRouter from './routes/auth';
 const router_1 = require("./routes/router");
@@ -93,10 +93,10 @@ app.use(userAuthentication_1.default);
  * plenty of time in most operating environments.
  */
 const MONGOLAB_URI = process.env.MONGOLAB_URI;
+if (MONGOLAB_URI === undefined) {
+    throw new Error('Environment variable MONGOLAB_URI is required for connecting MongoDB. Please set it.');
+}
 // Use native promises
-mongoose.Promise = global.Promise;
-mongoose.connect(MONGOLAB_URI, {
-    server: { socketOptions: { keepAlive: 300000, connectTimeoutMS: 30000 } },
-    replset: { socketOptions: { keepAlive: 300000, connectTimeoutMS: 30000 } }
-});
+ttts.mongoose.Promise = global.Promise;
+ttts.mongoose.connect(MONGOLAB_URI, mongooseConnectionOptions_1.default);
 module.exports = app;

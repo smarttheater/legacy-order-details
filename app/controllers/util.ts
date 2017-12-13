@@ -4,10 +4,18 @@
  * @namespace util
  */
 
-import { Models, PerformanceStatusesModel, ReservationUtil } from '@motionpicture/ttts-domain';
+import * as ttts from '@motionpicture/ttts-domain';
 import * as conf from 'config';
 import { Request, Response } from 'express';
 import * as moment from 'moment';
+
+const redisClient = ttts.redis.createClient({
+    host: <string>process.env.TTTS_PERFORMANCE_STATUSES_REDIS_HOST,
+    // tslint:disable-next-line:no-magic-numbers
+    port: parseInt(<string>process.env.TTTS_PERFORMANCE_STATUSES_REDIS_PORT, 10),
+    password: <string>process.env.TTTS_PERFORMANCE_STATUSES_REDIS_KEY,
+    tls: { servername: <string>process.env.TTTS_PERFORMANCE_STATUSES_REDIS_HOST }
+});
 
 // チケット情報(descriptionは予約データに持つべき(ticket_description))
 const ticketInfos: any = conf.get('ticketInfos');
@@ -41,14 +49,16 @@ export async function performancestatus(req: Request, res: Response): Promise<vo
         }
 
         // パフォーマンス一覧を取得 (start_time昇順ソート)
-        const query = Models.Performance.find({ day: req.query.day }, 'day start_time end_time').sort({start_time: 1});
+        const performanceRepo = new ttts.repository.Performance(ttts.mongoose.connection);
+        const query = performanceRepo.performanceModel.find({ day: req.query.day }, 'day start_time end_time').sort({start_time: 1});
         const performances = <any[]>await query.lean(true).exec().catch((err) => { error = err; });
         if (!Array.isArray(performances) || performances.length < 1) {
             throw new Error();
         }
 
         // 空席数を取得
-        const performanceStatuses = await PerformanceStatusesModel.find().catch((err) => { error = err; });
+        const performanceStatusesRepo = new ttts.repository.PerformanceStatuses(redisClient);
+        const performanceStatuses = await performanceStatusesRepo.find().catch((err) => { error = err; });
         if (typeof performanceStatuses !== 'object') {
             throw new Error('typeof performanceStatuses !== "object"');
         }
@@ -104,10 +114,11 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
         // 取得対象のパフォーマンス取得
         const performanceInfo: any = await getTargetPerformances(timeInfo);
         // 予約情報取得
-        const reservations = <any[]>await Models.Reservation.find(
+        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+        const reservations = <any[]>await reservationRepo.reservationModel.find(
             {
                 performance: { $in: performanceInfo.ids },
-                status: ReservationUtil.STATUS_RESERVED
+                status: ttts.factory.reservationStatusType.ReservationConfirmed
             }
         ).exec();
 
@@ -131,7 +142,8 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
         const dataCheckins: any = groupingCheckinsByWhere(dataByPerformance);
 
         // チェックポイント名称取得
-        const owners: any[] = await Models.Owner.find({notes: '1'}).exec();
+        const ownerRepo = new ttts.repository.Owner(ttts.mongoose.connection);
+        const owners: any[] = await ownerRepo.ownerModel.find({ notes: '1' }).exec();
         const checkpointNames: any = {};
         owners.map((owner) => {
             checkpointNames[owner.group] = owner.get('description');
@@ -145,7 +157,8 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
         Object.keys(dataByPerformance).forEach((performanceId) => {
             // パフォーマンス情報セット
             const performance: any = dataByPerformance[performanceId].performance;
-            const reservedNum: number = getStatusCount(dataByPerformance[performanceId].reservations, ReservationUtil.STATUS_RESERVED);
+            const reservedNum: number = getStatusCount(dataByPerformance[performanceId].reservations,
+                                                       ttts.factory.reservationStatusType.ReservationConfirmed);
             const schedule: any = {
                 performanceId: performanceId,
                 start_time: performance.start_time,
@@ -214,10 +227,10 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
  * @param {string} selectType
  * @returns {Promise<any>}
  */
-async function getStartTime(selectType: string, now: moment.Moment ) : Promise<any> {
+async function getStartTime(selectType: string, now: moment.Moment) : Promise<any> {
     const day = now.format('YYYYMMDD');
     // 1日分の時は日付のみセット
-    if ( selectType === 'day') {
+    if (selectType === 'day') {
         return {
             startTimeFrom: null,
             startTimeTo: null,
@@ -226,7 +239,8 @@ async function getStartTime(selectType: string, now: moment.Moment ) : Promise<a
    }
     const start = now.format('HHmm');
     // 直近のパフォーマンス(開始時刻)取得
-    const performances = <any[]>await Models.Performance.find(
+    const performanceRepo = new ttts.repository.Performance(ttts.mongoose.connection);
+    const performances = <any[]>await performanceRepo.performanceModel.find(
         {
             day: day,
             start_time: { $lte: start }
@@ -276,7 +290,8 @@ async function getTargetPerformances(timeInfo: any): Promise<any> {
         conditions.start_time = conditionsTime;
     }
     // 対象パフォーマンス取得
-    const performances = <any[]>await Models.Performance.find(
+    const performanceRepo = new ttts.repository.Performance(ttts.mongoose.connection);
+    const performances = <any[]>await performanceRepo.performanceModel.find(
         conditions
     ).exec();
     // id抽出
@@ -428,7 +443,7 @@ async function groupingReservationsByPerformance(dicPerformances: any, performan
  */
 async function getTicketTypes(group: string): Promise<any> {
     // 券種取得(ticket_typesをjoinして名称etcも取得)
-    const ticketTypeGroup = await Models.TicketTypeGroup.findOne(
+    const ticketTypeGroup = await ttts.Models.TicketTypeGroup.findOne(
         { _id: group }
     ).populate('ticket_types').exec();
 
@@ -532,7 +547,7 @@ function getConcernedUnarrivedArray(concernedReservedArray: any[], checkin: any)
     });
 
     // 到着チケットをチェックし、同じdescriptionの予約数からチェックイン数を引く
-    for (const tycketType of Object.keys(checkin.arrived)){
+    for (const tycketType of Object.keys(checkin.arrived)) {
         if (!ticketInfos.hasOwnProperty(tycketType)) {
             continue;
         }

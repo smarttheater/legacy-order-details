@@ -49,27 +49,28 @@ exports.default = (app) => {
         res.locals.title = 'Tokyo Tower';
         res.locals.description = 'TTTS Terms';
         res.locals.keywords = 'TTTS Terms';
-        return res.render('common/terms/', {
-            layout: 'layouts/inquiry/layout'
-        });
+        res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
     });
     // 本体サイトのプライバシーポリシーページの対応言語版(無ければ英語版)に転送
     app.get('/privacypolicy', (req, res) => {
-        const locale = (req.getLocale()) || 'en';
-        const url = (privacyPolicyUrlByLocale[locale] || privacyPolicyUrlByLocale.en);
-        return res.redirect(url);
+        const locale = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url = (privacyPolicyUrlByLocale[locale] !== undefined) ?
+            privacyPolicyUrlByLocale[locale] : privacyPolicyUrlByLocale.en;
+        res.redirect(url);
     });
     // 本体サイトのお問い合わせページの対応言語版(無ければ英語版)に転送
     app.get('/contact', (req, res) => {
-        const locale = (req.getLocale()) || 'en';
-        const url = (contactUrlByLocale[locale] || contactUrlByLocale.en);
-        return res.redirect(url);
+        const locale = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url = (contactUrlByLocale[locale] !== undefined) ?
+            contactUrlByLocale[locale] : contactUrlByLocale.en;
+        res.redirect(url);
     });
     // 本体サイトトップページの対応言語版(無ければ英語版)に転送
     app.get('/returntop', (req, res) => {
-        const locale = (req.getLocale()) || 'en';
-        const url = (topUrlByLocale[locale] || topUrlByLocale.en);
-        return res.redirect(url);
+        const locale = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url = (topUrlByLocale[locale] !== undefined) ?
+            topUrlByLocale[locale] : topUrlByLocale.en;
+        res.redirect(url);
     });
     // 404
     app.get('/error/notFound', base, errorController.notFound);
