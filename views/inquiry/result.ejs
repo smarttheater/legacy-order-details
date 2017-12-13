@@ -1,0 +1,89 @@
+<% const reservationIdArray = []; %>
+<%- contentFor('pageId') %>
+page_inquiry_result
+<%- contentFor('pageClassName') %>
+page-inquiry page-result page-complete
+<%- contentFor('scripts') %>
+<script src="/js/inquiry/result.js"></script>
+
+<%- contentFor('body') %>
+
+<h1 class="pagetitle"><%- __('h1.TicketResult') %></h1>
+<p class="guidetext">以下のQRコードが入場チケットとなります。保存もしくは印刷の上、御持参ください。<br>キャンセルを行う場合は「チケットをキャンセル」ボタンを押してください。</p>
+<p class="guidetext"></p>
+
+
+<table class="table table-complete">
+    <tbody>
+        <tr>
+            <th><%- __('Label.PaymentNo') %></th>
+            <td>
+                <span class="rsrvno"><%- reservations[0].payment_no %></span>
+            </td>
+        </tr>
+        <tr>
+            <th><%- __('Label.PerformanceTime') %></th>
+            <%
+                moment.locale(locale);
+                const day = moment(reservations[0].performance_day, 'YYYYMMDD');
+                const start = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
+                const end = `${reservations[0].performance_end_time.substr(0, 2)}:${reservations[0].performance_end_time.substr(2, 2)}`;
+            %>
+            <td>
+                <%- day.format('LL(ddd) ') %>
+                <%- start %>～<%- end %>
+            </td>
+        </tr>
+        <tr>
+            <th>ツアーナンバー</th>
+            <td>
+                <%- reservations[0].performance_ttts_extension.tour_number %>
+            </td>
+        </tr>
+        <tr>
+            <th><%- __('Label.QrCode') %></th>
+            <td>
+                <% reservations.forEach((reservation, index) => {
+                    reservationIdArray.push(`\"${reservation._id.toString()}\"`);
+                %>
+                <div class="wrapper-qrcodes">
+                    <div>
+                        <p>
+                            <img class="codeimg-barcode" src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>" alt="">
+                        </p>
+                        <p>
+                            <%- reservation.ticket_type_name[locale] || reservation.ticket_type_name.en %><br>
+                            &yen;<%- reservation.ticket_type_charge %><br>
+                            <%- reservation.seat_code %>
+                        </p>
+                    </div>
+                </div>
+                <% }) %>
+            </td>
+        </tr>
+        <tr>
+            <th><%- __('Label.TotalPrice') %> %></th>
+            <td>
+                <span class="price">&yen;<%- String(reservations.reduce((a,b)=>a+b.charge,0)).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,') %></span>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<div>
+    <a class="btn btn-blue btn-print" target="_blank" href='/inquiry/print/?ids=[<%- reservationIdArray.join(',') %>]'><span>印刷する</span></a>
+    <br/>
+    <p class="btn btn-cancel"><span>チケットをキャンセルする</span></p>
+</div>
+
+<div class="enteringguide">
+    <h3>ご入場方法について</h3>
+    <p>特別展望台への入場方法に関しましては<br>下記の「入場方法について」ボタンを押してご確認ください。</p>
+    <a class="btn btn-blue btn-entering" target="_blank" href="https://www.tokyotower.co.jp/observatory/index.html"><span>入場方法について</span></a>
+</div>
+
+
+<div>
+    <a class="btn-back" href="/inquiry/search"><span>他のチケットを照会</span></a>
+</div>
+<%- include('cancel') %>
