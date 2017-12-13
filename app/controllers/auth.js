@@ -14,9 +14,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ttts = require("@motionpicture/ttts-domain");
+const createDebug = require("debug");
 const _ = require("underscore");
 const Message = require("../../common/Const/Message");
 const checkinAdmin_1 = require("../models/user/checkinAdmin");
+const debug = createDebug('ttts-authentication:controllers:auth');
 const checkInHome = '/checkin/confirm';
 const cookieName = 'remember_checkin_admin';
 /**
@@ -28,9 +30,10 @@ function login(req, res, next) {
             res.redirect(checkInHome);
             return;
         }
-        // ユーザー認証
+        // ユーザー認証(notesフィールドが、入場認証に使えるユーザーのフラグ)
         const ownerRepo = new ttts.repository.Owner(ttts.mongoose.connection);
         const owners = yield ownerRepo.ownerModel.find({ notes: '1' }).exec();
+        debug('owners:', owners);
         if (owners.length === undefined || owners.length <= 0) {
             next(new Error(Message.Common.unexpectedError));
             return;
@@ -43,15 +46,13 @@ function login(req, res, next) {
             errors = req.validationErrors(true);
             if (validatorResult.isEmpty()) {
                 // ユーザー認証
-                const owner = owners.filter((own) => {
-                    return (own.username === req.body.username);
-                })[0];
-                if (!owner) {
+                const signedOwner = owners.find((owner) => (owner.get('username') === req.body.username));
+                if (signedOwner === undefined) {
                     errors = { username: { msg: 'IDもしくはパスワードの入力に誤りがあります' } };
                 }
                 else {
                     // パスワードチェック
-                    if (owner.get('password_hash') !== ttts.CommonUtil.createHash(req.body.password, owner.get('password_salt'))) {
+                    if (signedOwner.get('password_hash') !== ttts.CommonUtil.createHash(req.body.password, signedOwner.get('password_salt'))) {
                         errors = { username: { msg: 'IDもしくはパスワードの入力に誤りがあります' } };
                     }
                     else {
@@ -60,13 +61,13 @@ function login(req, res, next) {
                             // トークン生成
                             const authentication = yield ttts.Models.Authentication.create({
                                 token: ttts.CommonUtil.createToken(),
-                                owner: owner.get('_id'),
+                                owner: signedOwner.get('_id'),
                                 signature: req.body.signature
                             });
                             // tslint:disable-next-line:no-cookies
                             res.cookie(cookieName, authentication.get('token'), { path: '/', httpOnly: true, maxAge: 604800000 });
                         }
-                        req.session[checkinAdmin_1.default.AUTH_SESSION_NAME] = owner.toObject();
+                        req.session[checkinAdmin_1.default.AUTH_SESSION_NAME] = signedOwner.toObject();
                         req.session[checkinAdmin_1.default.AUTH_SESSION_NAME].signature = req.body.signature;
                         // 入場確認へ
                         const cb = (!_.isEmpty(req.query.cb)) ? req.query.cb : checkInHome;
@@ -82,7 +83,7 @@ function login(req, res, next) {
             title: '入場管理ログイン',
             errors: errors,
             usernames: owners.map((owner) => {
-                return { id: owner.username, ja: owner.name.ja };
+                return { id: owner.get('username'), ja: owner.get('name.ja') };
             }),
             layout: 'layouts/checkIn/layout'
         });

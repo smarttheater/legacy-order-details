@@ -16,7 +16,6 @@ const log4js = require("log4js");
 const _ = require("underscore");
 // ミドルウェア
 const basicAuth_1 = require("./middlewares/basicAuth");
-const benchmarks_1 = require("./middlewares/benchmarks");
 const session_1 = require("./middlewares/session");
 const userAuthentication_1 = require("./middlewares/userAuthentication");
 const mongooseConnectionOptions_1 = require("../mongooseConnectionOptions");
@@ -26,7 +25,6 @@ const router_1 = require("./routes/router");
 // tslint:disable-next-line:no-var-requires no-require-imports
 const expressLayouts = require('express-ejs-layouts');
 const app = express();
-app.use(benchmarks_1.default); // ベンチマーク的な
 app.use(session_1.default); // セッション
 app.use(basicAuth_1.default); // ベーシック認証
 if (process.env.NODE_ENV !== 'production') {

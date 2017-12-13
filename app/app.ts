@@ -16,7 +16,6 @@ import * as _ from 'underscore';
 
 // ミドルウェア
 import basicAuth from './middlewares/basicAuth';
-import benchmarks from './middlewares/benchmarks';
 import session from './middlewares/session';
 import userAuthentication from './middlewares/userAuthentication';
 
@@ -30,7 +29,6 @@ const expressLayouts = require('express-ejs-layouts');
 
 const app = express();
 
-app.use(benchmarks); // ベンチマーク的な
 app.use(session); // セッション
 app.use(basicAuth); // ベーシック認証
 

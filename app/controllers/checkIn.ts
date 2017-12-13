@@ -1,78 +1,14 @@
 /**
  * 入場コントローラー
- *
  * 上映当日入場画面から使う機能はここにあります。
- *
  * @namespace checkIn
  */
+
 import * as ttts from '@motionpicture/ttts-domain';
 import { NextFunction, Request, Response } from 'express';
+import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, NO_CONTENT, NOT_FOUND } from 'http-status';
 import * as moment from 'moment';
 import * as _ from 'underscore';
-
-// /**
-//  * 入場画面のパフォーマンス検索
-//  * @memberof checkIn
-//  * @function performances
-//  * @param {Request} req
-//  * @param {Response} res
-//  * @param {NextFunction} next
-//  * @returns {Promise<void>}
-//  */
-// export async function performances(__: Request, res: Response, next: NextFunction): Promise<void> {
-//     try {
-//         // 劇場とスクリーンを取得
-//         const theaters = await Models.Theater.find(
-//             {},
-//             'name'
-//         ).exec();
-
-//         const screens = await Models.Screen.find(
-//             {},
-//             'name theater'
-//         ).exec();
-
-//         const screensByTheater: any = {};
-//         screens.forEach((screen) => {
-//             if (screensByTheater[screen.get('theater')] === undefined) {
-//                 screensByTheater[screen.get('theater')] = [];
-//             }
-
-//             screensByTheater[screen.get('theater')].push(screen);
-//         });
-
-//         res.render('checkIn/performances', {
-//             FilmUtil: FilmUtil,
-//             theaters: theaters,
-//             screensByTheater: screensByTheater,
-//             event: {
-//                 start: '2016-10-25T00:00:00+09:00',
-//                 end: '2017-12-31T23:59:59+09:00'
-//             },
-//             layout: 'layouts/checkIn/layout'
-//         });
-
-//         return;
-//     } catch (error) {
-//         next(error);
-//     }
-// }
-
-// /**
-//  * 入場画面のパフォーマンス選択
-//  * @memberof checkIn
-//  * @function performanceSelect
-//  * @param {Request} req
-//  * @param {Response} res
-//  * @returns {Promise<void>}
-//  */
-// export async function performanceSelect(req: Request, res: Response): Promise<void> {
-//     if (!_.isEmpty(req.body.performanceId)) {
-//         res.redirect(`/checkin/performance/${req.body.performanceId}/confirm`);
-//     } else {
-//         res.redirect('/checkin/performances');
-//     }
-// }
 
 /**
  * QRコード認証画面
@@ -122,24 +58,25 @@ export async function confirmTest(req: Request, res: Response, next: NextFunctio
  */
 export async function getReservations(req: Request, res: Response): Promise<void> {
     try {
-        const performanceId: string = (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : '';
+        // 予約検索条件(デフォルトはReservationConfirmedステータス)
         const conditions: any = {
             status: ttts.factory.reservationStatusType.ReservationConfirmed
         };
-        if (performanceId !== '') {
-            conditions.performance = performanceId;
+        if (!_.isEmpty(req.body.performanceId)) {
+            conditions.performance = req.body.performanceId;
         } else {
+            // パフォーマンスの指定がなければ、その時点での上映を指定する
             const now = moment();
             const day = now.format('YYYYMMDD');
             const time = now.format('HHmm');
-            conditions.performance_day =  day;
+            conditions.performance_day = day;
             conditions.performance_start_time = { $lte: time };
             conditions.performance_end_time = { $gte: time };
         }
+
+        // 予約を検索
         const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-        const reservations = await reservationRepo.reservationModel.find(
-            conditions
-        ).exec();
+        const reservations = await reservationRepo.reservationModel.find(conditions).exec();
 
         const reservationsById: {
             [id: string]: ttts.mongoose.Document
@@ -147,7 +84,7 @@ export async function getReservations(req: Request, res: Response): Promise<void
         const reservationIdsByQrStr: {
             [qr: string]: string
         } = {};
-        reservations.forEach((reservation: any) => {
+        reservations.forEach((reservation) => {
             reservationsById[reservation.get('_id').toString()] = reservation;
             reservationIdsByQrStr[reservation.get('qr_str')] = reservation.get('_id').toString();
         });
@@ -158,12 +95,12 @@ export async function getReservations(req: Request, res: Response): Promise<void
             reservationIdsByQrStr: reservationIdsByQrStr
         });
     } catch (error) {
-        console.error(error);
         res.json({
             error: '予約情報取得失敗'
         });
     }
 }
+
 /**
  * 予約情報取得
  * @memberof checkIn
@@ -179,17 +116,17 @@ export async function getReservation(req: Request, res: Response): Promise<void>
     if (!req.staffUser.isAuthenticated()) {
         throw new Error('staffUser not authenticated.');
     }
+
     try {
         const reservation = await getReservationByQR(req.params.qr);
-        res.json({
-            status: true,
-            error: null,
-            reservation: reservation
-        });
+
+        if (reservation === null) {
+            res.status(NOT_FOUND).json(null);
+        } else {
+            res.json(reservation);
+        }
     } catch (error) {
-        console.error(error);
-        res.json({
-            status: false,
+        res.status(INTERNAL_SERVER_ERROR).json({
             error: '予約情報取得失敗',
             message: error
         });
@@ -212,40 +149,41 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
         if (!req.staffUser.isAuthenticated()) {
             throw new Error('staffUser not authenticated.');
         }
-        if (!req.body['checkin[_id]']
-        || !req.body['checkin[where]']
-        || !req.body['checkin[how]']
-        ) {
-            throw new Error('req.body.checkin invalid');
+        if (!req.body.when || !req.body.where || !req.body.how) {
+            res.status(BAD_REQUEST).json({
+                error: 'チェックイン情報作成失敗',
+                message: 'Invalid checkin.'
+            });
+
+            return;
         }
-        // QR文字列から予約取得
-        const reservation: any = await getReservationByQR(req.params.qr);
-        const checkins: any[] = reservation.checkins;
-        // tslint:disable-next-line:no-magic-numbers
-        const unixTimestamp: number = parseInt(req.body['checkin[_id]'], 10);
-        // チェックイン情報追加
-        checkins.push(
-            {
-                _id: unixTimestamp,
-                when: unixTimestamp,
-                where: req.body['checkin[where]'],
-                why: '',
-                how: req.body['checkin[how]']
-            }
-        );
-        // 予約更新
-        const update = {
-            checkins: checkins
+
+        const checkin = {
+            when: req.body.when,
+            where: req.body.where,
+            why: '',
+            how: req.body.how
         };
         const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-        await reservationRepo.reservationModel.findByIdAndUpdate(reservation._id, update).exec();
-        res.json({
-            status: true
-        });
+        const newReservation = await reservationRepo.reservationModel.findOneAndUpdate(
+            {
+                qr_str: req.params.qr
+            },
+            {
+                $push: {
+                    checkins: checkin
+                }
+            },
+            { new: true }
+        ).exec();
+
+        if (newReservation === null) {
+            res.status(NOT_FOUND).json(null);
+        } else {
+            res.status(CREATED).json(checkin);
+        }
     } catch (error) {
-        console.error(error);
-        res.json({
-            status: false,
+        res.status(INTERNAL_SERVER_ERROR).json({
             error: 'チェックイン情報作成失敗',
             message: error.message
         });
@@ -267,38 +205,35 @@ export async function removeCheckIn(req: Request, res: Response): Promise<void> 
         if (!req.staffUser.isAuthenticated()) {
             throw new Error('staffUser not authenticated.');
         }
-        if (!req.params.qr || !req.body.when) {
-            throw new Error('invalid request');
+        if (!req.body.when) {
+            res.status(BAD_REQUEST).json({
+                error: 'チェックイン取り消し失敗',
+                message: 'Invalid request.'
+            });
+
+            return;
         }
-        // QR文字列から予約取得
-        const reservation: any = await getReservationByQR(req.params.qr);
-        const timeStamp: string = req.body.when;
-        const checkins: any[] = reservation.checkins;
-        let index: number = 0;
-        let delIndex: number = -1;
-        // 削除対象のチェックイン情報のindexを取得
-        for (const checkin of checkins) {
-            if (checkin && checkin._id === Number(timeStamp)) {
-                delIndex = index;
-                break;
-            }
-            index += 1;
-        }
-        // チェックイン削除
-        if (delIndex >= 0) {
-            checkins.splice(delIndex, 1);
-        }
-        // 予約更新
-        const update = {checkins: checkins};
+
         const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-        await reservationRepo.reservationModel.findByIdAndUpdate(reservation._id, update).exec();
-        res.json({
-            status: true
-        });
+        const newReservation = await reservationRepo.reservationModel.findOneAndUpdate(
+            {
+                qr_str: req.params.qr
+            },
+            {
+                $pull: {
+                    checkins: { when: req.body.when }
+                }
+            },
+            { new: true }
+        ).exec();
+
+        if (newReservation === null) {
+            res.status(NOT_FOUND).json(null);
+        } else {
+            res.status(NO_CONTENT).end();
+        }
     } catch (error) {
-        console.error(error);
-        res.json({
-            status: false,
+        res.status(INTERNAL_SERVER_ERROR).json({
             error: 'チェックイン取り消し失敗',
             message: error.message
         });
@@ -312,35 +247,13 @@ export async function removeCheckIn(req: Request, res: Response): Promise<void> 
  * @param {string} qr
  * @returns {Promise<any>}
  */
-async function getReservationByQR(qr: string): Promise<any> {
-    const conditions: any =  parseQR(qr);
-    conditions.status =  ttts.factory.reservationStatusType.ReservationConfirmed;
+async function getReservationByQR(qr: string): Promise<ttts.factory.reservation.event.IReservation | null> {
     const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
 
-    return (reservationRepo.reservationModel.findOne(
-        conditions
-    ).exec());
-}
-/**
- * QR文字列からクラス作成
- * @function parseQR
- * @param {string} qrStr
- * @returns {any}
- */
-function parseQR(qrStr: string): any {
-    const qr: string[] = qrStr.split('-');
-    const qrInfo: any = {};
-    if (qr.length > 0) {
-        qrInfo.performance_day = qr[0];
-    }
-    if (qr.length > 1) {
-        qrInfo.payment_no = qr[1];
-    }
-    // tslint:disable-next-line:no-magic-numbers
-    if (qr.length > 2) {
-        // tslint:disable-next-line:no-magic-numbers
-        qrInfo.payment_seat_index = qr[2];
-    }
-
-    return qrInfo;
+    return reservationRepo.reservationModel.findOne(
+        {
+            qr_str: qr,
+            status: ttts.factory.reservationStatusType.ReservationConfirmed
+        }
+    ).exec().then((doc) => (doc === null) ? null : <ttts.factory.reservation.event.IReservation>doc.toObject());
 }

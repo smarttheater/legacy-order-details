@@ -5,12 +5,14 @@
  */
 
 import * as ttts from '@motionpicture/ttts-domain';
+import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
 import * as _ from 'underscore';
 
 import * as Message from '../../common/Const/Message';
 import CheckInAdminUser from '../models/user/checkinAdmin';
 
+const debug = createDebug('ttts-authentication:controllers:auth');
 const checkInHome: string = '/checkin/confirm';
 const cookieName = 'remember_checkin_admin';
 
@@ -24,9 +26,10 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
         return;
     }
 
-    // ユーザー認証
+    // ユーザー認証(notesフィールドが、入場認証に使えるユーザーのフラグ)
     const ownerRepo = new ttts.repository.Owner(ttts.mongoose.connection);
-    const owners: any[] = await ownerRepo.ownerModel.find({ notes: '1' }).exec();
+    const owners = await ownerRepo.ownerModel.find({ notes: '1' }).exec();
+    debug('owners:', owners);
     if (owners.length === undefined || owners.length <= 0) {
         next(new Error(Message.Common.unexpectedError));
 
@@ -41,15 +44,13 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
         errors = req.validationErrors(true);
         if (validatorResult.isEmpty()) {
             // ユーザー認証
-            const owner: any = owners.filter((own: any) => {
-                return (own.username === req.body.username);
-            })[0];
+            const signedOwner = owners.find((owner) => (owner.get('username') === req.body.username));
 
-            if (!owner) {
+            if (signedOwner === undefined) {
                 errors = { username: { msg: 'IDもしくはパスワードの入力に誤りがあります' } };
             } else {
                 // パスワードチェック
-                if (owner.get('password_hash') !== ttts.CommonUtil.createHash(req.body.password, owner.get('password_salt'))) {
+                if (signedOwner.get('password_hash') !== ttts.CommonUtil.createHash(req.body.password, signedOwner.get('password_salt'))) {
                     errors = { username: { msg: 'IDもしくはパスワードの入力に誤りがあります' } };
                 } else {
                     // ログイン記憶
@@ -58,7 +59,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
                         const authentication = await ttts.Models.Authentication.create(
                             {
                                 token: ttts.CommonUtil.createToken(),
-                                owner: owner.get('_id'),
+                                owner: signedOwner.get('_id'),
                                 signature: req.body.signature
                             }
                         );
@@ -71,7 +72,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
                         );
                     }
 
-                    (<Express.Session>req.session)[CheckInAdminUser.AUTH_SESSION_NAME] = owner.toObject();
+                    (<Express.Session>req.session)[CheckInAdminUser.AUTH_SESSION_NAME] = signedOwner.toObject();
                     (<Express.Session>req.session)[CheckInAdminUser.AUTH_SESSION_NAME].signature = req.body.signature;
                     // 入場確認へ
                     const cb = (!_.isEmpty(req.query.cb)) ? req.query.cb : checkInHome;
@@ -89,7 +90,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
         title: '入場管理ログイン',
         errors: errors,
         usernames: owners.map((owner) => {
-            return { id: owner.username, ja: owner.name.ja };
+            return { id: owner.get('username'), ja: owner.get('name.ja') };
         }),
         layout: 'layouts/checkIn/layout'
     });
