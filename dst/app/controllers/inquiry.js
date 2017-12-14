@@ -20,6 +20,9 @@ const google_libphonenumber_1 = require("google-libphonenumber");
 const http_status_1 = require("http-status");
 const moment = require("moment");
 const numeral = require("numeral");
+const sendgrid = require("sendgrid");
+const util = require("util");
+const Text = require("../../common/Const/Text");
 const ticket = require("../../common/Util/ticket");
 const debug = createDebug('ttts-authentication:controllers.inquiry');
 // セッションキー
@@ -63,9 +66,20 @@ function search(req, res) {
                 try {
                     // 予約検索
                     const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
+                    const transactionRepo = new ttts.repository.Transaction(ttts.mongoose.connection);
                     const reservations = yield reservationRepo.reservationModel.find(conditions).exec();
+                    debug('reservations found.', reservations);
                     // データ有りの時
                     if (reservations.length > 0) {
+                        // 取引に対する返品リクエストがすでにあるかどうか
+                        const returnOrderTransaction = yield transactionRepo.transactionModel.findOne({
+                            typeOf: ttts.factory.transactionType.ReturnOrder,
+                            'object.transaction.id': reservations[0].get('transaction')
+                        }).exec();
+                        debug('returnOrderTransaction:', returnOrderTransaction);
+                        if (returnOrderTransaction !== null) {
+                            throw new Error('Already canceled.');
+                        }
                         // 予約照会・検索結果画面へ遷移
                         req.session[SESSION_KEY_INQUIRY_RESERVATIONS] = reservations;
                         res.redirect('/inquiry/search/result');
@@ -109,7 +123,7 @@ function result(req, res, next) {
                 next(new Error(messageNotFound));
             }
             let reservations = req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
-            if (!reservations || reservations.length === 0) {
+            if (!Array.isArray(reservations) || reservations.length === 0) {
                 next(new Error(messageNotFound));
                 return;
             }
@@ -117,10 +131,7 @@ function result(req, res, next) {
             reservations = reservations.filter((reservation) => reservation.status === ttts.factory.reservationStatusType.ReservationConfirmed);
             // 券種ごとに合計枚数算出
             const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
-            // キャンセル料取得
-            // 2017/11/15 キャンセル料は1予約あたり1000円固定
-            //const today = moment().format('YYYYMMDD');
-            //const fee: number = getCancellationFee(reservations, today);
+            // キャンセル料は1予約あたり1000円固定
             const fee = CANCEL_CHARGE;
             req.session[SESSION_KEY_INQUIRY_CANCELLATIONFEE] = fee;
             const cancellationFee = numeral(fee).format('0,0');
@@ -227,6 +238,7 @@ function cancel(req, res) {
                 paymentNo: reservations[0].payment_no,
                 cancellationFee: cancellationFee
             })(new ttts.repository.Transaction(ttts.mongoose.connection));
+            yield sendEmail(reservations[0].purchaser_email, getCancelMail(req, reservations, cancellationFee));
             res.json({
                 validation: null,
                 error: null
@@ -241,111 +253,6 @@ function cancel(req, res) {
     });
 }
 exports.cancel = cancel;
-// async function cancelProcess() {
-//     // キャンセル
-//     try {
-//         // 金額変更(エラー時はchangeTran内部で例外発生)
-//         await ttts.GMO.services.credit.changeTran({
-//             shopId: <string>process.env.GMO_SHOP_ID,
-//             shopPass: <string>process.env.GMO_SHOP_PASS,
-//             accessId: <string>reservations[0].gmo_access_id,
-//             accessPass: <string>reservations[0].gmo_access_pass,
-//             jobCd: ttts.GMO.utils.util.JobCd.Capture,
-//             amount: cancellationFee
-//         });
-//     } catch (err) {
-//         // GMO金額変更apiエラーはキャンセルできなかたことをユーザーに知らせる
-//         res.json({
-//             success: false,
-//             validation: null,
-//             error: errorMessage
-//         });
-//         return;
-//     }
-//     const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-//     const stockRepo = new ttts.repository.Stock(ttts.mongoose.connection);
-//     const promises = ((<any>reservations).map(async (reservation: any) => {
-//         // キャンセルメール送信
-//         await sendEmail(reservations[0].purchaser_email, getCancelMail(req, reservations, cancellationFee));
-//         // 2017/11 本体チケットかつ特殊チケットの時、時間ごとの予約データ解放(AVAILABLEに変更)
-//         if (reservation.ticket_ttts_extension.category !== ttts.TicketTypeGroupUtil.TICKET_TYPE_CATEGORY_NORMAL &&
-//             reservation.seat_code === reservation.reservation_ttts_extension.seat_code_base) {
-//             await ttts.Models.ReservationPerHour.findOneAndUpdate(
-//                 { reservation_id: reservation._id.toString() },
-//                 {
-//                     $set: { status: ttts.factory.itemAvailability.InStock },
-//                     $unset: { expired_at: 1, reservation_id: 1 }
-//                 },
-//                 { new: true }
-//             ).exec();
-//             logger.info('ReservationPerHour clear reservation_id=', reservation._id.toString());
-//         }
-//         // 予約データ解放(AVAILABLEに変更)
-//         await reservationRepo.reservationModel.findByIdAndUpdate(
-//             reservation._id,
-//             {
-//                 $set: { status: ttts.factory.reservationStatusType.ReservationCancelled },
-//                 $unset: getUnsetFields(reservation)
-//             }
-//         ).exec();
-//         logger.info('Reservation clear =', JSON.stringify(reservation));
-//         // 在庫を空きに(在庫IDに対して、元の状態に戻す)
-//         await stockRepo.stockModel.findByIdAndUpdate(
-//             reservation.get('stock'),
-//             { availability: reservation.get('stock_availability_before') }
-//         ).exec();
-//     }));
-//     await Promise.all(promises);
-// }
-/**
- * キャンセル料合計取得
- *
- * @param {any} reservations
- * @param {string} today
- * @return {number}
- */
-// function getCancellationFee(reservations: any[], today: string): number {
-//     let cancellationFee: number = 0;
-//     for (const reservation of reservations){
-//         if (reservation.status !== ReservationUtil.STATUS_RESERVED) {
-//             continue;
-//         }
-//         // キャンセル料合計
-//         cancellationFee += getCancelCharge(reservation, today);
-//     }
-//     return cancellationFee;
-// }
-/**
- * キャンセル料取得
- *
- * @param {any} reservation
- * @param {string} today
- * @param {number} index
- */
-// function getCancelCharge( reservation: any, today: string): number {
-//     const cancelInfo: any[] = reservation.ticket_cancel_charge;
-//     let cancelCharge: number = cancelInfo[cancelInfo.length - 1].charge;
-//     const performanceDay = reservation.performance_day;
-//     let dayTo = performanceDay;
-//     let index: number = 0;
-//     // 本日が入塔予約日の3日前以内
-//     for (index = 0; index < cancelInfo.length; index += 1) {
-//         const limitDays: number = cancelInfo[index].days;
-//         const dayFrom = moment(performanceDay, 'YYYYMMDD').add(limitDays * -1, 'days').format('YYYYMMDD');
-//         // 本日が一番大きい設定日を過ぎていたら-1(キャンセル料は全額)
-//         if ( index === 0 && today > dayFrom) {
-//             cancelCharge = reservation.charge;
-//             break;
-//         }
-//         // 日付終了日 >= 本日 >= 日付開始日
-//         if (dayTo >= today && today > dayFrom) {
-//             cancelCharge =  cancelInfo[index - 1].charge;
-//             break;
-//         }
-//         dayTo = dayFrom;
-//     }
-//     return cancelCharge;
-// }
 /**
  * 予約照会画面検証
  *
@@ -365,32 +272,24 @@ function validate(req) {
  * @param {string} text
  * @returns {void}
  */
-// async function sendEmail(to: string, text: string): Promise<void> {
-//     const subject = util.format(
-//         '%s%s %s',
-//         (process.env.NODE_ENV !== 'production') ? `[${process.env.NODE_ENV}]` : '',
-//         'TTTS_EVENT_NAMEチケット キャンセル完了のお知らせ',
-//         'Notice of Completion of Cancel for TTTS Tickets'
-//     );
-//     const mail = new sendgrid.mail.Mail(
-//         new sendgrid.mail.Email(conf.get<string>('email.from'), conf.get<string>('email.fromname')),
-//         subject,
-//         new sendgrid.mail.Email(to),
-//         new sendgrid.mail.Content('text/plain', text)
-//     );
-//     const sg = sendgrid(<string>process.env.SENDGRID_API_KEY);
-//     const request = sg.emptyRequest({
-//         host: 'api.sendgrid.com',
-//         method: 'POST',
-//         path: '/v3/mail/send',
-//         headers: {},
-//         body: mail.toJSON(),
-//         queryParams: {},
-//         test: false,
-//         port: ''
-//     });
-//     await sg.API(request);
-// }
+function sendEmail(to, text) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const subject = util.format('%s%s %s', (process.env.NODE_ENV !== 'production') ? `[${process.env.NODE_ENV}]` : '', 'TTTS_EVENT_NAMEチケット キャンセル完了のお知らせ', 'Notice of Completion of Cancel for TTTS Tickets');
+        const mail = new sendgrid.mail.Mail(new sendgrid.mail.Email(conf.get('email.from'), conf.get('email.fromname')), subject, new sendgrid.mail.Email(to), new sendgrid.mail.Content('text/plain', text));
+        const sg = sendgrid(process.env.SENDGRID_API_KEY);
+        const request = sg.emptyRequest({
+            host: 'api.sendgrid.com',
+            method: 'POST',
+            path: '/v3/mail/send',
+            headers: {},
+            body: mail.toJSON(),
+            queryParams: {},
+            test: false,
+            port: ''
+        });
+        yield sg.API(request);
+    });
+}
 /**
  * キャンセルメール本文取得
  * @function getCancelMail
@@ -398,53 +297,53 @@ function validate(req) {
  * @param {any[]}reservations
  * @returns {string}
  */
-// function getCancelMail(req: Request, reservations: any[], fee: number): string {
-//     const mail: string[] = [];
-//     const locale: string = (<any>req.session).locale;
-//     const cancellationFee: string = numeral(fee).format('0,0');
-//     // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
-//     mail.push(req.__('Email.TitleCan'));
-//     mail.push('');
-//     // XXXX XXXX 様
-//     mail.push(req.__('Mr{{name}}', { name: reservations[0].purchaser_name[locale] }));
-//     mail.push('');
-//     // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
-//     mail.push(req.__('Email.Head1').replace('$theater_name$', reservations[0].theater_name[locale]));
-//     // お客様がキャンセルされましたチケットの情報は下記の通りです。
-//     mail.push(req.__('Email.Head2Can'));
-//     mail.push('');
-//     // 購入番号
-//     mail.push(`${req.__('Label.PaymentNo')} : ${reservations[0].payment_no}`);
-//     // ご来塔日時
-//     const day: string = moment(reservations[0].performance_day, 'YYYYMMDD').format('YYYY/MM/DD');
-//     // tslint:disable-next-line:no-magic-numbers
-//     const time: string = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
-//     mail.push(`${req.__('Label.Day')} : ${day} ${time}`);
-//     // 券種、枚数
-//     mail.push(`${req.__('Label.TicketType')} ${req.__('Label.TicketCount')}`);
-//     // 券種ごとに合計枚数算出
-//     const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
-//     Object.keys(ticketInfos).forEach((key: string) => {
-//         mail.push(ticketInfos[key].info);
-//     });
-//     mail.push('-------------------------------------');
-//     // 合計枚数
-//     mail.push(req.__('Email.TotalTicketCount').replace('$reservations_length$', reservations.length.toString()));
-//     // キャンセル料
-//     mail.push(req.__('Email.CancellationFee').replace('$cancellationFee$', cancellationFee));
-//     mail.push('-------------------------------------');
-//     mail.push('');
-//     // なお、このメールは、「$theater_name$」の予約システムでチケットをキャンセル…
-//     mail.push(req.__('Email.Foot1Can').replace('$theater_name$', reservations[0].theater_name[locale]));
-//     // ※尚、このメールアドレスは送信専用となっておりますでので、ご返信頂けません。
-//     mail.push(req.__('Email.Foot2'));
-//     // ご不明※な点がございましたら、下記番号までお問合わせ下さい。
-//     mail.push(req.__('Email.Foot3'));
-//     mail.push('');
-//     // お問い合わせはこちら
-//     mail.push(req.__('Email.Access1'));
-//     mail.push(reservations[0].theater_name[locale]);
-//     // TEL
-//     mail.push(`${req.__('Email.Access2')} : ${conf.get('official_tel_number')}`);
-//     return (mail.join(Text.Common.newline));
-// }
+function getCancelMail(req, reservations, fee) {
+    const mail = [];
+    const locale = req.session.locale;
+    const cancellationFee = numeral(fee).format('0,0');
+    // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
+    mail.push(req.__('Email.TitleCan'));
+    mail.push('');
+    // XXXX XXXX 様
+    mail.push(req.__('Mr{{name}}', { name: reservations[0].purchaser_name[locale] }));
+    mail.push('');
+    // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
+    mail.push(req.__('Email.Head1').replace('$theater_name$', reservations[0].theater_name[locale]));
+    // お客様がキャンセルされましたチケットの情報は下記の通りです。
+    mail.push(req.__('Email.Head2Can'));
+    mail.push('');
+    // 購入番号
+    mail.push(`${req.__('Label.PaymentNo')} : ${reservations[0].payment_no}`);
+    // ご来塔日時
+    const day = moment(reservations[0].performance_day, 'YYYYMMDD').format('YYYY/MM/DD');
+    // tslint:disable-next-line:no-magic-numbers
+    const time = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
+    mail.push(`${req.__('Label.Day')} : ${day} ${time}`);
+    // 券種、枚数
+    mail.push(`${req.__('Label.TicketType')} ${req.__('Label.TicketCount')}`);
+    // 券種ごとに合計枚数算出
+    const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
+    Object.keys(ticketInfos).forEach((key) => {
+        mail.push(ticketInfos[key].info);
+    });
+    mail.push('-------------------------------------');
+    // 合計枚数
+    mail.push(req.__('Email.TotalTicketCount').replace('$reservations_length$', reservations.length.toString()));
+    // キャンセル料
+    mail.push(req.__('Email.CancellationFee').replace('$cancellationFee$', cancellationFee));
+    mail.push('-------------------------------------');
+    mail.push('');
+    // なお、このメールは、「$theater_name$」の予約システムでチケットをキャンセル…
+    mail.push(req.__('Email.Foot1Can').replace('$theater_name$', reservations[0].theater_name[locale]));
+    // ※尚、このメールアドレスは送信専用となっておりますでので、ご返信頂けません。
+    mail.push(req.__('Email.Foot2'));
+    // ご不明※な点がございましたら、下記番号までお問合わせ下さい。
+    mail.push(req.__('Email.Foot3'));
+    mail.push('');
+    // お問い合わせはこちら
+    mail.push(req.__('Email.Access1'));
+    mail.push(reservations[0].theater_name[locale]);
+    // TEL
+    mail.push(`${req.__('Email.Access2')} : ${conf.get('official_tel_number')}`);
+    return (mail.join(Text.Common.newline));
+}

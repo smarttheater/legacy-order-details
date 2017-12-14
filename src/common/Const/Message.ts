@@ -15,6 +15,6 @@ export namespace Common {
     export const maxLength = '$fieldName$は$maxLength$文字以内で入力してください';
     // メッセージ編集
     export function getMaxLength(fieldName: string, max: number): string {
-        return Common.maxLength.replace(field, fieldName).replace(maxLen, max.toString());
+        return maxLength.replace(field, fieldName).replace(maxLen, max.toString());
     }
 }

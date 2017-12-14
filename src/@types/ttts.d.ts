@@ -1,3 +1,7 @@
+/**
+ * ttts-authenticationアプリケーション固有の型
+ * @ignore
+ */
 declare namespace Express {
     export interface Request {
         staffUser?: StaffUser;
