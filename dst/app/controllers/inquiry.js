@@ -27,7 +27,8 @@ const debug = createDebug('ttts-authentication:controllers.inquiry');
 const SESSION_KEY_INQUIRY_RESERVATIONS = 'ttts-ticket-inquiry-reservations';
 const SESSION_KEY_INQUIRY_CANCELLATIONFEE = 'ttts-ticket-inquiry-cancellationfee';
 // キャンセル料(1予約あたり1000円固定)
-const CANCEL_CHARGE = Number(conf.get('cancelCharge'));
+// const CANCEL_CHARGE: number = Number(conf.get<string>('cancelCharge'));
+const CANCEL_CHARGE = 1000;
 /**
  * 予約照会検索
  * @memberof inquiry
