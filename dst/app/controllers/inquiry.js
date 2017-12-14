@@ -26,12 +26,8 @@ const debug = createDebug('ttts-authentication:controllers.inquiry');
 // セッションキー
 const SESSION_KEY_INQUIRY_RESERVATIONS = 'ttts-ticket-inquiry-reservations';
 const SESSION_KEY_INQUIRY_CANCELLATIONFEE = 'ttts-ticket-inquiry-cancellationfee';
-// ログ出力
-// const logger = log4js.getLogger('system');
 // キャンセル料(1予約あたり1000円固定)
 const CANCEL_CHARGE = Number(conf.get('cancelCharge'));
-// キャンセル可能な日数(3日前まで)
-// const CANCELLABLE_DAYS: number = Number(conf.get<string>('cancellableDays'));
 /**
  * 予約照会検索
  * @memberof inquiry

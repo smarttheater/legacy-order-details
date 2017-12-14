@@ -66,28 +66,6 @@
     "temporary_reservation_valid_period_seconds": 900,
     "waiting_settlement_reservatioin_valid_period_hours": 72,
     "performanceIds4limit2": [],
-    "log4js": {
-        "appenders": {
-            "system": {
-                "category": "system",
-                "type": "dateFile",
-                "filename": "./logs/system.log",
-                "pattern": "-yyyy-MM-dd",
-                "backups": 10
-            },
-            "console": {
-                "type": "console"
-            }
-        },
-        "categories": {
-            "default": {
-                "appenders": [
-                    "system"
-                ],
-                "level": "error"
-            }
-        }
-    },
     "cancelCharge": 1000,
     "cancellableDays": 3,
     "ticketInfos": {

@@ -1,12 +1,60 @@
 {
-    "official_website_url": "http://motionpicture.jp",
+    "locales": {
+        "ja": "日本語",
+        "en": "ENGLISH",
+        "zh-hant": "中文(繁體)",
+        "zh-hans": "中文(简体)",
+        "ko": "한국어",
+        "th": "ภาษาไทย",
+        "id": "Bahasa Indonesia",
+        "vi": "Tiếng Việt",
+        "fr": "Français",
+        "de": "Deutsch",
+        "it": "Italiano",
+        "es": "Español",
+        "ru": "Русский"
+    },
+    "official_website_url": "https://www.tokyotower.co.jp/",
+    "official_tel_number": "03-1234-5678",
+    "official_url_top_by_locale": {
+        "ja": "https://www.tokyotower.co.jp/",
+        "en": "https://www.tokyotower.co.jp/en.html",
+        "zh-hans": "https://www.tokyotower.co.jp/cn.html",
+        "zh-hant": "https://www.tokyotower.co.jp/zh.html",
+        "ko": "https://www.tokyotower.co.jp/kr.html"
+    },
+    "official_url_aboutentering_by_locale": {
+        "ja": "https://www.tokyotower.co.jp/observatory/index.html",
+        "en": "https://www.tokyotower.co.jp/observatory/en.html",
+        "zh-hans": "https://www.tokyotower.co.jp/observatory/cn.html",
+        "zh-hant": "https://www.tokyotower.co.jp/observatory/zh.html",
+        "ko": "https://www.tokyotower.co.jp/observatory/kr.html"
+    },
+    "official_url_ticketinfo_by_locale": {
+        "ja": "https://www.tokyotower.co.jp/price/index.html",
+        "en": "https://www.tokyotower.co.jp/price/en.html",
+        "zh-hans": "https://www.tokyotower.co.jp/price/cn.html",
+        "zh-hant": "https://www.tokyotower.co.jp/price/zh.html",
+        "ko": "https://www.tokyotower.co.jp/price/kr.html"
+    },
+    "official_url_privacypolicy_by_locale": {
+        "ja": "https://www.tokyotower.co.jp/privacypolicy/index.html",
+        "en": "https://www.tokyotower.co.jp/privacypolicy/en.html",
+        "zh-hans": "https://www.tokyotower.co.jp/privacypolicy/cn.html",
+        "zh-hant": "https://www.tokyotower.co.jp/privacypolicy/zh.html",
+        "ko": "https://www.tokyotower.co.jp/privacypolicy/kr.html"
+    },
+    "official_url_contact_by_locale": {
+        "ja": "https://www.tokyotower.co.jp/contact/index.html",
+        "en": "https://www.tokyotower.co.jp/contact/en.html"
+    },
     "meta": {
         "keywords": "TOKYO TOWER TOP DECK TOUR",
         "description": "TOKYO TOWER TOP DECK TOUR"
     },
     "email": {
         "from": "noreply@default.ttts.motionpicture.jp",
-        "fromname": "TTTS_EVENT_NAME Online Ticket"
+        "fromname": "Tokyo Tower Online Ticket [dev]"
     },
     "gmo_payment_api_link_multi_entry": "https://pt01.mul-pay.jp/link/tshop00026838/Multi/Entry",
     "datetimes": {
@@ -17,5 +65,39 @@
     },
     "temporary_reservation_valid_period_seconds": 900,
     "waiting_settlement_reservatioin_valid_period_hours": 72,
-    "performanceIds4limit2": []
+    "performanceIds4limit2": [],
+    "cancelCharge": 1000,
+    "cancellableDays": 3,
+    "ticketInfos": {
+        "000004": {
+            "description": "1"
+        },
+        "000005": {
+            "description": "1"
+        },
+        "000006": {
+            "description": "1"
+        }
+    },
+    // "cancelDays" : [3, 10],
+    // "cancelInfos" : {
+    //     "000001": [600, 300],
+    //     "000002": [500, 250],
+    //     "000003": [400, 200],
+    //     "000004": [300, 150],
+    //     "000005": [200, 100],
+    //     "000006": [100,  50]
+    // },
+    // 10日前まで300円,9日前～3日前まで600円,それ以降はチケット代全額
+    // "cancelCharges" : {
+    //     "000001": [{"days": 3, "charge": 600},{"days": 10, "charge": 300}],
+    //     "000002": [{"days": 3, "charge": 500},{"days": 10, "charge": 250}],
+    //     "000003": [{"days": 3, "charge": 400},{"days": 10, "charge": 200}],
+    //     "000004": [{"days": 3, "charge": 300},{"days": 10, "charge": 150}],
+    //     "000005": [{"days": 3, "charge": 200},{"days": 10, "charge": 100}],
+    //     "000006": [{"days": 3, "charge": 100},{"days": 10, "charge":  50}]
+    // },
+    "descriptionInfos": {
+        "1": "wheelchair"
+    }
 }

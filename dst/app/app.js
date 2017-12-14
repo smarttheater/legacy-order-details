@@ -12,7 +12,6 @@ const cookieParser = require("cookie-parser");
 const express = require("express");
 const expressValidator = require("express-validator");
 const i18n = require("i18n");
-const log4js = require("log4js");
 const _ = require("underscore");
 // ミドルウェア
 const basicAuth_1 = require("./middlewares/basicAuth");
@@ -36,8 +35,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(`${__dirname}/../../public`));
-// log4jsセット
-log4js.configure(conf.get('log4js'));
 // i18n を利用する設定
 i18n.configure({
     locales: Object.keys(conf.get('locales')),

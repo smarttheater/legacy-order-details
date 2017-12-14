@@ -11,7 +11,6 @@ import * as cookieParser from 'cookie-parser';
 import * as express from 'express';
 import * as expressValidator from 'express-validator';
 import * as i18n from 'i18n';
-import * as log4js from 'log4js';
 import * as _ from 'underscore';
 
 // ミドルウェア
@@ -43,9 +42,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(cookieParser());
 app.use(express.static(`${__dirname}/../../public`));
-
-// log4jsセット
-log4js.configure(conf.get<any>('log4js'));
 
 // i18n を利用する設定
 i18n.configure({
