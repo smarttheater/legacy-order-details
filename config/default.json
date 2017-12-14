@@ -2,7 +2,7 @@
     "locales": {
         "ja": "日本語",
         "en": "ENGLISH",
-        "zh-hant": "中文(繁體)",        
+        "zh-hant": "中文(繁體)",
         "zh-hans": "中文(简体)",
         "ko": "한국어",
         "th": "ภาษาไทย",
@@ -17,7 +17,7 @@
     "official_website_url": "https://www.tokyotower.co.jp/",
     "official_tel_number": "03-1234-5678",
     "official_url_top_by_locale": {
-        "ja": "https://www.tokyotower.co.jp/",        
+        "ja": "https://www.tokyotower.co.jp/",
         "en": "https://www.tokyotower.co.jp/en.html",
         "zh-hans": "https://www.tokyotower.co.jp/cn.html",
         "zh-hant": "https://www.tokyotower.co.jp/zh.html",
@@ -38,7 +38,7 @@
         "ko": "https://www.tokyotower.co.jp/price/kr.html"
     },
     "official_url_privacypolicy_by_locale": {
-        "ja": "https://www.tokyotower.co.jp/privacypolicy/index.html",        
+        "ja": "https://www.tokyotower.co.jp/privacypolicy/index.html",
         "en": "https://www.tokyotower.co.jp/privacypolicy/en.html",
         "zh-hans": "https://www.tokyotower.co.jp/privacypolicy/cn.html",
         "zh-hant": "https://www.tokyotower.co.jp/privacypolicy/zh.html",
@@ -67,28 +67,39 @@
     "waiting_settlement_reservatioin_valid_period_hours": 72,
     "performanceIds4limit2": [],
     "log4js": {
-        "appenders": [
-            {
+        "appenders": {
+            "system": {
                 "category": "system",
                 "type": "dateFile",
                 "filename": "./logs/system.log",
                 "pattern": "-yyyy-MM-dd",
                 "backups": 10
             },
-            {
+            "console": {
                 "type": "console"
             }
-        ],
-        "levels": {
-            "error": "ALL"
+        },
+        "categories": {
+            "default": {
+                "appenders": [
+                    "system"
+                ],
+                "level": "error"
+            }
         }
     },
-    "cancelCharge" : 1000,
-    "cancellableDays" : 3,
-    "ticketInfos" : {
-        "000004": { "description": "1"},
-        "000005": { "description": "1"},
-        "000006": { "description": "1"}
+    "cancelCharge": 1000,
+    "cancellableDays": 3,
+    "ticketInfos": {
+        "000004": {
+            "description": "1"
+        },
+        "000005": {
+            "description": "1"
+        },
+        "000006": {
+            "description": "1"
+        }
     },
     // "cancelDays" : [3, 10],
     // "cancelInfos" : {
@@ -108,7 +119,7 @@
     //     "000005": [{"days": 3, "charge": 200},{"days": 10, "charge": 100}],
     //     "000006": [{"days": 3, "charge": 100},{"days": 10, "charge":  50}]
     // },
-    "descriptionInfos" : {
+    "descriptionInfos": {
         "1": "wheelchair"
     }
 }

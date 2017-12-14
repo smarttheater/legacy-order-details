@@ -1,0 +1,106 @@
+<div class="modal modal-cancel fade" id="modal_cancelreservation" tabindex="-1" data-paymentNo="<%- reservations[0].payment_no %>">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<p class="btn-close" data-dismiss="modal"><span>×</span></p>
+				<h2 class="modal-title"><%- __('TicketCancel') %></h2>
+				<p class="guidetext guidetext-cancelingnotice"><%- __('CancelingTicketMessage') %></p>
+			</div>
+			<div class="modal-body">
+                <form>
+                    <input type="hidden" name="">
+                    <h3><%- __('PurchaseContent') %></h3>
+                    <div>
+                        <h4><%- __('PaymentNo') %></h4>
+                        <%- reservations[0].payment_no %>
+                        <hr>
+
+                        <h4><%- __('PurchaseContentDate') %></h4>
+                        <%
+                            let momentLocale = locale || 'en';
+                            if (momentLocale === 'zh-hans') {
+                                momentLocale = 'zh-cn';
+                            } else if (momentLocale === 'zh-hant') {
+                                momentLocale = 'zh-tw';
+                            }
+                            moment.locale(momentLocale);
+                            const day = moment(reservations[0].performance_day, 'YYYYMMDD');
+                            const start = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
+                            const end = `${reservations[0].performance_end_time.substr(0, 2)}:${reservations[0].performance_end_time.substr(2, 2)}`;
+                        %>
+                        <%- day.format('LL(ddd) ') %> <%- start %>～<%- end %>
+                        <hr>
+
+                        <h4><%- __('TourNumber') %></h4>
+                        <%- reservations[0].performance_ttts_extension.tour_number %>
+                        <hr>
+
+                        <h4><%- __('TicketTypeLeaf') %></h4>
+                        <% Object.keys(ticketInfos).forEach(function(key) { %>
+                            <p><%- ticketInfos[key].info %></p>
+                        <% }); %>
+                    </div>
+
+                    <h3><%- __('Profile') %></h3>
+                    <div>
+                        <h4><%- __('FullName') %></h4>
+                        <%- reservations[0].purchaser_last_name %>　<%- reservations[0].purchaser_first_name %>
+                        <hr>
+
+                        <h4><%- __('Email') %></h4>
+                        <%- reservations[0].purchaser_email %>
+                        <hr>
+
+                        <h4><%- __('Tel') %></h4>
+                        <%- reservations[0].purchaser_tel %>
+                    </div>
+
+                    <h3><%- __('CancellationFee') %></h3>
+                    <div>
+                        <p class="cancelfee">
+                        <% if(enableCancel) { %>
+                          &yen
+                        <% } %>
+                        <%- cancellationFee %>
+                        </p>
+                    </div>
+                </form>
+
+                <hr style="margin-top: 0;">
+
+                <div class="cancelnotice">
+                    <h3><%- __('TicketCancellationCautionTitle') %></h3>
+                    <p><%- __('TicketCancellationCaution') %></p>
+                </div>
+			</div>
+
+			<div class="modal-footer">
+                <p id="error_cancel"></p>
+				<p id="btn_execcancel" class="btn btn-red">
+                    <span>
+                        <span class="hide-processing"><%- __('ExecCancel') %></span>
+                        <span class="show-processing"><%- __('Processing') %></span>
+                    </span>
+                </p>
+				<p class="btn btn-close" data-dismiss="modal"><span><%- __('Close') %></span></p>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="modal_cancelcompleted" tabindex="-1">
+	<div class="modal-dialog">
+		<div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"><%- __('CancelComplete') %></h2>
+            </div>
+			<div class="modal-body">
+                <h3><%- __('PaymentNo') %>: <%- reservations[0].payment_no %></h3>
+                <p class="cancelcomplete"><%- __('CancelCompleteMessage') %></p>
+			</div>
+			<div class="modal-footer">
+				<a href="/inquiry/search" class="btn-back"><%- __('BackToInquiry') %></a>
+			</div>
+		</div>
+	</div>
+</div>

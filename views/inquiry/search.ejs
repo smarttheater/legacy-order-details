@@ -1,0 +1,86 @@
+<%- contentFor('pageId') %>
+page_inquiry_search
+<%- contentFor('pageClassName') %>
+page-inquiry page-search
+<%- contentFor('scripts') %>
+<script>
+    window.ttts.errmsgLocales = {
+        empty: "<%-__('NoInput{{fieldName}}', { fieldName: '{{fieldName}}' }) %>",
+        invalid: "<%-__('Invalid{{fieldName}}', { fieldName: '{{fieldName}}' }) %>",
+        match: "<%-__('Match{{fieldName}}', { fieldName: '{{fieldName}}' }) %>",
+        maxLength: "<%-__('MaxLength{{fieldName}}{{max}}', { fieldName: '{{fieldName}}', max: '{{max}}' }) %>"
+    };
+</script>
+<script src="/js/inquiry/search.js"></script>
+<%- contentFor('body') %>
+<input type="hidden" name="apiEndpoint" value="<%= process.env.API_ENDPOINT %>">
+
+<h1 class="pagetitle"><%- __('TicketInquiry') %></h1>
+<p class="guidetext">チケット購入時に発行された購入番号及び<br>電話番号を入力して「照会」ボタンを押してください。</p>
+
+<div class="inquiry-searchform">
+    <form method="post">
+        <div class="menu-group">
+            <% if (message !== '') { %>
+            <p name='error_head' class="error-message error message text-danger panel-body bg-danger">
+            <%= message %>
+            <% } %>
+            </p>
+        </div>
+        <div class="form-group"> 
+            <label>ご来塔ご予約日</label>
+            <select class="form-control" name="day">
+                <%
+                let now = moment();
+                let start = moment(event.start);
+                let end = moment(event.end);
+                let options = '';
+                while (start.format('YYYYMMDD') <= end.format('YYYYMMDD')) {
+                    options += `<option value="${start.format('YYYYMMDD')}"`;
+                    if (req.body.day === start.format('YYYYMMDD')) {
+                        options += ' selected';
+                    }
+                    options += `>${start.format('MM/DD')}</option>`;
+                    start = start.add(+1, 'days');
+                    continue;
+                }
+                %>
+                <%- options %>
+            </select>
+        </div>
+
+        <div class="form-group form-seachqueryinput">
+            <label for="input_paymentNo"><%- __('PaymentNo') %></label>
+            <input id="input_paymentNo" type="text" class="form-control input-required" name="paymentNo" value="<%= req.body.paymentNo %>" maxlength="9" data-pattern="^[0-9]+$" data-fieldname="<%- __('PaymentNo') %>" required>
+            <p class="errmsg errmsg-paymentNo"><%- (errors && errors.paymentNo ? errors.paymentNo.msg : '') %></p>
+        </div>
+
+        <div class="form-group form-seachqueryinput">
+            <label for="input_purchaserTel"><%- __('Tel') %></label>
+            <input id="input_purchaserTel" type="text" class="form-control input-required" name="purchaserTel" value="<%= req.body.purchaserTel %>" maxlength="4" data-pattern="^[0-9]+$" data-fieldname="<%- __('Tel') %>" required>
+            <p class="errmsg errmsg-purchaserTel"><%- (errors && errors.purchaserTel ? __('Last4Digits') : '') %></p>
+        </div>
+
+    </form>
+</div>
+
+<div class="navbtns">
+    <a class="btn btn-next btn-search search" href="javascript:void(0)">
+        <span>
+            <span class="hide-processing"><%- __('Inquiry') %></span>
+            <span class="show-processing"><%- __('Processing') %></span>
+        </span>
+    </a>
+    <a class="btn-back" href="javascript:void(0)"><span><%- __('Back') %></span></a>
+</div>
+
+
+<div class="modal fade loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="text-center"><%- __('Processing') %></div>
+            </div>
+        </div>
+    </div>
+</div>
