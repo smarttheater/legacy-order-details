@@ -227,22 +227,31 @@ function cancel(req, res) {
         try {
             // キャンセルリクエスト
             yield ttts.service.transaction.returnOrder.confirm({
-                performanceDay: reservations[0].performance_day,
-                paymentNo: reservations[0].payment_no,
-                cancellationFee: cancellationFee
+                transactionId: reservations[0].transaction,
+                cancellationFee: cancellationFee,
+                forcibly: false
             })(new ttts.repository.Transaction(ttts.mongoose.connection));
-            yield sendEmail(reservations[0].purchaser_email, getCancelMail(req, reservations, cancellationFee));
-            res.json({
-                validation: null,
-                error: null
-            });
         }
         catch (err) {
             res.status(http_status_1.INTERNAL_SERVER_ERROR).json({
                 validation: null,
                 error: err.message
             });
+            return;
         }
+        try {
+            yield sendEmail(reservations[0].purchaser_email, getCancelMail(req, reservations, cancellationFee));
+        }
+        catch (err) {
+            // no op
+            // メール送信に失敗しても、返品処理は走るので、成功
+        }
+        // セッションから削除
+        delete req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
+        res.json({
+            validation: null,
+            error: null
+        });
     });
 }
 exports.cancel = cancel;

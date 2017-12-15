@@ -17,7 +17,7 @@
     }
   ],
   "dependencies": {
-    "@motionpicture/ttts-domain": "^12.0.0-alpha.12",
+    "@motionpicture/ttts-domain": "^12.0.0-alpha.13",
     "basic-auth": "^1.1.0",
     "body-parser": "^1.18.2",
     "config": "^1.28.1",
@@ -68,7 +68,7 @@
     "mocha": "^3.4.1",
     "nsp": "^2.6.3",
     "rimraf": "^2.6.1",
-    "snyk": "^1.59.0",
+    "snyk": "^1.59.1",
     "tslint": "^5.8.0",
     "tslint-microsoft-contrib": "^5.0.1",
     "typescript": "^2.6.2"
