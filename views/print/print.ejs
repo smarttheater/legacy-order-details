@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="<%- locale %>">
 <head>
 <meta charset="utf-8">
 <title>Tokyo Tower PRINT TICKET</title>
@@ -19,7 +19,7 @@ body {
 <script src="/js/lib/url.min.js"></script>
 <script src="/js/common.js"></script>
 </head>
-<body>
+<body class="page-<%- locale %>">
 
 <div class="noprint">
     <%- include('../common/_select_locale.ejs') %>
@@ -59,7 +59,7 @@ for (let reservation of reservations) {
         <img class="pr-bg-image" src="/images/print/bg_gray.png">
         <div class="pr-bg-content inner">
             <h2>
-                <%- __('TicketQRInfo') %>
+                <%- __('SpanContainedTicketQRInfo') %>
             </h2>
             <div class="wrapper-qrimg pr-bg">
                 <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>">
@@ -118,8 +118,8 @@ for (let reservation of reservations) {
 
                         <div class="pr-contact">
                             <h4><%- __('ContactUs') %></h4>
-                            <p><%- __('ContactAvailableDay') %></p>
-                            <h4><%- __('OfficialSiteWithUrl') %></h4>
+                            <p><%- __('UrlContainedContactAvailableDay') %></p>
+                            <h4><%- __('UrlContainedOfficialSiteWithUrl') %></h4>
                         </div>
 
 

@@ -284,10 +284,10 @@ export async function cancel(req: Request, res: Response): Promise<void> {
  */
 function validate(req: Request): void {
     // 購入番号
-    req.checkBody('paymentNo', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.PaymentNo') })).notEmpty();
+    req.checkBody('paymentNo', req.__('NoInput{{fieldName}}', { fieldName: req.__('PaymentNo') })).notEmpty();
     req.checkBody('paymentNo', req.__('NoInput{{fieldName}}', { fieldName: req.__('PaymentNo') })).notEmpty();
     // 電話番号
-    //req.checkBody('purchaserTel', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
+    //req.checkBody('purchaserTel', req.__('NoInput{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
     //req.checkBody('purchaserTel', req.__('NoInput{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
     req.checkBody(
         'purchaserTel',
@@ -354,7 +354,7 @@ function getCancelMail(req: Request, reservations: any[], fee: number): string {
     mail.push(req.__('EmailHead1').replace('$theater_name$', reservations[0].theater_name[locale]));
 
     // お客様がキャンセルされましたチケットの情報は下記の通りです。
-    mail.push(req.__('Email.Head2Can'));
+    mail.push(req.__('EmailHead2Can'));
     mail.push('');
 
     // 購入番号
@@ -375,7 +375,7 @@ function getCancelMail(req: Request, reservations: any[], fee: number): string {
     });
     mail.push('-------------------------------------');
     // 合計枚数
-    mail.push(req.__('EmailTotalTicketCount').replace('$reservations_length$', reservations.length.toString()));
+    mail.push(req.__('EmailTotalTicketCount{{n}}{{n}}').replace('$reservations_length$', reservations.length.toString()));
 
     // キャンセル料
     mail.push(req.__('Email.CancellationFee').replace('$cancellationFee$', cancellationFee));

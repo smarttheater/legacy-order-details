@@ -4,7 +4,7 @@
 			<div class="modal-header">
 				<p class="btn-close" data-dismiss="modal"><span>×</span></p>
 				<h2 class="modal-title"><%- __('TicketCancel') %></h2>
-				<p class="guidetext guidetext-cancelingnotice"><%- __('CancelingTicketMessage') %></p>
+				<p class="guidetext guidetext-cancelingnotice"><%- __('SpanContainedCancelingTicketMessage') %></p>
 			</div>
 			<div class="modal-body">
                 <form>
@@ -58,10 +58,7 @@
                     <h3><%- __('CancellationFee') %></h3>
                     <div>
                         <p class="cancelfee">
-                        <% if(enableCancel) { %>
-                          &yen
-                        <% } %>
-                        <%- cancellationFee %>
+                        <span class="is-ja">&yen;</span><%- cancellationFee %><span class="is-not-ja"> JPY</span>
                         </p>
                     </div>
                 </form>

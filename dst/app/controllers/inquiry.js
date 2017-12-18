@@ -275,10 +275,10 @@ exports.cancel = cancel;
  */
 function validate(req) {
     // 購入番号
-    req.checkBody('paymentNo', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.PaymentNo') })).notEmpty();
+    req.checkBody('paymentNo', req.__('NoInput{{fieldName}}', { fieldName: req.__('PaymentNo') })).notEmpty();
     req.checkBody('paymentNo', req.__('NoInput{{fieldName}}', { fieldName: req.__('PaymentNo') })).notEmpty();
     // 電話番号
-    //req.checkBody('purchaserTel', req.__('Message.required{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
+    //req.checkBody('purchaserTel', req.__('NoInput{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
     //req.checkBody('purchaserTel', req.__('NoInput{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
     req.checkBody('purchaserTel', req.__('Message.minLength{{fieldName}}{{min}}', { fieldName: req.__('Label.Tel'), min: '4' })).len({ min: 4 });
 }
@@ -327,7 +327,7 @@ function getCancelMail(req, reservations, fee) {
     // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
     mail.push(req.__('EmailHead1').replace('$theater_name$', reservations[0].theater_name[locale]));
     // お客様がキャンセルされましたチケットの情報は下記の通りです。
-    mail.push(req.__('Email.Head2Can'));
+    mail.push(req.__('EmailHead2Can'));
     mail.push('');
     // 購入番号
     mail.push(`${req.__('PaymentNo')} : ${reservations[0].payment_no}`);
@@ -345,7 +345,7 @@ function getCancelMail(req, reservations, fee) {
     });
     mail.push('-------------------------------------');
     // 合計枚数
-    mail.push(req.__('EmailTotalTicketCount').replace('$reservations_length$', reservations.length.toString()));
+    mail.push(req.__('EmailTotalTicketCount{{n}}{{n}}').replace('$reservations_length$', reservations.length.toString()));
     // キャンセル料
     mail.push(req.__('Email.CancellationFee').replace('$cancellationFee$', cancellationFee));
     mail.push('-------------------------------------');

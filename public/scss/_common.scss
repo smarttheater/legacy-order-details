@@ -1,3 +1,9 @@
+@media print {
+    .noprint {
+        display: none !important;
+    }
+}
+
 $breakpoint_tablet:801px;
 $breakpoint_mobile:481px;
 @mixin clearfix {
@@ -69,17 +75,6 @@ $breakpoint_mobile:481px;
     }
 }
 
-@mixin btn-ocher {
-    background-color: #aa8d47;
-    &:hover,
-    &:active,
-    &:focus,
-    &:active:focus,
-    {
-        background-color: #ba9d57;
-    }
-}
-
 @mixin btn-white {
     color: #555;
     border: 1px solid #999;
@@ -104,12 +99,6 @@ body {
     background-color: #fff;
     @media screen and (max-width: $breakpoint_tablet) {
         font-size:14px;
-    }
-    &.page-staff {
-        background-color: #e9fcff;
-    }
-    &.page-sponsor {
-        background-color: #fffee6;
     }
 }
 
@@ -139,13 +128,26 @@ select {
     margin: 0 0 20px 0;
 }
 
+.is-ja {
+    display: none;
+}
+
+.page-ja {
+    .is-ja {
+        display: inline;
+    }
+    .is-not-ja {
+        display: none;
+    }
+}
+
 .form-inline .form-control {
     @media screen and (max-width: $breakpoint_tablet) {
         width:100%;
     }
 }
 
-.errmsg {
+.red, .errmsg {
     color: red;
 }
 
@@ -169,22 +171,11 @@ select {
     }
 }
 
-.text-ja,
-.text-en {
+.is-staff-inline,
+.is-staff-block {
     display: none;
 }
 
-.page-ja {
-    .text-ja {
-        display: inline;
-    }
-}
-
-.page-en {
-    .text-en {
-        display: inline;
-    }
-}
 
 .pagetitle {
     font-size: 1.5em;
@@ -194,7 +185,7 @@ select {
 
 .guidetext {
     text-align: center;
-    padding: 1em 0 2em 0;
+    padding: 1em 0;
     line-height: 1.5;
     font-size: 16px;
 }
@@ -307,6 +298,10 @@ select {
     }
 }
 
+.btn-thermalprint {
+    background-color: #e1894f;
+}
+
 .btn-disabled {
     cursor: default;
     pointer-events: none;
@@ -327,60 +322,14 @@ select {
     }
 }
 
-.btn-icon-mail {
-    @include btn-withIconImage;
-    >span {
-        &::after {
-            left: 0;
-            background-image: url(/images/common/icon-btn-mail.png);
-        }
-    }
-}
-
 .btn-login {
-    @include btn-ocher;
+    @include btn-red;
 }
 
 .btn-confirmcancel {
     @include btn-red;
 }
 
-.btn-newticket {
-    @include btn-blue;
-}
-
-.btn-release {
-    background-color: #d02424;
-    &:hover,
-    &:active,
-    &:focus,
-    &:active:focus,
-    {
-        background-color: #e03434;
-    }
-}
-
-.btn-showseat {
-    @include btn-withIconImage;
-    @include btn-blue;
-    width: 200px;
-    height: 50px;
-    >span {
-        &::after {
-            right: 0;
-            background-size: contain;
-            background-image: url(/images/common/icon-window.png);
-        }
-    }
-}
-
-.btn-blue {
-    @include btn-blue;
-}
-
-.btn-red {
-    @include btn-red;
-}
 
 .btns2clm {
     @include clearfix;
@@ -458,6 +407,53 @@ select {
     }
 }
 
+.wrapper-agreement {
+    margin: 20px auto 40px;
+    text-align: center;
+    label {
+        position: relative;
+        cursor: pointer;
+        &::before, &::after {
+            content: '';
+            height: 28px;
+            position: absolute;
+            top: 50%;
+            left: 0;
+            margin-top: -10px;
+            cursor: pointer;
+        }
+        &::before {
+            width: 28px;
+            border: 1px solid #ccc;
+            background-color: #FFF;
+        }
+        &::after {
+            width: 0;
+            transition: width 0.1s;
+            background-image: url(/images/common/icon-checkmark.svg);
+            background-size: 28px;                
+        }
+        input {
+            opacity: 0;
+            position: absolute;
+            width: 0px;
+            height: 0px;
+            cursor: pointer;
+        }
+        span {
+            font-size: 20px;
+            margin-top: 10px;
+            margin-left: 36px;
+            display: block;
+        }
+        &.agreed {
+            &::after {
+                width: 28px;
+            }
+        }
+    }
+}
+
 .modal {
     .modal-dialog {
         width: 800px;
@@ -508,6 +504,24 @@ select {
         border: none;
         font-size: 20px;
         padding: 30px;
+        @media screen and (max-width: $breakpoint_tablet) {
+            border-radius:6px;
+        }
+        .btn-close {
+            cursor: pointer;
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-size: 48px;
+            background-color: #3f3f3f;
+            color: #fff;
+            &:hover {
+                background-color: #5f5f5f;
+            }
+            @media screen and (max-width: $breakpoint_tablet) {
+                font-size: 36px;
+            }
+        }
     }
     .modal-footer {
         border: none;

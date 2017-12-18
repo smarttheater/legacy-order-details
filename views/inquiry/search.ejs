@@ -1,7 +1,7 @@
 <%- contentFor('pageId') %>
 page_inquiry_search
 <%- contentFor('pageClassName') %>
-page-inquiry page-search
+page-inquiry page-search page-<%- locale %>
 <%- contentFor('scripts') %>
 <script>
     window.ttts.errmsgLocales = {
@@ -16,7 +16,7 @@ page-inquiry page-search
 <input type="hidden" name="apiEndpoint" value="<%= process.env.API_ENDPOINT %>">
 
 <h1 class="pagetitle"><%- __('TicketInquiry') %></h1>
-<p class="guidetext">チケット購入時に発行された購入番号及び<br>電話番号を入力して「照会」ボタンを押してください。</p>
+<p class="guidetext"><%- __('InquiryMessage') %></p>
 
 <div class="inquiry-searchform">
     <form method="post">
@@ -28,7 +28,7 @@ page-inquiry page-search
             </p>
         </div>
         <div class="form-group"> 
-            <label>ご来塔ご予約日</label>
+            <label><%- __('PurchaseContentDay') %></label>
             <select class="form-control" name="day">
                 <%
                 let now = moment();

@@ -2,7 +2,7 @@
 <%- contentFor('pageId') %>
 page_inquiry_result
 <%- contentFor('pageClassName') %>
-page-inquiry page-result page-complete
+page-inquiry page-result page-complete page-<%- locale %>
 <%- contentFor('scripts') %>
 <script src="/js/inquiry/result.js"></script>
 <%- contentFor('body') %>
@@ -21,7 +21,13 @@ page-inquiry page-result page-complete
         <tr class="tr-date">
             <th><%- __('PurchaseContentDate') %></th>
             <%
-                moment.locale(locale);
+                let momentLocale = locale || 'en';
+                if (momentLocale === 'zh-hans') {
+                    momentLocale = 'zh-cn';
+                } else if (momentLocale === 'zh-hant') {
+                    momentLocale = 'zh-tw';
+                }
+                moment.locale(momentLocale);
                 const day = moment(reservations[0].performance_day, 'YYYYMMDD');
                 const start = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
                 const end = `${reservations[0].performance_end_time.substr(0, 2)}:${reservations[0].performance_end_time.substr(2, 2)}`;
@@ -61,7 +67,7 @@ page-inquiry page-result page-complete
         <tr class="tr-price">
             <th><%- __('TotalPrice') %> %></th>
             <td>
-                <span class="price">&yen;<%- String(reservations.reduce((a,b)=>a+b.charge,0)).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,') %></span>
+                <span class="price"><span class="is-ja">&yen;</span><%- String(reservations.reduce((a,b)=>a+b.charge,0)).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,') %><span class="is-not-ja"> JPY</span></span>
             </td>
         </tr>
     </tbody>
