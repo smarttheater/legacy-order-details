@@ -14,7 +14,6 @@ import * as i18n from 'i18n';
 import * as _ from 'underscore';
 
 // ミドルウェア
-import basicAuth from './middlewares/basicAuth';
 import session from './middlewares/session';
 import userAuthentication from './middlewares/userAuthentication';
 
@@ -29,7 +28,6 @@ const expressLayouts = require('express-ejs-layouts');
 const app = express();
 
 app.use(session); // セッション
-app.use(basicAuth); // ベーシック認証
 
 // view engine setup
 app.set('views', `${__dirname}/../../views`);

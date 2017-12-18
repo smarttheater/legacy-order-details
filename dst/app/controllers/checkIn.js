@@ -95,8 +95,8 @@ function getReservations(req, res) {
             const reservationsById = {};
             const reservationIdsByQrStr = {};
             reservations.forEach((reservation) => {
-                reservationsById[reservation.get('_id').toString()] = reservation;
-                reservationIdsByQrStr[reservation.get('qr_str')] = reservation.get('_id').toString();
+                reservationsById[reservation.get('id')] = reservation;
+                reservationIdsByQrStr[reservation.get('qr_str')] = reservation.get('id');
             });
             res.json({
                 error: null,

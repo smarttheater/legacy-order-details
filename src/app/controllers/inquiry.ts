@@ -7,7 +7,7 @@ import * as ttts from '@motionpicture/ttts-domain';
 import * as conf from 'config';
 import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
-import { INTERNAL_SERVER_ERROR } from 'http-status';
+import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR } from 'http-status';
 import * as moment from 'moment';
 import * as numeral from 'numeral';
 import * as sendgrid from 'sendgrid';
@@ -226,25 +226,36 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         cancellationFee = (<any>req.session)[SESSION_KEY_INQUIRY_CANCELLATIONFEE];
     } catch (err) {
         res.status(INTERNAL_SERVER_ERROR).json({
-            validation: null,
-            error: err.message
+            errors: [{
+                message: err.message
+            }]
         });
 
         return;
     }
 
+    let returnOrderTransaction: ttts.factory.transaction.returnOrder.ITransaction;
     try {
         // キャンセルリクエスト
-        await ttts.service.transaction.returnOrder.confirm({
+        returnOrderTransaction = await ttts.service.transaction.returnOrder.confirm({
             transactionId: reservations[0].transaction,
             cancellationFee: cancellationFee,
             forcibly: false
         })(new ttts.repository.Transaction(ttts.mongoose.connection));
     } catch (err) {
-        res.status(INTERNAL_SERVER_ERROR).json({
-            validation: null,
-            error: err.message
-        });
+        if (err instanceof ttts.factory.errors.Argument) {
+            res.status(BAD_REQUEST).json({
+                errors: [{
+                    message: err.message
+                }]
+            });
+        } else {
+            res.status(INTERNAL_SERVER_ERROR).json({
+                errors: [{
+                    message: err.message
+                }]
+            });
+        }
 
         return;
     }
@@ -259,9 +270,9 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     // セッションから削除
     delete (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS];
 
-    res.json({
-        validation: null,
-        error: null
+    res.status(CREATED).json({
+        id: returnOrderTransaction.id,
+        status: returnOrderTransaction.status
     });
 }
 

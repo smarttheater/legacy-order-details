@@ -14,7 +14,6 @@ const expressValidator = require("express-validator");
 const i18n = require("i18n");
 const _ = require("underscore");
 // ミドルウェア
-const basicAuth_1 = require("./middlewares/basicAuth");
 const session_1 = require("./middlewares/session");
 const userAuthentication_1 = require("./middlewares/userAuthentication");
 const mongooseConnectionOptions_1 = require("../mongooseConnectionOptions");
@@ -25,7 +24,6 @@ const router_1 = require("./routes/router");
 const expressLayouts = require('express-ejs-layouts');
 const app = express();
 app.use(session_1.default); // セッション
-app.use(basicAuth_1.default); // ベーシック認証
 // view engine setup
 app.set('views', `${__dirname}/../../views`);
 app.set('view engine', 'ejs');

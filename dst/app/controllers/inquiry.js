@@ -219,24 +219,36 @@ function cancel(req, res) {
         }
         catch (err) {
             res.status(http_status_1.INTERNAL_SERVER_ERROR).json({
-                validation: null,
-                error: err.message
+                errors: [{
+                        message: err.message
+                    }]
             });
             return;
         }
+        let returnOrderTransaction;
         try {
             // キャンセルリクエスト
-            yield ttts.service.transaction.returnOrder.confirm({
+            returnOrderTransaction = yield ttts.service.transaction.returnOrder.confirm({
                 transactionId: reservations[0].transaction,
                 cancellationFee: cancellationFee,
                 forcibly: false
             })(new ttts.repository.Transaction(ttts.mongoose.connection));
         }
         catch (err) {
-            res.status(http_status_1.INTERNAL_SERVER_ERROR).json({
-                validation: null,
-                error: err.message
-            });
+            if (err instanceof ttts.factory.errors.Argument) {
+                res.status(http_status_1.BAD_REQUEST).json({
+                    errors: [{
+                            message: err.message
+                        }]
+                });
+            }
+            else {
+                res.status(http_status_1.INTERNAL_SERVER_ERROR).json({
+                    errors: [{
+                            message: err.message
+                        }]
+                });
+            }
             return;
         }
         try {
@@ -248,9 +260,9 @@ function cancel(req, res) {
         }
         // セッションから削除
         delete req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
-        res.json({
-            validation: null,
-            error: null
+        res.status(http_status_1.CREATED).json({
+            id: returnOrderTransaction.id,
+            status: returnOrderTransaction.status
         });
     });
 }

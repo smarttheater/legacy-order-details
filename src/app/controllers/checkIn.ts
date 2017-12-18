@@ -85,8 +85,8 @@ export async function getReservations(req: Request, res: Response): Promise<void
             [qr: string]: string
         } = {};
         reservations.forEach((reservation) => {
-            reservationsById[reservation.get('_id').toString()] = reservation;
-            reservationIdsByQrStr[reservation.get('qr_str')] = reservation.get('_id').toString();
+            reservationsById[reservation.get('id')] = reservation;
+            reservationIdsByQrStr[reservation.get('qr_str')] = reservation.get('id');
         });
 
         res.json({

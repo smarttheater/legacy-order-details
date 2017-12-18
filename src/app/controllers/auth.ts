@@ -59,7 +59,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
                         const authentication = await ttts.Models.Authentication.create(
                             {
                                 token: ttts.CommonUtil.createToken(),
-                                owner: signedOwner.get('_id'),
+                                owner: signedOwner.get('id'),
                                 signature: req.body.signature
                             }
                         );

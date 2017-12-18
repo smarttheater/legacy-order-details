@@ -1,4 +1,4 @@
-$(function() {
+$(function () {
     var $modal_cancelreservation = $('#modal_cancelreservation');
 
     /**
@@ -6,7 +6,7 @@ $(function() {
      * @function cancel
      * @returns {void}
      */
-    var cancel = function() {
+    var cancel = function () {
         var $dfd = $.Deferred();
         $('.btn-close').hide();
         var $error_message = $('#error_cancel').text('');
@@ -19,20 +19,21 @@ $(function() {
             data: {
                 payment_no: payment_no
             }
-        }).done(function(data) {
-            if (!data.error) {
-                $modal_cancelreservation.modal('hide');
-                $('#modal_cancelcompleted').modal({
-                    backdrop: 'static',
-                    keyboard: false
-                });
-                return;
+        }).done(function (data) {
+            $modal_cancelreservation.modal('hide');
+            $('#modal_cancelcompleted').modal({
+                backdrop: 'static',
+                keyboard: false
+            });
+            return;
+        }).fail(function (jqxhr, textStatus, error) {
+            try {
+                var res = JSON.parse(jqxhr.responseText);
+                $error_message.text(res.errors[0].message);
+            } catch (e) {
+                $error_message.text(error);
             }
-            $error_message.text(data.error);
-        }).fail(function(jqxhr, textStatus, error) {
-            console.error(jqxhr, textStatus, error);
-            $error_message.text(error);
-        }).always(function() {
+        }).always(function () {
             $('.btn-close').show();
             $dfd.resolve();
         });
@@ -40,25 +41,25 @@ $(function() {
     };
 
     // キャンセル(ポップアップ表示)
-    $(document).on('click', '.btn-cancel', function(event) {
+    $(document).on('click', '.btn-cancel', function (event) {
         event.preventDefault();
         $modal_cancelreservation.modal({
             backdrop: 'static',
             keyboard: false
-        }).click(function(e) {
+        }).click(function (e) {
             e.stopPropagation();
         });
     });
 
     // キャンセル(確定)
     var busy_cancel = false;
-    $('#btn_execcancel').click(function(e) {
+    $('#btn_execcancel').click(function (e) {
         e.preventDefault();
         if (busy_cancel) { return false; }
         busy_cancel = true;
         var $btn = $(this);
         $btn.addClass('is-processing');
-        cancel().always(function() {
+        cancel().always(function () {
             $btn.removeClass('is-processing');
             busy_cancel = false;
         });

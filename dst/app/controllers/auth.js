@@ -61,7 +61,7 @@ function login(req, res, next) {
                             // トークン生成
                             const authentication = yield ttts.Models.Authentication.create({
                                 token: ttts.CommonUtil.createToken(),
-                                owner: signedOwner.get('_id'),
+                                owner: signedOwner.get('id'),
                                 signature: req.body.signature
                             });
                             // tslint:disable-next-line:no-cookies
