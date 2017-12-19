@@ -34,7 +34,7 @@ body {
     width: 210mm;
     height: 297mm;
     background-color: white;
-    font-family: '游ゴシック', meiryo, sans-serif;
+    font-family: sans-serif;
     overflow: hidden;
     page-break-after: always!important;
     -webkit-print-color-adjust: exact;
@@ -252,6 +252,10 @@ body {
     .smalltext {
         font-size: 10px;
     }
+}
+
+.page-ja .printcontent {
+    font-family: '游ゴシック', sans-serif;    
 }
 
 .pcthermarlprintcontent {
