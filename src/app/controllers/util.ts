@@ -10,11 +10,11 @@ import { Request, Response } from 'express';
 import * as moment from 'moment';
 
 const redisClient = ttts.redis.createClient({
-    host: <string>process.env.TTTS_PERFORMANCE_STATUSES_REDIS_HOST,
+    host: <string>process.env.REDIS_HOST,
     // tslint:disable-next-line:no-magic-numbers
-    port: parseInt(<string>process.env.TTTS_PERFORMANCE_STATUSES_REDIS_PORT, 10),
-    password: <string>process.env.TTTS_PERFORMANCE_STATUSES_REDIS_KEY,
-    tls: { servername: <string>process.env.TTTS_PERFORMANCE_STATUSES_REDIS_HOST }
+    port: parseInt(<string>process.env.REDIS_PORT, 10),
+    password: <string>process.env.REDIS_KEY,
+    tls: { servername: <string>process.env.REDIS_HOST }
 });
 
 // チケット情報(descriptionは予約データに持つべき(ticket_description))
@@ -50,7 +50,7 @@ export async function performancestatus(req: Request, res: Response): Promise<vo
 
         // パフォーマンス一覧を取得 (start_time昇順ソート)
         const performanceRepo = new ttts.repository.Performance(ttts.mongoose.connection);
-        const query = performanceRepo.performanceModel.find({ day: req.query.day }, 'day start_time end_time').sort({start_time: 1});
+        const query = performanceRepo.performanceModel.find({ day: req.query.day }, 'day start_time end_time').sort({ start_time: 1 });
         const performances = <any[]>await query.lean(true).exec().catch((err) => { error = err; });
         if (!Array.isArray(performances) || performances.length < 1) {
             throw new Error();
@@ -66,7 +66,7 @@ export async function performancestatus(req: Request, res: Response): Promise<vo
         // 空席数を個々のパフォーマンスオブジェクトに追加
         data = performances.map((performance) => {
             performance.seat_status = (<any>performanceStatuses)[performance._id] !== undefined ?
-                                      (<any>performanceStatuses)[performance._id] : null;
+                (<any>performanceStatuses)[performance._id] : null;
             delete performance._id;
 
             return performance;
@@ -110,7 +110,7 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
         }
 
         // 取得対象の日付と開始時刻FromToを取得
-        const timeInfo : any = await getStartTime(selectType, now);
+        const timeInfo: any = await getStartTime(selectType, now);
         // 取得対象のパフォーマンス取得
         const performanceInfo: any = await getTargetPerformances(timeInfo);
         // 予約情報取得
@@ -128,9 +128,9 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
         //                    reservedNormalNum: 5
         //                    reservedExtra:{'1': {name:"wheelchair",reservedNum:1},{･･･}
         const dataByPerformance: any = await groupingReservationsByPerformance(
-                                                performanceInfo.dicPerformances,
-                                                performanceInfo.ids,
-                                                reservations);
+            performanceInfo.dicPerformances,
+            performanceInfo.ids,
+            reservations);
 
         // パフォーマンス+通過地点単位にチェックイン情報をグルーピング
         //   パフォーマンスID:{'daiten-auth' : {
@@ -157,8 +157,10 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
         Object.keys(dataByPerformance).forEach((performanceId) => {
             // パフォーマンス情報セット
             const performance: any = dataByPerformance[performanceId].performance;
-            const reservedNum: number = getStatusCount(dataByPerformance[performanceId].reservations,
-                                                       ttts.factory.reservationStatusType.ReservationConfirmed);
+            const reservedNum: number = getStatusCount(
+                dataByPerformance[performanceId].reservations,
+                ttts.factory.reservationStatusType.ReservationConfirmed
+            );
             const schedule: any = {
                 performanceId: performanceId,
                 start_time: performance.start_time,
@@ -183,7 +185,7 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
             Object.keys(descriptionInfos).forEach((description) => {
                 // reservedExtraに予約情報があれば予約数セット
                 const concernedReservedNum: number = (reservedExtra.hasOwnProperty(description)) ?
-                                                      reservedExtra[description].reservedNum : 0;
+                    reservedExtra[description].reservedNum : 0;
                 concernedReservedArray.push({
                     id: description,
                     name: descriptionInfos[description],
@@ -227,7 +229,7 @@ export async function getPassList(req: Request, res: Response): Promise<void> {
  * @param {string} selectType
  * @returns {Promise<any>}
  */
-async function getStartTime(selectType: string, now: moment.Moment) : Promise<any> {
+async function getStartTime(selectType: string, now: moment.Moment): Promise<any> {
     const day = now.format('YYYYMMDD');
     // 1日分の時は日付のみセット
     if (selectType === 'day') {
@@ -236,7 +238,7 @@ async function getStartTime(selectType: string, now: moment.Moment) : Promise<an
             startTimeTo: null,
             day: day
         };
-   }
+    }
     const start = now.format('HHmm');
     // 直近のパフォーマンス(開始時刻)取得
     const performanceRepo = new ttts.repository.Performance(ttts.mongoose.connection);
@@ -255,7 +257,7 @@ async function getStartTime(selectType: string, now: moment.Moment) : Promise<an
     const startDate = moment(<string>performances[0].day + <string>startTimeFrom, 'YYYYMMDDHHmm');
     // tslint:disable-next-line:no-magic-numbers
     const addTime = 15 * (3 - 1);
-    const startTimeTo =  moment(startDate).add('minutes', addTime).format('HHmm');
+    const startTimeTo = moment(startDate).add('minutes', addTime).format('HHmm');
 
     // 現在時刻を含む開始時間を持つパフォーマンスから3パフォーマンス分の開始時刻をセット
     return {
@@ -273,7 +275,7 @@ async function getStartTime(selectType: string, now: moment.Moment) : Promise<an
  */
 async function getTargetPerformances(timeInfo: any): Promise<any> {
     // 来塔日
-    const conditions: any = {day: timeInfo.day};
+    const conditions: any = { day: timeInfo.day };
     // 開始時間
     const startTimeFrom: any = (timeInfo.startTimeFrom !== null) ? timeInfo.startTimeFrom : null;
     const startTimeTo: any = (timeInfo.startTimeTo !== null) ? timeInfo.startTimeTo : null;
@@ -295,7 +297,7 @@ async function getTargetPerformances(timeInfo: any): Promise<any> {
         conditions
     ).exec();
     // id抽出
-    const dicPerformances : any[] = [];
+    const dicPerformances: any[] = [];
     const ids: string[] = performances.map((performance) => {
         (<any>dicPerformances)[performance._id] = performance;
 
@@ -389,14 +391,14 @@ async function groupingReservationsByPerformance(dicPerformances: any, performan
     }
 
     // 初期セット(DBアクセスがあるので最小限の処理のloopを分割)
-    for (const reservation of reservations)  {
+    for (const reservation of reservations) {
         // キーはパフォーマンスID
         const keyValue = reservation.performance;
         if (!dataByPerformance.hasOwnProperty(keyValue)) {
             const ticketTypes = await getTicketTypes(dicPerformances[keyValue].ticket_type_group);
             //const ticketNames: any = {};
             const ticketTypesExtra: string[] = [];
-            for (const ticketType of ticketTypes)  {
+            for (const ticketType of ticketTypes) {
                 if (isSpecialTicket(ticketType.get('description'))) {
                     ticketTypesExtra.push(ticketType._id);
                 }
@@ -411,7 +413,7 @@ async function groupingReservationsByPerformance(dicPerformances: any, performan
         }
     }
     // 予約情報セット
-    reservations.map(async(reservation: any) => {
+    reservations.map(async (reservation: any) => {
         // 予約情報
         const keyValue = reservation.performance;
         (<any>dataByPerformance)[keyValue].reservations.push(reservation);
@@ -477,7 +479,7 @@ function groupingCheckinsByWhere(dataByPerformance: any): any {
                 tempCheckinWhereArray.push(checkin.where);
                 if (!dataCheckin.hasOwnProperty(checkin.where)) {
                     //dataCheckin[checkin.where] = [];
-                    dataCheckin[checkin.where] = {checkins: [], arrived: {}};
+                    dataCheckin[checkin.where] = { checkins: [], arrived: {} };
                 }
                 // チェックイン数セット
                 if (!dataCheckin[checkin.where].arrived.hasOwnProperty(reservation.ticket_type)) {
@@ -514,7 +516,7 @@ function groupingCheckinsByWhere(dataByPerformance: any): any {
  * @returns {number}
  */
 function getStatusCount(reservations: any[], status: string): number {
-    let statusNum : number = 0;
+    let statusNum: number = 0;
     reservations.forEach((reservation: any) => {
         if (reservation.status === status) {
             statusNum += 1;
@@ -556,7 +558,7 @@ function getConcernedUnarrivedArray(concernedReservedArray: any[], checkin: any)
         concernedUnarrivedArray.forEach((unarrive: any) => {
             if (description === unarrive.id) {
                 // 未入場者数 = 来場予定者数 - チェックポイント通過者数
-                const arrivedNum : number = checkin.arrived[tycketType];
+                const arrivedNum: number = checkin.arrived[tycketType];
                 unarrive.unarrivedNum = unarrive.unarrivedNum - arrivedNum;
             }
         });

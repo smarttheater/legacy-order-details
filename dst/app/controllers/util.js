@@ -17,11 +17,11 @@ const ttts = require("@motionpicture/ttts-domain");
 const conf = require("config");
 const moment = require("moment");
 const redisClient = ttts.redis.createClient({
-    host: process.env.TTTS_PERFORMANCE_STATUSES_REDIS_HOST,
+    host: process.env.REDIS_HOST,
     // tslint:disable-next-line:no-magic-numbers
-    port: parseInt(process.env.TTTS_PERFORMANCE_STATUSES_REDIS_PORT, 10),
-    password: process.env.TTTS_PERFORMANCE_STATUSES_REDIS_KEY,
-    tls: { servername: process.env.TTTS_PERFORMANCE_STATUSES_REDIS_HOST }
+    port: parseInt(process.env.REDIS_PORT, 10),
+    password: process.env.REDIS_KEY,
+    tls: { servername: process.env.REDIS_HOST }
 });
 // チケット情報(descriptionは予約データに持つべき(ticket_description))
 const ticketInfos = conf.get('ticketInfos');
