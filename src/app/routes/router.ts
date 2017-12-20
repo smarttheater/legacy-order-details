@@ -12,6 +12,7 @@ import * as languageController from '../controllers/language';
 //import authRouter from './auth';
 import checkinRouter from './checkin';
 import inquiryRouter from './inquiry';
+import reservationsRouter from './reservations';
 import utilRouter from './util';
 
 // 本体サイトのトップページの言語別URL
@@ -33,70 +34,71 @@ const aboutEnteringUrlByLocale = conf.get<any>('official_url_aboutentering_by_lo
  * リクエスト毎に、req,res,nextでコントローラーインスタンスを生成して、URLに応じたメソッドを実行する、という考え方
  */
 export default (app: Application) => {
-        const base = baseController.setLocals;
+    const base = baseController.setLocals;
 
-        // 言語切替
-        app.get('/language/update/:locale', languageController.update);
+    // 言語切替
+    app.get('/language/update/:locale', languageController.update);
 
-        // 入場
-        //app.use('/checkin', base, authRouter);
-        // 入場
-        app.use('/checkin', base, checkinRouter);
-        // チケット照会
-        app.use('/inquiry', base, inquiryRouter);
-        // Util
-        app.use('/util', base, utilRouter);
+    // 入場
+    //app.use('/checkin', base, authRouter);
+    // 入場
+    app.use('/checkin', base, checkinRouter);
+    // チケット照会
+    app.use('/inquiry', base, inquiryRouter);
+    app.use('/reservations', base, reservationsRouter);
+    // Util
+    app.use('/util', base, utilRouter);
 
-        // 利用規約ページ
-        app.get('/terms/', (req: Request, res: Response) => {
-                res.locals.req = req;
-                res.locals.conf = conf;
-                res.locals.validation = null;
-                res.locals.title = 'Tokyo Tower';
-                res.locals.description = 'TTTS Terms';
-                res.locals.keywords = 'TTTS Terms';
+    // 利用規約ページ
+    app.get('/terms/', (req: Request, res: Response) => {
+        res.locals.req = req;
+        res.locals.conf = conf;
+        res.locals.validation = null;
+        res.locals.title = 'Tokyo Tower';
+        res.locals.description = 'TTTS Terms';
+        res.locals.keywords = 'TTTS Terms';
 
-                res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
-        });
+        res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
+    });
 
-        // 本体サイトの入場案内ページの対応言語版(無ければ英語版)に転送
-        app.get('/aboutenter', (req: Request, res: Response) => {
-                const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
-                const url: string = aboutEnteringUrlByLocale[locale];
-                res.redirect(url);
-        });
+    // 本体サイトの入場案内ページの対応言語版(無ければ英語版)に転送
+    app.get('/aboutenter', (req: Request, res: Response) => {
+        const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url: string = aboutEnteringUrlByLocale[locale];
+        res.redirect(url);
+    });
 
-        // 本体サイトのプライバシーポリシーページの対応言語版(無ければ英語版)に転送
-        app.get('/privacypolicy', (req: Request, res: Response) => {
-                const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
-                const url: string = (privacyPolicyUrlByLocale[locale] !== undefined) ?
-                        privacyPolicyUrlByLocale[locale] : privacyPolicyUrlByLocale.en;
+    // 本体サイトのプライバシーポリシーページの対応言語版(無ければ英語版)に転送
+    app.get('/privacypolicy', (req: Request, res: Response) => {
+        const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url: string = (privacyPolicyUrlByLocale[locale] !== undefined) ?
+            privacyPolicyUrlByLocale[locale] : privacyPolicyUrlByLocale.en;
 
-                res.redirect(url);
-        });
+        res.redirect(url);
+    });
 
-        // 本体サイトのお問い合わせページの対応言語版(無ければ英語版)に転送
-        app.get('/contact', (req: Request, res: Response) => {
-                const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
-                const url: string = (contactUrlByLocale[locale] !== undefined) ?
-                        contactUrlByLocale[locale] : contactUrlByLocale.en;
+    // 本体サイトのお問い合わせページの対応言語版(無ければ英語版)に転送
+    app.get('/contact', (req: Request, res: Response) => {
+        const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url: string = (contactUrlByLocale[locale] !== undefined) ?
+            contactUrlByLocale[locale] : contactUrlByLocale.en;
 
-                res.redirect(url);
-        });
+        res.redirect(url);
+    });
 
-        // 本体サイトトップページの対応言語版(無ければ英語版)に転送
-        app.get('/returntop', (req: Request, res: Response) => {
-                const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
-                const url: string = (topUrlByLocale[locale] !== undefined) ?
-                        topUrlByLocale[locale] : topUrlByLocale.en;
+    // 本体サイトトップページの対応言語版(無ければ英語版)に転送
+    app.get('/returntop', (req: Request, res: Response) => {
+        const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+        const url: string = (topUrlByLocale[locale] !== undefined) ?
+            topUrlByLocale[locale] : topUrlByLocale.en;
 
-                res.redirect(url);
-        });
+        res.redirect(url);
+    });
 
-        // 404
-        app.get('/error/notFound', base, errorController.notFound);
-        app.use((_: Request, res: Response) => { res.redirect('/error/notFound'); });
+    // 404
+    app.get('/error/notFound', base, errorController.notFound);
+    app.use((_: Request, res: Response) => { res.redirect('/error/notFound'); });
 
-        // error handlers
-        app.use(errorController.index);
+    // error handlers
+    app.use(errorController.index);
 };

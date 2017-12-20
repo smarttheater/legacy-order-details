@@ -74,7 +74,7 @@ page-inquiry page-result page-complete page-<%- locale %>
 </table>
 
 <div>
-    <a class="btn btn-blue btn-print visible-pc" target="_blank" href='/inquiry/print/?ids=[<%- reservationIdArray.join(',') %>]'><span><%- __('PrintTicket') %></span></a>
+    <a class="btn btn-blue btn-print visible-pc" target="_blank" href='/reservations/print?token=<%= printToken %>'><span><%- __('PrintTicket') %></span></a>
     <br>
     <p class="btn btn-cancel"><span><%- __('CancelTicket') %></span></p>
 </div>

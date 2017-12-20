@@ -18,6 +18,14 @@ import * as ticket from '../../common/Util/ticket';
 
 const debug = createDebug('ttts-authentication:controllers.inquiry');
 
+const redisClient = ttts.redis.createClient({
+    host: <string>process.env.REDIS_HOST,
+    // tslint:disable-next-line:no-magic-numbers
+    port: parseInt(<string>process.env.REDIS_PORT, 10),
+    password: <string>process.env.REDIS_KEY,
+    tls: { servername: <string>process.env.REDIS_HOST }
+});
+
 // セッションキー
 const SESSION_KEY_INQUIRY_RESERVATIONS: string = 'ttts-ticket-inquiry-reservations';
 const SESSION_KEY_INQUIRY_CANCELLATIONFEE: string = 'ttts-ticket-inquiry-cancellationfee';
@@ -129,6 +137,10 @@ export async function result(req: Request, res: Response, next: NextFunction): P
         // "予約"のデータのみセット(Extra分を削除)
         reservations = reservations.filter((reservation) => reservation.status === ttts.factory.reservationStatusType.ReservationConfirmed);
 
+        const tokenRepo = new ttts.repository.Token(redisClient);
+        const printToken = await tokenRepo.createPrintToken(reservations.map((r) => r.id));
+        debug('token created.', printToken);
+
         // 券種ごとに合計枚数算出
         const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
         // キャンセル料は1予約あたり1000円固定
@@ -139,6 +151,7 @@ export async function result(req: Request, res: Response, next: NextFunction): P
 
         // 画面描画
         res.render('inquiry/result', {
+            printToken: printToken,
             moment: moment,
             reservations: reservations,
             ticketInfos: ticketInfos,
@@ -148,60 +161,6 @@ export async function result(req: Request, res: Response, next: NextFunction): P
         });
     } catch (error) {
         next(error);
-    }
-}
-
-/**
- * 印刷
- */
-export async function print(req: Request, res: Response, next: NextFunction) {
-    try {
-        const ids: string[] = JSON.parse(req.query.ids);
-        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-        const reservations = await reservationRepo.reservationModel.find({
-            _id: { $in: ids },
-            status: ttts.factory.reservationStatusType.ReservationConfirmed
-        }).sort({ seat_code: 1 }).exec();
-
-        if (reservations.length === 0) {
-            next(new Error(req.__('NotFound')));
-
-            return;
-        }
-
-        res.render('print/print', {
-            layout: false,
-            reservations: reservations
-        });
-    } catch (error) {
-        next(new Error(req.__('UnexpectedError')));
-    }
-}
-
-/**
- * PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
- */
-export async function pcthermalprint(req: Request, res: Response, next: NextFunction) {
-    try {
-        const ids: string[] = JSON.parse(req.query.ids);
-        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-        const reservations = await reservationRepo.reservationModel.find({
-            _id: { $in: ids },
-            status: ttts.factory.reservationStatusType.ReservationConfirmed
-        }).sort({ seat_code: 1 }).exec();
-
-        if (reservations.length === 0) {
-            next(new Error(req.__('NotFound')));
-
-            return;
-        }
-
-        res.render('print/print_pcthermal', {
-            layout: false,
-            reservations: reservations
-        });
-    } catch (error) {
-        next(new Error(req.__('UnexpectedError')));
     }
 }
 

@@ -13,6 +13,7 @@ const languageController = require("../controllers/language");
 //import authRouter from './auth';
 const checkin_1 = require("./checkin");
 const inquiry_1 = require("./inquiry");
+const reservations_1 = require("./reservations");
 const util_1 = require("./util");
 // 本体サイトのトップページの言語別URL
 const topUrlByLocale = conf.get('official_url_top_by_locale');
@@ -41,6 +42,7 @@ exports.default = (app) => {
     app.use('/checkin', base, checkin_1.default);
     // チケット照会
     app.use('/inquiry', base, inquiry_1.default);
+    app.use('/reservations', base, reservations_1.default);
     // Util
     app.use('/util', base, util_1.default);
     // 利用規約ページ
