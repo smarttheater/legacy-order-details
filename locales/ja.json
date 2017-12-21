@@ -206,5 +206,6 @@
 	"EmailDestinationName{{name}}": "{{name}} 様",
 	"EmailConfirm": "メールアドレス(確認入力)",
 	"EmailConfirmDomain": "メールアドレス(確認入力)のドメイン",
-	"EmailConfirmInvalid": "入力されたメールアドレスが確認入力と一致しません"
+	"EmailConfirmInvalid": "入力されたメールアドレスが確認入力と一致しません",
+	"QrCheckpoint": "QR認証場所"
 }

@@ -40,7 +40,7 @@ for (let reservation of reservations) {
 
     <div class="pr-header">
         <div class="logo-ttts">
-            <img src="/images/common/logo.png">
+            <img src="/images/common/logo.svg">
         </div>
         <div class="title">
             <%- __('TicketAndReceipt') %>
@@ -106,7 +106,7 @@ for (let reservation of reservations) {
 
                         <div class="pr-ticket">
                             <h3><%- __('TicketType') %></h3>
-                            <strong><%- reservation.get('ticket_type_name')[locale] %> / <%- ((!isNoCharge) ? '&yen;' + reservation.get('ticket_type_charge') + '&nbsp;' : '') %>(<%- reservation.seat_code %>)</strong>
+                            <strong><%- reservation.get('ticket_type_name')[locale] %> / <%- ((!isNoCharge) ? '<span class="is-ja">&yen;</span>' + reservation.get('ticket_type_charge') + '<span class="is-not-ja"> JPY</span>&nbsp;' : '') %>(<%- reservation.seat_code %>)</strong>
                         </div>
 
                         <div class="pr-term">
@@ -135,12 +135,12 @@ for (let reservation of reservations) {
                             <table>
                                 <tbody>
                                     <tr><td>
-                                        ① <%- __('Akabanebashi') %><br>
-                                        ② <%- __('Kamiyacho') %><br>
-                                        ③ <%- __('Onarimon') %><br>
-                                        ④ <%- __('Daimon') %><br>
+                                        1. <%- __('Akabanebashi') %><br>
+                                        2. <%- __('Kamiyacho') %><br>
+                                        3. <%- __('Onarimon') %><br>
+                                        4. <%- __('Daimon') %><br>
                                     </td><td>
-                                        ⑤ <%- __('Hamamatsucho') %><br>
+                                        5. <%- __('Hamamatsucho') %><br>
                                     </td></tr>
                                 </tbody>
                             </table>
@@ -150,7 +150,7 @@ for (let reservation of reservations) {
 
                         <div class="stafftable">
                             <h3><%- __('StaffPosition') %></h3>
-                            <h4><img class="mark" src="/images/print/staff_mark.svg">：<%- __('StaffPosition') %></h4>
+                            <h4><img class="mark" src="/images/print/staff_mark.svg"> : <%- __('QrCheckpoint') %></h4>
                             <table>
                                 <tbody>
                                     <tr>

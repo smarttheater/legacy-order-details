@@ -45,6 +45,23 @@ body {
     .bold {
         font-weight: bold;        
     }
+    h3 {
+        font-weight: bold;
+        line-height: 1.4;
+        .smalltext {
+            font-weight: normal;
+            margin-left: 4px;
+        }
+    }
+    strong {
+        display: block;
+        font-size: 18px;
+        line-height: 1.4;
+        font-weight: bold;
+    }
+    .smalltext {
+        font-size: 10px;
+    }
     .pr-bg {
         position: relative;
         >.pr-bg-image {
@@ -84,7 +101,7 @@ body {
     }
     .pr-thanks {
         font-size: 12px;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
         text-align: center;
     }
     .pr-qrcode {
@@ -104,6 +121,8 @@ body {
             h2 {
                 font-weight: bold;
                 font-size: 16px;
+                line-height: 1.4;
+                padding-right: 1em;
                 >span {
                     font-weight: normal;
                     font-size: 14px;
@@ -115,27 +134,31 @@ body {
             .wrapper-qrimg {
                 text-align: center;
                 >img {
+                    min-width: 128px;
+                    min-height: 128px;
                     width: 128px;
                     height: 128px;
+                    max-width: 128px;
+                    max-height: 128px;
                     vertical-align: middle;
                 }
             }
         }
     }
     .pr-paddinglr {
-        padding: 0 20px;
+        padding: 0 8px;
     }
     .pr-maintable {
-        margin-top: 20px;
+        margin-top: 8px;
         table-layout: fixed;
     }
     .main-info {
         vertical-align: top;
-        padding-right: 20px;
+        padding-right: 10px;
         >div {
-            padding: 0 0 12px;
+            padding: 0 0 8px;
             border-bottom: 1px solid #ccc;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
     }
     .main-map {
@@ -190,16 +213,21 @@ body {
     .pr-rsrvnum {
         strong {
             display: block;
-            font-size: 20px;
+            font-size: 18px;
         }
     }
     .pr-time {
         strong {
-            font-size: 20px;
+            font-size: 18px;
         }
         .timenotice {
             margin-top:10px;
             font-size: 14px;
+        }
+    }
+    .pr-ticket {
+        strong {
+            font-size: 16px;
         }
     }
     .pr-term {
@@ -236,26 +264,21 @@ body {
         font-size: 10px;
         border-top: 1px solid #ccc;
     }
-    h3 {
-        font-weight: bold;
-        margin-bottom: 11px;
-        .smalltext {
-            font-weight: normal;
-            margin-left: 4px;
-        }
-    }
-    strong {
-        display: block;
-        font-size: 18px;
-        font-weight: bold;
-    }
-    .smalltext {
-        font-size: 10px;
-    }
 }
 
-.page-ja .printcontent {
-    font-family: '游ゴシック', sans-serif;    
+.is-ja {
+    display: none;
+}
+.page-ja {
+    .is-ja {
+        display: inline;
+    } 
+    .is-not-ja {
+        display: none;
+    }
+    .printcontent {
+        font-family: '游ゴシック', sans-serif;    
+    }
 }
 
 .pcthermarlprintcontent {
