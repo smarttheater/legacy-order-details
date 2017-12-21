@@ -36,6 +36,9 @@ const SESSION_KEY_INQUIRY_CANCELLATIONFEE = 'ttts-ticket-inquiry-cancellationfee
 // キャンセル料(1予約あたり1000円固定)
 // const CANCEL_CHARGE: number = Number(conf.get<string>('cancelCharge'));
 const CANCEL_CHARGE = 1000;
+if (process.env.API_CLIENT_ID === undefined) {
+    throw new Error('Please set an environment variable \'API_CLIENT_ID\'');
+}
 /**
  * 予約照会検索
  * @memberof inquiry
@@ -186,6 +189,7 @@ function cancel(req, res) {
         try {
             // キャンセルリクエスト
             returnOrderTransaction = yield ttts.service.transaction.returnOrder.confirm({
+                agentId: process.env.API_CLIENT_ID,
                 transactionId: reservations[0].transaction,
                 cancellationFee: cancellationFee,
                 forcibly: false

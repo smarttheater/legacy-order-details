@@ -33,6 +33,10 @@ const SESSION_KEY_INQUIRY_CANCELLATIONFEE: string = 'ttts-ticket-inquiry-cancell
 // const CANCEL_CHARGE: number = Number(conf.get<string>('cancelCharge'));
 const CANCEL_CHARGE: number = 1000;
 
+if (process.env.API_CLIENT_ID === undefined) {
+    throw new Error('Please set an environment variable \'API_CLIENT_ID\'');
+}
+
 /**
  * 予約照会検索
  * @memberof inquiry
@@ -197,6 +201,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     try {
         // キャンセルリクエスト
         returnOrderTransaction = await ttts.service.transaction.returnOrder.confirm({
+            agentId: <string>process.env.API_CLIENT_ID,
             transactionId: reservations[0].transaction,
             cancellationFee: cancellationFee,
             forcibly: false
