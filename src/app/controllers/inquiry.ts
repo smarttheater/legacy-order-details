@@ -306,7 +306,7 @@ function getCancelMail(req: Request, reservations: any[], fee: number): string {
     mail.push('');
 
     // XXXX XXXX 様
-    mail.push(req.__('Mr{{name}}', { name: reservations[0].purchaser_name[locale] }));
+    mail.push(req.__('EmailDestinationName{{name}}', { name: reservations[0].purchaser_name[locale] }));
     mail.push('');
 
     // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
@@ -323,7 +323,7 @@ function getCancelMail(req: Request, reservations: any[], fee: number): string {
     const day: string = moment(reservations[0].performance_day, 'YYYYMMDD').format('YYYY/MM/DD');
     // tslint:disable-next-line:no-magic-numbers
     const time: string = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
-    mail.push(`${req.__('Label.Day')} : ${day} ${time}`);
+    mail.push(`${req.__('EmailReserveDate')} : ${day} ${time}`);
     // 券種、枚数
     mail.push(`${req.__('TicketType')} ${req.__('TicketCount')}`);
 
@@ -334,30 +334,40 @@ function getCancelMail(req: Request, reservations: any[], fee: number): string {
     });
     mail.push('-------------------------------------');
     // 合計枚数
-    mail.push(req.__('EmailTotalTicketCount{{n}}{{n}}').replace('$reservations_length$', reservations.length.toString()));
+    mail.push(req.__('EmailTotalTicketCount{{n}}', { n: reservations.length.toString() }));
 
     // キャンセル料
-    mail.push(req.__('Email.CancellationFee').replace('$cancellationFee$', cancellationFee));
+    mail.push(req.__('CancellationFee{{fee}}', { n: cancellationFee }));
     mail.push('-------------------------------------');
     mail.push('');
 
-    // なお、このメールは、「$theater_name$」の予約システムでチケットをキャンセル…
-    mail.push(req.__('EmailFoot1CanCan').replace('$theater_name$', reservations[0].theater_name[locale]));
+    // ご注意事項
+    mail.push(req.__('EmailNotice2Can'));
+    // ・チケット購入金額全額をチケット購入時のクレジットカードに返金した後、チケットキャンセル料【1000円】を引き落としさせていただきます。
+    mail.push(req.__('EmailNotice3Can'));
+    // ・チケットの再購入をされる場合は、最初のお手続きよりご購入ください。
+    mail.push(req.__('EmailNotice4Can'));
+    // ・チケットを再度購入されてもキャンセル料は返金いたしません。
+    mail.push(req.__('EmailNotice5Can'));
+    mail.push('');
 
+    // ※よくあるご質問（ＦＡＱ）はこちら
+    mail.push(req.__('EmailFAQURL'));
+    mail.push((<any>conf.get('official_url_top_by_locale'))[locale]);
+    mail.push('');
+
+    // なお、このメールは、「東京タワー トップデッキツアー」の予約システムでチケットをキャンセル…
+    mail.push(req.__('EmailFoot1Can'));
     // ※尚、このメールアドレスは送信専用となっておりますでので、ご返信頂けません。
     mail.push(req.__('EmailFoot2'));
-
-    // ご不明※な点がございましたら、下記番号までお問合わせ下さい。
+    // ご不明※な点がございましたら、下記番号までお問合わせください。
     mail.push(req.__('EmailFoot3'));
-
     mail.push('');
 
     // お問い合わせはこちら
     mail.push(req.__('EmailAccess1'));
-
-    mail.push(reservations[0].theater_name[locale]);
     // TEL
-    mail.push(`${req.__('EmailAccess2')} : ${conf.get('official_tel_number')}`);
+    mail.push(req.__('EmailAccess2'));
 
     return (mail.join(Text.Common.newline));
 }
