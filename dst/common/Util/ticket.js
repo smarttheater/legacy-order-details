@@ -31,11 +31,11 @@ function getTicketInfos(reservations) {
 exports.getTicketInfos = getTicketInfos;
 function editTicketInfos(req, ticketInfos) {
     const locale = req.session.locale;
-    const leaf = req.__('Label.Leaf');
     // 券種ごとの表示情報編集
     Object.keys(ticketInfos).forEach((key) => {
         const ticketInfo = ticketInfos[key];
-        ticketInfos[key].info = `${ticketInfo.ticket_type_name[locale]} ${ticketInfo.charge} × ${ticketInfo.count}${leaf}`;
+        const ticketCountEdit = req.__('{{n}}Leaf', { n: ticketInfo.count.toString() });
+        ticketInfos[key].info = `${ticketInfo.ticket_type_name[locale]} ${ticketInfo.charge} × ${ticketCountEdit}`;
     });
     return ticketInfos;
 }

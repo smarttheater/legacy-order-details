@@ -29,11 +29,11 @@ export function getTicketInfos(reservations: any[]): any {
 }
 export function editTicketInfos(req: Request, ticketInfos: any[]): any {
     const locale = (<any>req.session).locale;
-    const leaf: string = req.__('Label.Leaf');
     // 券種ごとの表示情報編集
     Object.keys(ticketInfos).forEach((key) => {
         const ticketInfo = (<any>ticketInfos)[key];
-        (<any>ticketInfos)[key].info = `${ticketInfo.ticket_type_name[locale]} ${ticketInfo.charge} × ${ticketInfo.count}${leaf}`;
+        const ticketCountEdit = req.__('{{n}}Leaf', { n: ticketInfo.count.toString() });
+        (<any>ticketInfos)[key].info = `${ticketInfo.ticket_type_name[locale]} ${ticketInfo.charge} × ${ticketCountEdit}`;
     });
 
     return ticketInfos;
