@@ -26,6 +26,7 @@ const redisClient = ttts.redis.createClient({
 });
 /**
  * チケット印刷(A4)
+ * output:thermal→PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
  */
 reservationsRouter.get('/print', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
     try {
@@ -41,36 +42,23 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(this, void 0, voi
             next(new Error(req.__('NotFound')));
             return;
         }
-        res.render('print/print', {
-            layout: false,
-            reservations: reservations
-        });
-    }
-    catch (error) {
-        next(new Error(req.__('UnexpectedError')));
-    }
-}));
-/**
- * PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
- */
-reservationsRouter.get('/print_pcthermal', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-    try {
-        const tokenRepo = new ttts.repository.Token(redisClient);
-        const ids = yield tokenRepo.verifyPrintToken(req.query.token);
-        debug('token verified.', ids);
-        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-        const reservations = yield reservationRepo.reservationModel.find({
-            _id: { $in: ids },
-            status: ttts.factory.reservationStatusType.ReservationConfirmed
-        }).sort({ seat_code: 1 }).exec();
-        if (reservations.length === 0) {
-            next(new Error(req.__('NotFound')));
-            return;
+        const output = req.query.output;
+        switch (output) {
+            // サーマル印刷
+            case 'thermal':
+                res.render('print/print_pcthermal', {
+                    layout: false,
+                    reservations: reservations
+                });
+                break;
+            // デフォルトはA4印刷
+            default:
+                res.render('print/print', {
+                    layout: false,
+                    reservations: reservations
+                });
+                break;
         }
-        res.render('print/print_pcthermal', {
-            layout: false,
-            reservations: reservations
-        });
     }
     catch (error) {
         next(new Error(req.__('UnexpectedError')));

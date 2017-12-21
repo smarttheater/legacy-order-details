@@ -20,6 +20,7 @@ const redisClient = ttts.redis.createClient({
 
 /**
  * チケット印刷(A4)
+ * output:thermal→PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
  */
 reservationsRouter.get(
     '/print',
@@ -41,42 +42,26 @@ reservationsRouter.get(
                 return;
             }
 
-            res.render('print/print', {
-                layout: false,
-                reservations: reservations
-            });
-        } catch (error) {
-            next(new Error(req.__('UnexpectedError')));
-        }
-    });
+            const output = req.query.output;
+            switch (output) {
+                // サーマル印刷
+                case 'thermal':
+                    res.render('print/print_pcthermal', {
+                        layout: false,
+                        reservations: reservations
+                    });
 
-/**
- * PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
- */
-reservationsRouter.get(
-    '/print_pcthermal',
-    async (req, res, next) => {
-        try {
-            const tokenRepo = new ttts.repository.Token(redisClient);
-            const ids = await tokenRepo.verifyPrintToken(req.query.token);
-            debug('token verified.', ids);
+                    break;
 
-            const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-            const reservations = await reservationRepo.reservationModel.find({
-                _id: { $in: ids },
-                status: ttts.factory.reservationStatusType.ReservationConfirmed
-            }).sort({ seat_code: 1 }).exec();
+                // デフォルトはA4印刷
+                default:
+                    res.render('print/print', {
+                        layout: false,
+                        reservations: reservations
+                    });
 
-            if (reservations.length === 0) {
-                next(new Error(req.__('NotFound')));
-
-                return;
+                    break;
             }
-
-            res.render('print/print_pcthermal', {
-                layout: false,
-                reservations: reservations
-            });
         } catch (error) {
             next(new Error(req.__('UnexpectedError')));
         }
