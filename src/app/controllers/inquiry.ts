@@ -342,7 +342,7 @@ function getCancelMail(req: Request, reservations: any[], fee: number): string {
     mail.push(req.__('EmailTotalTicketCount{{n}}', { n: reservations.length.toString() }));
 
     // キャンセル料
-    mail.push(req.__('CancellationFee{{fee}}', { fee: cancellationFee }));
+    mail.push(`${req.__('CancellationFee')} ${req.__('{{price}} yen', { price: fee })}`);
     mail.push('-------------------------------------');
     mail.push('');
 

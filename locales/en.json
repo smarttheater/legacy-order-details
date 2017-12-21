@@ -192,5 +192,6 @@
 	"Close": "Close",	
 	"{{n}}Leaf": "Quantity: {{n}}",
 	"InquiryResultCan": "InquiryResultCan",
-	"NotFoundGuideText": "NotFoundGuideText"
+	"NotFoundGuideText": "NotFoundGuideText",
+	"EmailDestinationName{{name}}": "Mr./Ms. {{name}}"
 }

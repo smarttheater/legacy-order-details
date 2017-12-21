@@ -308,7 +308,7 @@ function getCancelMail(req, reservations, fee) {
     // 合計枚数
     mail.push(req.__('EmailTotalTicketCount{{n}}', { n: reservations.length.toString() }));
     // キャンセル料
-    mail.push(req.__('CancellationFee{{fee}}', { fee: cancellationFee }));
+    mail.push(`${req.__('CancellationFee')} ${req.__('{{price}} yen', { price: fee })}`);
     mail.push('-------------------------------------');
     mail.push('');
     // ご注意事項
