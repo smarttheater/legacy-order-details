@@ -113,6 +113,7 @@
     "InquiryOther":"Andere Tickets verwalten",
     "TicketCancel":"Buchungsstornierung",
     "SpanContainedCancelingTicketMessage":"Klicken Sie unten auf „Stornieren“, um die nachstehende Buchung und deren Tickets zu stornieren.<br>Es fällt eine Stornierungsgebühr von 1000 JPY an.",
+    "CancellationFee{{fee}}": "Stornierungsgebühr {{fee}}JPY",
     "CancellationFee":"Stornierungsgebühr",
     "TicketCancellationCautionTitle":"Wichtige Hinweise zur Buchungsstornierung",
     "TicketCancellationCaution":"(1) Wenn Sie Ihre Stornierung bestätigen, ist diese endgültig und kann nicht mehr widerrufen werden.<br>(2) Alle Tickets Ihrer oben genannten Buchung werden storniert. Es können nicht einzelne Tickets einer Buchung storniert werden.<br>(3) In einem ersten Schritt überweisen wir Ihnen den Gesamtbetrag Ihrer Buchung zurück auf Ihre Kreditkarte. In einem zweiten Schritt belasten wir Ihre Kreditkarte mit der Stornierungsgebühr von 1000 JPY.<br>(4) Sie können Ihre Tickets erneut buchen, indem Sie den Buchungsvorgang von Anfang an wiederholen. (*) Die Stornierungsgebühr kann nicht erstattet oder auf neue Tickets angerechnet werden.",
