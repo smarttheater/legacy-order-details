@@ -4,7 +4,12 @@
         display: table;
         width: 220px;
         height: 40px;
-        margin: 2em auto;
+        margin: 2em auto 0;
+    }
+    .notice-canceldeadline {
+        text-align: center;
+        margin-top: 10px;
+        color: #f00;
     }
 }
 .inquiry-searchform {

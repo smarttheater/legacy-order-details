@@ -1,14 +1,32 @@
-<% const reservationIdArray = []; %>
+<%
+    let momentLocale = locale || 'en';
+    if (momentLocale === 'zh-hans') {
+        momentLocale = 'zh-cn';
+    } else if (momentLocale === 'zh-hant') {
+        momentLocale = 'zh-tw';
+    }
+    moment.locale(momentLocale);
+
+    // キャンセル期限 ＝ ツアー3日前23:59まで
+    const moment_cancelDeadline = moment(`${reservations[0].performance_day}235959`, 'YYYYMMDDHHmmss').subtract(3, 'day');
+    const isCancellable = moment().isBefore(moment_cancelDeadline);
+%>
 <%- contentFor('pageId') %>
 page_inquiry_result
 <%- contentFor('pageClassName') %>
 page-inquiry page-result page-complete page-<%- locale %>
 <%- contentFor('scripts') %>
 <script src="/js/inquiry/result.js"></script>
+<script>
+    window.ttts.isCancellable = <%- isCancellable %>;
+</script>
 <%- contentFor('body') %>
 
 <h1 class="pagetitle"><%- __('TicketDetail') %></h1>
-<p class="guidetext guidetext-customer"><%- __('CompleteReservationNoticeText') %></p>
+<p class="guidetext guidetext-customer">
+    <%- __('CompleteReservationNoticeText') %><br>
+    <span class="red"><%- __('InquiryResultCan') %></span>
+</p>
 
 <table class="table table-complete">
     <tbody>
@@ -21,13 +39,6 @@ page-inquiry page-result page-complete page-<%- locale %>
         <tr class="tr-date">
             <th><%- __('PurchaseContentDate') %></th>
             <%
-                let momentLocale = locale || 'en';
-                if (momentLocale === 'zh-hans') {
-                    momentLocale = 'zh-cn';
-                } else if (momentLocale === 'zh-hant') {
-                    momentLocale = 'zh-tw';
-                }
-                moment.locale(momentLocale);
                 const day = moment(reservations[0].performance_day, 'YYYYMMDD');
                 const start = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
                 const end = `${reservations[0].performance_end_time.substr(0, 2)}:${reservations[0].performance_end_time.substr(2, 2)}`;
@@ -47,7 +58,6 @@ page-inquiry page-result page-complete page-<%- locale %>
             <th><%- __('QRCode') %></th>
             <td>
                 <% reservations.forEach((reservation, index) => {
-                    reservationIdArray.push(`\"${reservation._id.toString()}\"`);
                 %>
                 <div class="wrapper-qrcodes">
                     <div>
@@ -76,7 +86,10 @@ page-inquiry page-result page-complete page-<%- locale %>
 <div>
     <a class="btn btn-blue btn-print visible-pc" target="_blank" href='/reservations/print?token=<%= printToken %>'><span><%- __('PrintTicket') %></span></a>
     <br>
-    <p class="btn btn-cancel"><span><%- __('CancelTicket') %></span></p>
+    <p class="btn btn-cancel <%- (!isCancellable) ? 'btn-disabled' : '' %>"><span><%- __('CancelTicket') %></span></p>
+    <% if (!isCancellable) { %>
+        <p class="notice-canceldeadline"><%- __('EmailNotice2') %></p>
+    <% } %>
 </div>
 
 <div class="enteringguide">
