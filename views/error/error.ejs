@@ -1,13 +1,8 @@
-<%- contentFor('pageId') %>
-page_error
-<%- contentFor('pageClassName') %>
-page-error
-<%- contentFor('body') %>
-<h1 class="pagetitle">エラー</h1>
+<h1 class="pagetitle"><%- __('Error') %></h1>
 <p class="guidetext">
     <%= message %>
 </p>
 
 <div class="center">
-    <a class="btn btn-lg btn-big" href="<%= officialWebsiteUrl %>"><span>公式サイトに戻る</span></a>
+    <a class="btn btn-lg btn-big" href="/returntop"><span><%- __('BackToOfficialSite') %></span></a>
 </div>

@@ -24,6 +24,13 @@ const contactUrlByLocale = conf.get<any>('official_url_contact_by_locale');
 // 本体サイトの入場案内ページの言語別URL
 const aboutEnteringUrlByLocale = conf.get<any>('official_url_aboutentering_by_locale');
 
+// 言語ごとの対象ページリダイレクト用URLを得る (その言語のURLが無かった場合は英語版を返す)
+const getRedirectOfficialUrl = (req: Request, urlByLocale: any): string => {
+    const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
+
+    return (urlByLocale[locale] !== undefined) ? urlByLocale[locale] : urlByLocale.en;
+};
+
 /**
  * URLルーティング
  *
@@ -39,8 +46,6 @@ export default (app: Application) => {
     // 言語切替
     app.get('/language/update/:locale', languageController.update);
 
-    // 入場
-    //app.use('/checkin', base, authRouter);
     // 入場
     app.use('/checkin', base, checkinRouter);
     // チケット照会
@@ -61,38 +66,36 @@ export default (app: Application) => {
         res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
     });
 
-    // 本体サイトの入場案内ページの対応言語版(無ければ英語版)に転送
+    // 特定商取引法に基づく表示ページ
+    app.get('/asct/', (req: Request, res: Response) => {
+        res.locals.req = req;
+        res.locals.conf = conf;
+        res.locals.validation = null;
+        res.locals.title = 'Tokyo Tower';
+        res.locals.description = 'TTTS Act on Specified Commercial Transactions';
+        res.locals.keywords = 'TTTS Act on Specified Commercial Transactions';
+
+        res.render('common/asct/', { layout: 'layouts/inquiry/layout' });
+    });
+
+    // 本体サイトの入場案内ページの対応言語版に転送
     app.get('/aboutenter', (req: Request, res: Response) => {
-        const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
-        const url: string = aboutEnteringUrlByLocale[locale];
-        res.redirect(url);
+        res.redirect(getRedirectOfficialUrl(req, aboutEnteringUrlByLocale));
     });
 
-    // 本体サイトのプライバシーポリシーページの対応言語版(無ければ英語版)に転送
+    // 本体サイトのプライバシーポリシーページの対応言語版に転送
     app.get('/privacypolicy', (req: Request, res: Response) => {
-        const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
-        const url: string = (privacyPolicyUrlByLocale[locale] !== undefined) ?
-            privacyPolicyUrlByLocale[locale] : privacyPolicyUrlByLocale.en;
-
-        res.redirect(url);
+        res.redirect(getRedirectOfficialUrl(req, privacyPolicyUrlByLocale));
     });
 
-    // 本体サイトのお問い合わせページの対応言語版(無ければ英語版)に転送
+    // 本体サイトのお問い合わせページの対応言語版に転送
     app.get('/contact', (req: Request, res: Response) => {
-        const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
-        const url: string = (contactUrlByLocale[locale] !== undefined) ?
-            contactUrlByLocale[locale] : contactUrlByLocale.en;
-
-        res.redirect(url);
+        res.redirect(getRedirectOfficialUrl(req, contactUrlByLocale));
     });
 
-    // 本体サイトトップページの対応言語版(無ければ英語版)に転送
+    // 本体サイトトップページの対応言語版に転送
     app.get('/returntop', (req: Request, res: Response) => {
-        const locale: string = (typeof req.getLocale() === 'string' && req.getLocale() !== '') ? req.getLocale() : 'en';
-        const url: string = (topUrlByLocale[locale] !== undefined) ?
-            topUrlByLocale[locale] : topUrlByLocale.en;
-
-        res.redirect(url);
+        res.redirect(getRedirectOfficialUrl(req, topUrlByLocale));
     });
 
     // 404

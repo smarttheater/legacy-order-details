@@ -1,11 +1,6 @@
-<%- contentFor('pageId') %>
-page_error_notFound
-<%- contentFor('pageClassName') %>
-page-error page-notFound
-<%- contentFor('body') %>
-<h1 class="pagetitle">お探しのページが見つかりません</h1>
-<p class="guidetext">既に存在しないか、もしくはアドレスの入力が間違っている可能性があります。</p>
+<h1 class="pagetitle"><%- __('NotFound') %></h1>
+<p class="guidetext"><%- __('NotFoundGuideText') %></p>
 
 <div class="center">
-    <a class="btn btn-lg btn-big" href="<%= officialWebsiteUrl %>"><span>公式サイトに戻る</span></a>
+    <a class="btn btn-lg btn-big" href="/returntop"><span><%- __('BackToOfficialSite') %></span></a>
 </div>

@@ -3,6 +3,8 @@
         <li><a href="/terms" target="_blank"><%- __('Terms') %></a></li>
         <li><a href="/privacypolicy" target="_blank"><%- __('AboutPrivacy') %></a></li>
         <li><a href="/contact" target="_blank"><%- __('ContactUs') %></a></li>
+        <br class="visible-pc">
+        <li><a href="/asct" target="_blank"><%- __('CommercialNotice') %></a></li>
     </ul>
     <div class="copyrights">
         <div class="inner">
@@ -10,3 +12,15 @@
         </div>
     </div>
 </footer>
+
+<script>
+    window.ttts.API_ENDPOINT = '<%= process.env.API_ENDPOINT %>';
+    window.ttts.commonlocales = {
+        Next: '<%= __('Next') %>',
+        Sending: '<%= __('Processing') %>',
+        UnexpectedError: '<%= __('UnexpectedError') %>'
+    };
+    $(document).on('click', '.update-locale', function(){
+        location.href = '/language/update/' + $(this).attr('data-locale') + '?cb=' + location.href;
+    })
+</script>

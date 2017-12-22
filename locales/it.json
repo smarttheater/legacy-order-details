@@ -125,7 +125,7 @@
 	"TicketInfoMsg": "La ringraziamo dell'acquisto del/i biglietti, il cui codice QR dovrà essere mostrato al momento della la salita alla torre nel giorno prenotato.",
 	"SpanContainedTicketQRInfo": "Mostrare questo codice QR al personale all'ingresso.<br>(Il codice QR deve essere mostrato durante la fila al piano terra della Foot Town (alla base della torre) per la salita al Top Deck (osservatorio speciale) e al punto d'ingresso a quest'ultimo dal Main Deck (osservatorio principale) al secondo piano).\"",
 	"PurchaseContentDay": "Data prenotata per la salita",
-	"PurchaseContentTime": "Ora prenotata per la salita (fila al piano terra della Foot Town per la salita al Top Deck (osservatorio speciale))",
+	"PurchaseContentTime": "Ora prenotata per la salita (piano terra della Foot Town)",
 	"PurchaseEntryTime": "Ora di transito all'ingresso per la salita al Top Deck (osservatorio speciale)",
 	"TourNumber": "Numero di salita",
 	"RailWay": "Mezzi di trasporto (metro e treno JR):",
