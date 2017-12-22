@@ -113,7 +113,7 @@
 	"InquiryOther": "Rechercher un autre billet",
 	"TicketCancel": "Annulation de billet",
 	"SpanContainedCancelingTicketMessage": "En cliquant sur le bouton [Valider l'annulation], les billets ci-dessous seront annulés.<br>* Des frais d'annulation de 1000 JPY seront facturés.",
-	"CancellationFee{{fee}}": "Frais d'annulation {{fee}}JPY",
+	"CancellationFee{{fee}}": "Frais d'annulation {{fee}} JPY",
 	"CancellationFee": "Frais d'annulation ",
 	"TicketCancellationCautionTitle": "Remarque concernant l'annulation de billets",
 	"TicketCancellationCaution": "(1) Veuillez noter qu'une annulation devient ferme et définitive après sa validation.<br>(2) L'ensemble des billets achetés mentionnés ci-dessus seront annulés. L'annulation d'un seul billet est impossible.<br>(3) Votre compte sera débité des frais d'annulation de 1000 JPY après que la somme correspondant a votre achat ait été créditée sur le compte de la carte utilisée lors de l'achat.<br>(4) Tout nouvel achat de billet nécessite de reprendre les formalités depuis le début.<br>* Les frais d'annulation ne seront pas remboursés.",
