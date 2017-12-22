@@ -16,13 +16,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ttts = require("@motionpicture/ttts-domain");
 const conf = require("config");
 const moment = require("moment");
-const redisClient = ttts.redis.createClient({
-    host: process.env.REDIS_HOST,
-    // tslint:disable-next-line:no-magic-numbers
-    port: parseInt(process.env.REDIS_PORT, 10),
-    password: process.env.REDIS_KEY,
-    tls: { servername: process.env.REDIS_HOST }
-});
+const node_fetch_1 = require("node-fetch");
+const querystring = require("querystring");
 // チケット情報(descriptionは予約データに持つべき(ticket_description))
 const ticketInfos = conf.get('ticketInfos');
 // const ticketInfos: any = {
@@ -34,8 +29,8 @@ const ticketInfos = conf.get('ticketInfos');
 const descriptionInfos = conf.get('descriptionInfos');
 //const descriptionInfos: any = {1: 'wheelchair'};
 /**
- * API・指定dayのスケジュール＆残席数JSON出力
- * @desc POS横タブレットなどで利用 (日付時刻と残数のみを得る。取得文字列の整形などはしない)
+ * トークン更新機能付きパフォーマンス情報API (画面表示用APIの無意味な認証の相手をするための無駄な非同期通信や管理処理を各地に重複実装しないで済むようBFFとしてここにまとめる)
+ * @desc 現場の業務用タブレット用画面やサイネージ用の画面から毎分あるいは更新ボタン押下ごとに呼ばれる
  * @memberof util
  * @function performancestatus
  * @param {Request} req
@@ -45,40 +40,43 @@ const descriptionInfos = conf.get('descriptionInfos');
 function performancestatus(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         let error = null;
-        let data = [];
+        let data = {};
         try {
-            // dayはYYYYMMDDの数字8文字
-            if (!/^\d{8}$/.test(req.query.day)) {
-                throw new Error();
+            // query.day と query.page の確認
+            if (!/^\d{8}$/.test(req.query.day) || /^[^-0-9]+$/.test(req.query.page)) {
+                throw new Error('error: invalid request');
             }
-            // パフォーマンス一覧を取得 (start_time昇順ソート)
-            const performanceRepo = new ttts.repository.Performance(ttts.mongoose.connection);
-            const query = performanceRepo.performanceModel.find({ day: req.query.day }, 'day start_time end_time').sort({ start_time: 1 });
-            const performances = yield query.lean(true).exec().catch((err) => { error = err; });
-            if (!Array.isArray(performances) || performances.length < 1) {
-                throw new Error();
+            // query.currentToken の読み取り
+            const currentToken = JSON.parse(req.query.currentToken || '{}');
+            const token = yield getToken(currentToken, [`${process.env.API_RESOURECE_SERVER_IDENTIFIER}/performances.read-only`]);
+            if (token.error) {
+                throw new Error(`error: get token failed (${token.error})`);
             }
-            // 空席数を取得
-            const performanceStatusesRepo = new ttts.repository.PerformanceStatuses(redisClient);
-            const performanceStatuses = yield performanceStatusesRepo.find().catch((err) => { error = err; });
-            if (typeof performanceStatuses !== 'object') {
-                throw new Error('typeof performanceStatuses !== "object"');
-            }
-            // 空席数を個々のパフォーマンスオブジェクトに追加
-            data = performances.map((performance) => {
-                performance.seat_status = performanceStatuses[performance._id] !== undefined ?
-                    performanceStatuses[performance._id] : null;
-                delete performance._id;
-                return performance;
+            const reqGetParams = querystring.stringify({
+                day: req.query.day,
+                page: req.query.page,
+                wheelchair: !!req.query.wheelchair
             });
+            const rawRes = yield node_fetch_1.default(`${process.env.API_ENDPOINT}performances?${reqGetParams}`, {
+                headers: {
+                    Authorization: `Bearer ${token.access_token}`
+                }
+            }).catch(() => {
+                throw new Error(`error: fetch API/performances?${reqGetParams} failed (token = ${token.access_token})`);
+            });
+            data = yield rawRes.json().catch(() => {
+                throw new Error(`error: node-fetch rawRes json() failed (rawRes = \n${JSON.stringify(rawRes)}\n)`);
+            });
+            // 今(2017/12/22)のところ業務画面上で ticket_types は不要なので通信量軽減のためここで削る
+            data.data.forEach((performance) => {
+                delete performance.attributes.ticket_types;
+            });
+            data.nextToken = token;
         }
         catch (e) {
             error = (e && e.message !== undefined) ? e.message : error;
         }
-        res.json({
-            error,
-            data
-        });
+        res.json(error || data);
     });
 }
 exports.performancestatus = performancestatus;
@@ -556,4 +554,37 @@ function getConcernedUnarrivedArray(concernedReservedArray, checkin) {
  */
 function isSpecialTicket(description) {
     return description !== '0';
+}
+/**
+ * 使えるトークンをPromiseで返す (渡されたトークンがまだ期限内ならそのまま返却する)
+ * @desc トークンを新規で取得した場合は有効期限をtoISOStringして埋め込む
+ * @memberof util
+ * @function getToken
+ * @param {currentToken} any
+ * @param {scopes} string[]
+ * @returns {Promise<void>}
+ */
+function getToken(currentToken, scopes) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (currentToken.expirationDateISO && moment().isBefore(moment(currentToken.expirationDateISO))) {
+            return currentToken;
+        }
+        let token = {};
+        try {
+            token = (yield ttts.CommonUtil.getToken({
+                authorizeServerDomain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
+                clientId: process.env.API_CLIENT_ID,
+                clientSecret: process.env.API_CLIENT_SECRET,
+                scopes: scopes,
+                state: ''
+            }).catch((e) => {
+                throw new Error(`FAILED: ttts.CommonUtil.getToken (scopes=${scopes.join(',')})\n ${e.message}`);
+            }));
+            token.expirationDateISO = moment().add(token.expires_in, 'seconds').toISOString();
+        }
+        catch (e) {
+            token.error = (e && e.message !== undefined) ? e.message : 'ERROR';
+        }
+        return token;
+    });
 }
