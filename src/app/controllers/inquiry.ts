@@ -304,7 +304,6 @@ async function sendEmail(to: string, text: string): Promise<void> {
 function getCancelMail(req: Request, reservations: any[], fee: number): string {
     const mail: string[] = [];
     const locale: string = (<any>req.session).locale;
-    const cancellationFee: string = numeral(fee).format('0,0');
 
     // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
     mail.push(req.__('EmailTitleCan'));
@@ -342,7 +341,7 @@ function getCancelMail(req: Request, reservations: any[], fee: number): string {
     mail.push(req.__('EmailTotalTicketCount{{n}}', { n: reservations.length.toString() }));
 
     // キャンセル料
-    mail.push(`${req.__('CancellationFee')} ${req.__('{{price}} yen', { price: fee })}`);
+    mail.push(`${req.__('CancellationFee')} ${req.__('{{price}} yen', { price: fee.toString() })}`);
     mail.push('-------------------------------------');
     mail.push('');
 

@@ -32,7 +32,7 @@
     "http-status": "^1.0.1",
     "i18n": "^0.8.3",
     "moment": "^2.20.1",
-    "node-fetch": "1.7.3",
+    "node-fetch": "^1.7.3",
     "numeral": "^2.0.6",
     "redis": "^2.8.0",
     "sendgrid": "^5.2.3",
@@ -67,7 +67,7 @@
     "mocha": "^3.4.1",
     "nsp": "^2.6.3",
     "rimraf": "^2.6.1",
-    "snyk": "^1.61.2",
+    "snyk": "^1.62.0",
     "tslint": "^5.8.0",
     "tslint-microsoft-contrib": "^5.0.1",
     "typescript": "^2.6.2"

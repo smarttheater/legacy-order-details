@@ -278,7 +278,6 @@ function sendEmail(to, text) {
 function getCancelMail(req, reservations, fee) {
     const mail = [];
     const locale = req.session.locale;
-    const cancellationFee = numeral(fee).format('0,0');
     // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
     mail.push(req.__('EmailTitleCan'));
     mail.push('');
@@ -308,7 +307,7 @@ function getCancelMail(req, reservations, fee) {
     // 合計枚数
     mail.push(req.__('EmailTotalTicketCount{{n}}', { n: reservations.length.toString() }));
     // キャンセル料
-    mail.push(`${req.__('CancellationFee')} ${req.__('{{price}} yen', { price: fee })}`);
+    mail.push(`${req.__('CancellationFee')} ${req.__('{{price}} yen', { price: fee.toString() })}`);
     mail.push('-------------------------------------');
     mail.push('');
     // ご注意事項

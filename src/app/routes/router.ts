@@ -13,7 +13,6 @@ import * as languageController from '../controllers/language';
 import checkinRouter from './checkin';
 import inquiryRouter from './inquiry';
 import reservationsRouter from './reservations';
-import utilRouter from './util';
 
 // 本体サイトのトップページの言語別URL
 const topUrlByLocale = conf.get<any>('official_url_top_by_locale');
@@ -51,8 +50,6 @@ export default (app: Application) => {
     // チケット照会
     app.use('/inquiry', base, inquiryRouter);
     app.use('/reservations', base, reservationsRouter);
-    // Util
-    app.use('/util', base, utilRouter);
 
     // 利用規約ページ
     app.get('/terms/', (req: Request, res: Response) => {
