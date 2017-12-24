@@ -84,7 +84,7 @@ export async function search(req: Request, res: Response): Promise<void> {
                     ).exec();
                     debug('returnOrderTransaction:', returnOrderTransaction);
                     if (returnOrderTransaction !== null) {
-                        throw new Error('Already canceled.');
+                        throw new Error(req.__('MistakeInput'));
                     }
 
                     // 予約照会・検索結果画面へ遷移
