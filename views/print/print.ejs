@@ -46,7 +46,7 @@ for (let reservation of reservations) {
             <%- __('TicketAndReceipt') %>
         </div>
         <div class="logo-tour">
-            <img src="/images/common/logo_tour_gold.svg">
+            <img src="/images/common/logo_tour_black.svg">
         </div>
 
     </div>
@@ -79,34 +79,29 @@ for (let reservation of reservations) {
                             <strong><%- reservation.get('payment_no') %></strong>
                         </div>
 
-                        <div class="pr-time">
+                        <div class="pr-day">
                             <h3><%- __('PurchaseContentDay') %></h3>
                             <strong><%- moment(reservation.get('performance_day'), 'YYYYMMDD').format('LL (ddd)') %></strong>
                         </div>
 
                         <div class="pr-time">
                             <h3><%- __('PurchaseContentTime') %></h3>
-                            <strong><%- moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') %> - <%- moment(reservation.get('performance_end_time'), 'HHmm').format('HH:mm') %>(JST)</strong>
+                            <strong><%- moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') %> - <%- moment(reservation.get('performance_end_time'), 'HHmm').format('HH:mm') %> (JST)</strong>
                         </div>
 
-                        <div class="pr-time">
+                        <div class="pr-entrytime">
                             <h3><%- __('PurchaseEntryTime') %></h3>
-                            <strong><%- moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') %> - <%- moment(reservation.get('performance_end_time'), 'HHmm').format('HH:mm') %>(JST)</strong>
-                            <%
-                            var time = moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm');
-                            var timeEarly = moment(reservation.get('performance_start_time'), 'HHmm').add(-30, 'minutes').format('HH:mm');
-                            if (moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') !== "09:00") { %>
-                            <% } %>
+                            <strong><%- moment(reservation.get('performance_start_time'), 'HHmm').add(5, 'minute').format('HH:mm') %> - <%- moment(reservation.get('performance_end_time'), 'HHmm').add(10, 'minute').format('HH:mm') %> (JST)</strong>
                         </div>
 
-                        <div class="pr-time">
+                        <div class="pr-tournumber">
                             <h3><%- __('TourNumber') %></h3>
                             <strong><%- reservation.performance_ttts_extension.tour_number %></strong>
                         </div>
 
                         <div class="pr-ticket">
                             <h3><%- __('TicketType') %></h3>
-                            <strong><%- reservation.get('ticket_type_name')[locale] %> / <%- ((!isNoCharge) ? '<span class="is-ja">&yen;</span>' + reservation.get('ticket_type_charge') + '<span class="is-not-ja"> JPY</span>&nbsp;' : '') %>(<%- reservation.seat_code %>)</strong>
+                            <strong><span class="ticketname"><%- reservation.get('ticket_type_name')[locale] %></span> / <%- ((!isNoCharge) ? '<span class="is-ja">&yen;</span>' + reservation.get('ticket_type_charge') + '<span class="is-not-ja"> JPY</span>&nbsp;' : '') %>(<%- reservation.seat_code %>)</strong>
                         </div>
 
                         <div class="pr-term">
@@ -138,8 +133,8 @@ for (let reservation of reservations) {
                                         1. <%- __('Akabanebashi') %><br>
                                         2. <%- __('Kamiyacho') %><br>
                                         3. <%- __('Onarimon') %><br>
-                                        4. <%- __('Daimon') %><br>
                                     </td><td>
+                                        4. <%- __('Daimon') %><br>
                                         5. <%- __('Hamamatsucho') %><br>
                                     </td></tr>
                                 </tbody>
