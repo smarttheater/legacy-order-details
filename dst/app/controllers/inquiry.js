@@ -18,7 +18,6 @@ const createDebug = require("debug");
 const http_status_1 = require("http-status");
 const moment = require("moment");
 const numeral = require("numeral");
-const sendgrid = require("sendgrid");
 const util = require("util");
 const Text = require("../../common/Const/Text");
 const ticket = require("../../common/Util/ticket");
@@ -213,7 +212,7 @@ function cancel(req, res) {
             return;
         }
         try {
-            yield sendEmail(reservations[0].purchaser_email, getCancelMail(req, reservations, cancellationFee));
+            yield sendEmail(returnOrderTransaction.id, reservations[0].purchaser_name, reservations[0].purchaser_email, getCancelMail(req, reservations, cancellationFee));
         }
         catch (err) {
             // no op
@@ -250,22 +249,52 @@ function validate(req) {
  * @param {string} text
  * @returns {void}
  */
-function sendEmail(to, text) {
+function sendEmail(transactionId, name, to, text) {
     return __awaiter(this, void 0, void 0, function* () {
         const subject = util.format('%s%s %s', (process.env.NODE_ENV !== 'production') ? `[${process.env.NODE_ENV}]` : '', 'TTTS_EVENT_NAMEチケット キャンセル完了のお知らせ', 'Notice of Completion of Cancel for TTTS Tickets');
-        const mail = new sendgrid.mail.Mail(new sendgrid.mail.Email(conf.get('email.from'), conf.get('email.fromname')), subject, new sendgrid.mail.Email(to), new sendgrid.mail.Content('text/plain', text));
-        const sg = sendgrid(process.env.SENDGRID_API_KEY);
-        const request = sg.emptyRequest({
-            host: 'api.sendgrid.com',
-            method: 'POST',
-            path: '/v3/mail/send',
-            headers: {},
-            body: mail.toJSON(),
-            queryParams: {},
-            test: false,
-            port: ''
+        const emailAttributes = {
+            sender: {
+                name: conf.get('email.fromname'),
+                email: conf.get('email.from')
+            },
+            toRecipient: {
+                name: name,
+                email: to
+            },
+            about: subject,
+            text: text
+        };
+        // メール作成
+        const taskRepo = new ttts.repository.Task(ttts.mongoose.connection);
+        const emailMessage = ttts.factory.creativeWork.message.email.create({
+            identifier: `returnOrderTransaction-${transactionId}`,
+            sender: {
+                typeOf: 'Corporation',
+                name: emailAttributes.sender.name,
+                email: emailAttributes.sender.email
+            },
+            toRecipient: {
+                typeOf: ttts.factory.personType.Person,
+                name: emailAttributes.toRecipient.name,
+                email: emailAttributes.toRecipient.email
+            },
+            about: emailAttributes.about,
+            text: emailAttributes.text
         });
-        yield sg.API(request);
+        const taskAttributes = ttts.factory.task.sendEmailNotification.createAttributes({
+            status: ttts.factory.taskStatus.Ready,
+            runsAt: new Date(),
+            remainingNumberOfTries: 10,
+            lastTriedAt: null,
+            numberOfTried: 0,
+            executionResults: [],
+            data: {
+                transactionId: transactionId,
+                emailMessage: emailMessage
+            }
+        });
+        yield taskRepo.save(taskAttributes);
+        debug('sendEmail task created.');
     });
 }
 /**
@@ -282,10 +311,10 @@ function getCancelMail(req, reservations, fee) {
     mail.push(req.__('EmailTitleCan'));
     mail.push('');
     // XXXX XXXX 様
-    mail.push(req.__('EmailDestinationName{{name}}', { name: reservations[0].purchaser_name[locale] }));
+    mail.push(req.__('EmailDestinationName{{name}}', { name: reservations[0].purchaser_name }));
     mail.push('');
     // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
-    mail.push(req.__('EmailHead1').replace('$theater_name$', reservations[0].theater_name[locale]));
+    mail.push(req.__('EmailHead1').replace('$theater_name$', (locale === 'ja') ? reservations[0].theater_name.ja : reservations[0].theater_name.en));
     // お客様がキャンセルされましたチケットの情報は下記の通りです。
     mail.push(req.__('EmailHead2Can'));
     mail.push('');

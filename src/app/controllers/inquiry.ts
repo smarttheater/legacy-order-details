@@ -10,7 +10,6 @@ import { NextFunction, Request, Response } from 'express';
 import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR } from 'http-status';
 import * as moment from 'moment';
 import * as numeral from 'numeral';
-import * as sendgrid from 'sendgrid';
 import * as util from 'util';
 
 import * as Text from '../../common/Const/Text';
@@ -225,7 +224,12 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     }
 
     try {
-        await sendEmail(reservations[0].purchaser_email, getCancelMail(req, reservations, cancellationFee));
+        await sendEmail(
+            returnOrderTransaction.id,
+            reservations[0].purchaser_name,
+            reservations[0].purchaser_email,
+            getCancelMail(req, reservations, cancellationFee)
+        );
     } catch (err) {
         // no op
         // メール送信に失敗しても、返品処理は走るので、成功
@@ -266,32 +270,61 @@ function validate(req: Request): void {
  * @param {string} text
  * @returns {void}
  */
-async function sendEmail(to: string, text: string): Promise<void> {
+async function sendEmail(transactionId: string, name: string, to: string, text: string): Promise<void> {
     const subject = util.format(
         '%s%s %s',
         (process.env.NODE_ENV !== 'production') ? `[${process.env.NODE_ENV}]` : '',
         'TTTS_EVENT_NAMEチケット キャンセル完了のお知らせ',
         'Notice of Completion of Cancel for TTTS Tickets'
     );
-    const mail = new sendgrid.mail.Mail(
-        new sendgrid.mail.Email(conf.get<string>('email.from'), conf.get<string>('email.fromname')),
-        subject,
-        new sendgrid.mail.Email(to),
-        new sendgrid.mail.Content('text/plain', text)
-    );
 
-    const sg = sendgrid(<string>process.env.SENDGRID_API_KEY);
-    const request = sg.emptyRequest({
-        host: 'api.sendgrid.com',
-        method: 'POST',
-        path: '/v3/mail/send',
-        headers: {},
-        body: mail.toJSON(),
-        queryParams: {},
-        test: false,
-        port: ''
+    const emailAttributes: ttts.factory.creativeWork.message.email.IAttributes = {
+        sender: {
+            name: conf.get<string>('email.fromname'),
+            email: conf.get<string>('email.from')
+        },
+        toRecipient: {
+            name: name,
+            email: to
+        },
+        about: subject,
+        text: text
+    };
+
+    // メール作成
+    const taskRepo = new ttts.repository.Task(ttts.mongoose.connection);
+
+    const emailMessage = ttts.factory.creativeWork.message.email.create({
+        identifier: `returnOrderTransaction-${transactionId}`,
+        sender: {
+            typeOf: 'Corporation',
+            name: emailAttributes.sender.name,
+            email: emailAttributes.sender.email
+        },
+        toRecipient: {
+            typeOf: ttts.factory.personType.Person,
+            name: emailAttributes.toRecipient.name,
+            email: emailAttributes.toRecipient.email
+        },
+        about: emailAttributes.about,
+        text: emailAttributes.text
     });
-    await sg.API(request);
+
+    const taskAttributes = ttts.factory.task.sendEmailNotification.createAttributes({
+        status: ttts.factory.taskStatus.Ready,
+        runsAt: new Date(), // なるはやで実行
+        remainingNumberOfTries: 10,
+        lastTriedAt: null,
+        numberOfTried: 0,
+        executionResults: [],
+        data: {
+            transactionId: transactionId,
+            emailMessage: emailMessage
+        }
+    });
+
+    await taskRepo.save(taskAttributes);
+    debug('sendEmail task created.');
 }
 
 /**
@@ -301,7 +334,7 @@ async function sendEmail(to: string, text: string): Promise<void> {
  * @param {any[]}reservations
  * @returns {string}
  */
-function getCancelMail(req: Request, reservations: any[], fee: number): string {
+function getCancelMail(req: Request, reservations: ttts.factory.reservation.event.IReservation[], fee: number): string {
     const mail: string[] = [];
     const locale: string = (<any>req.session).locale;
 
@@ -310,11 +343,14 @@ function getCancelMail(req: Request, reservations: any[], fee: number): string {
     mail.push('');
 
     // XXXX XXXX 様
-    mail.push(req.__('EmailDestinationName{{name}}', { name: reservations[0].purchaser_name[locale] }));
+    mail.push(req.__('EmailDestinationName{{name}}', { name: reservations[0].purchaser_name }));
     mail.push('');
 
     // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
-    mail.push(req.__('EmailHead1').replace('$theater_name$', reservations[0].theater_name[locale]));
+    mail.push(req.__('EmailHead1').replace(
+        '$theater_name$',
+        (locale === 'ja') ? reservations[0].theater_name.ja : reservations[0].theater_name.en
+    ));
 
     // お客様がキャンセルされましたチケットの情報は下記の通りです。
     mail.push(req.__('EmailHead2Can'));
