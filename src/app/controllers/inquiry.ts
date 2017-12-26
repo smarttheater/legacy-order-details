@@ -203,7 +203,8 @@ export async function cancel(req: Request, res: Response): Promise<void> {
             agentId: <string>process.env.API_CLIENT_ID,
             transactionId: reservations[0].transaction,
             cancellationFee: cancellationFee,
-            forcibly: false
+            forcibly: false,
+            reason: ttts.factory.transaction.returnOrder.Reason.Customer
         })(new ttts.repository.Transaction(ttts.mongoose.connection));
     } catch (err) {
         if (err instanceof ttts.factory.errors.Argument) {

@@ -191,7 +191,8 @@ function cancel(req, res) {
                 agentId: process.env.API_CLIENT_ID,
                 transactionId: reservations[0].transaction,
                 cancellationFee: cancellationFee,
-                forcibly: false
+                forcibly: false,
+                reason: ttts.factory.transaction.returnOrder.Reason.Customer
             })(new ttts.repository.Transaction(ttts.mongoose.connection));
         }
         catch (err) {
