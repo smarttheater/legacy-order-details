@@ -10,7 +10,7 @@ page-checkin page-login
             <select name="username" id="username" class="form-control">
                 <option value="">選択してください</option>
                 <% usernames.forEach((username) => { %>
-                <option value="<%- username.id %>" <%- (req.body.username === username.id) ? 'selected' : '' %>><%- username.ja %></option>
+                <option value="<%- username.id %>" <%- (req.body.username === username.id) ? 'selected' : '' %>><%- username.name %></option>
                 <% }); %>
             </select>
             <p class="error message" style="text-align:left;">

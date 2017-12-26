@@ -90,7 +90,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
         title: '入場管理ログイン',
         errors: errors,
         usernames: owners.map((owner) => {
-            return { id: owner.get('username'), ja: owner.get('name.ja') };
+            return { id: owner.get('username'), name: owner.get('name') };
         }),
         layout: 'layouts/checkIn/layout'
     });

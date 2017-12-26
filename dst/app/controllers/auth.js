@@ -83,7 +83,7 @@ function login(req, res, next) {
             title: '入場管理ログイン',
             errors: errors,
             usernames: owners.map((owner) => {
-                return { id: owner.get('username'), ja: owner.get('name.ja') };
+                return { id: owner.get('username'), name: owner.get('name') };
             }),
             layout: 'layouts/checkIn/layout'
         });
