@@ -57,9 +57,7 @@
 
                     <h3><%- __('CancellationFee') %></h3>
                     <div>
-                        <p class="cancelfee">
-                        <span class="is-ja">&yen;</span><%- cancellationFee %><span class="is-not-ja"> JPY</span>
-                        </p>
+                        <p class="cancelfee"><%- __('{{price}} yen', { price: cancellationFee } ) %></p>
                     </div>
                 </form>
 

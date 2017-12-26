@@ -293,6 +293,7 @@ body {
     position: relative;
     margin: 0;
     padding: 0;
+    line-height: 1.4;
     width: 48mm;
     font-family: '游ゴシック', meiryo, sans-serif;
     overflow: hidden;
@@ -307,8 +308,11 @@ body {
     }
 
     .pr-header {
-        img {
+        .img-logo-ttts {
             max-width: 40mm;
+        }
+        .img-logo-tour {
+            max-width: 16mm;
         }
     }
 
@@ -320,11 +324,19 @@ body {
         margin-bottom: 1em;
     }
 
+    .pr-date {
+        margin-bottom: 1em;
+        p {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+    }
+
 
     .pr-tournumber {
         margin-bottom: 1em;        
         p {
-            font-size: 1.5em;
+            font-size: 1.1em;
             font-weight: bold;
             line-height: 1.4;
         }
@@ -338,7 +350,7 @@ body {
     .pr-ticket {
         margin-bottom: 1em;
         p {
-            font-size: 1.25em;
+            font-size: 1.1em;
             font-weight: bold;
         }
     }

@@ -21,12 +21,13 @@ body {
 <%
 moment.locale(locale);
 for (let reservation of reservations) {
-    let isNoCharge = (reservation.payment_method === 'F');
+    let isNoCharge = (reservation.payment_method === 'Invitation');
 %>
 <div class="pcthermarlprintcontent">
 
     <p class="pr-header">
-        <img src="/images/common/logo.svg"><br>
+        <img class="img-logo-ttts" src="/images/common/logo.svg"><br>
+        <img class="img-logo-tour" src="/images/common/logo_tour_black.svg"><br>        
         チケット兼領収書
     </p>
 
