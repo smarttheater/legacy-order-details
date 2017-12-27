@@ -29,11 +29,7 @@ const redisClient = ttts.redis.createClient({
     password: process.env.REDIS_KEY,
     tls: { servername: process.env.REDIS_HOST }
 });
-// セッションキー
-const SESSION_KEY_INQUIRY_RESERVATIONS = 'ttts-ticket-inquiry-reservations';
-const SESSION_KEY_INQUIRY_CANCELLATIONFEE = 'ttts-ticket-inquiry-cancellationfee';
 // キャンセル料(1予約あたり1000円固定)
-// const CANCEL_CHARGE: number = Number(conf.get<string>('cancelCharge'));
 const CANCEL_CHARGE = 1000;
 if (process.env.API_CLIENT_ID === undefined) {
     throw new Error('Please set an environment variable \'API_CLIENT_ID\'');
@@ -51,6 +47,8 @@ function search(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         let message = '';
         let errors = null;
+        // 照会結果セッション初期化
+        delete req.session.inquiryResult;
         if (req.method === 'POST') {
             // formバリデーション
             validate(req);
@@ -69,21 +67,29 @@ function search(req, res) {
                     // 予約検索
                     const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
                     const transactionRepo = new ttts.repository.Transaction(ttts.mongoose.connection);
-                    const reservations = yield reservationRepo.reservationModel.find(conditions).exec();
+                    const reservations = yield reservationRepo.reservationModel.find(conditions)
+                        .exec().then((docs) => docs.map((doc) => doc.toObject()));
                     debug('reservations found.', reservations);
                     // データ有りの時
                     if (reservations.length > 0) {
                         // 取引に対する返品リクエストがすでにあるかどうか
                         const returnOrderTransaction = yield transactionRepo.transactionModel.findOne({
                             typeOf: ttts.factory.transactionType.ReturnOrder,
-                            'object.transaction.id': reservations[0].get('transaction')
+                            'object.transaction.id': reservations[0].transaction
                         }).exec();
                         debug('returnOrderTransaction:', returnOrderTransaction);
                         if (returnOrderTransaction !== null) {
                             throw new Error(req.__('MistakeInput'));
                         }
-                        // 予約照会・検索結果画面へ遷移
-                        req.session[SESSION_KEY_INQUIRY_RESERVATIONS] = reservations;
+                        // バウチャー印刷トークンを発行
+                        const tokenRepo = new ttts.repository.Token(redisClient);
+                        const printToken = yield tokenRepo.createPrintToken(reservations.filter((r) => r.status === ttts.factory.reservationStatusType.ReservationConfirmed).map((r) => r.id));
+                        debug('token created.', printToken);
+                        // 結果をセッションに保管して結果画面へ遷移
+                        req.session.inquiryResult = {
+                            printToken: printToken,
+                            reservations: reservations
+                        };
                         res.redirect('/inquiry/search/result');
                         return;
                     }
@@ -124,25 +130,24 @@ function result(req, res, next) {
             if (req === null) {
                 next(new Error(messageNotFound));
             }
-            let reservations = req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
+            const inquiryResult = req.session.inquiryResult;
+            if (inquiryResult === undefined) {
+                throw new Error(messageNotFound);
+            }
+            let reservations = inquiryResult.reservations;
             if (!Array.isArray(reservations) || reservations.length === 0) {
                 next(new Error(messageNotFound));
                 return;
             }
             // "予約"のデータのみセット(Extra分を削除)
             reservations = reservations.filter((reservation) => reservation.status === ttts.factory.reservationStatusType.ReservationConfirmed);
-            const tokenRepo = new ttts.repository.Token(redisClient);
-            const printToken = yield tokenRepo.createPrintToken(reservations.map((r) => r.id));
-            debug('token created.', printToken);
             // 券種ごとに合計枚数算出
             const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
             // キャンセル料は1予約あたり1000円固定
-            const fee = CANCEL_CHARGE;
-            req.session[SESSION_KEY_INQUIRY_CANCELLATIONFEE] = fee;
-            const cancellationFee = numeral(fee).format('0,0');
+            const cancellationFee = numeral(CANCEL_CHARGE).format('0,0');
             // 画面描画
             res.render('inquiry/result', {
-                printToken: printToken,
+                printToken: inquiryResult.printToken,
                 moment: moment,
                 reservations: reservations,
                 ticketInfos: ticketInfos,
@@ -168,13 +173,14 @@ exports.result = result;
 // tslint:disable-next-line:max-func-body-length
 function cancel(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        let cancellationFee = 0;
         // 予約取得
         let reservations;
         try {
-            reservations = req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
-            // キャンセル料セット
-            cancellationFee = req.session[SESSION_KEY_INQUIRY_CANCELLATIONFEE];
+            const inquiryResult = req.session.inquiryResult;
+            if (inquiryResult === undefined) {
+                throw new Error(req.__('NotFound'));
+            }
+            reservations = inquiryResult.reservations;
         }
         catch (err) {
             res.status(http_status_1.INTERNAL_SERVER_ERROR).json({
@@ -184,6 +190,7 @@ function cancel(req, res) {
             });
             return;
         }
+        const cancellationFee = CANCEL_CHARGE;
         let returnOrderTransaction;
         try {
             // キャンセルリクエスト
@@ -219,8 +226,8 @@ function cancel(req, res) {
             // no op
             // メール送信に失敗しても、返品処理は走るので、成功
         }
-        // セッションから削除
-        delete req.session[SESSION_KEY_INQUIRY_RESERVATIONS];
+        // セッションから照会結果を削除
+        delete req.session.inquiryResult;
         res.status(http_status_1.CREATED).json({
             id: returnOrderTransaction.id,
             status: returnOrderTransaction.status
@@ -231,7 +238,7 @@ exports.cancel = cancel;
 /**
  * 予約照会画面検証
  *
- * @param {any} req
+ * @param {Request} req
  * @param {string} type
  */
 function validate(req) {
@@ -302,7 +309,7 @@ function sendEmail(transactionId, name, to, text) {
  * キャンセルメール本文取得
  * @function getCancelMail
  * @param {Request} req
- * @param {any[]}reservations
+ * @param {ttts.factory.reservation.event.IReservation[]}reservations
  * @returns {string}
  */
 function getCancelMail(req, reservations, fee) {

@@ -25,11 +25,7 @@ const redisClient = ttts.redis.createClient({
     tls: { servername: <string>process.env.REDIS_HOST }
 });
 
-// セッションキー
-const SESSION_KEY_INQUIRY_RESERVATIONS: string = 'ttts-ticket-inquiry-reservations';
-const SESSION_KEY_INQUIRY_CANCELLATIONFEE: string = 'ttts-ticket-inquiry-cancellationfee';
 // キャンセル料(1予約あたり1000円固定)
-// const CANCEL_CHARGE: number = Number(conf.get<string>('cancelCharge'));
 const CANCEL_CHARGE: number = 1000;
 
 if (process.env.API_CLIENT_ID === undefined) {
@@ -48,6 +44,9 @@ if (process.env.API_CLIENT_ID === undefined) {
 export async function search(req: Request, res: Response): Promise<void> {
     let message = '';
     let errors: ExpressValidator.Dictionary<ExpressValidator.MappedError> | null = null;
+
+    // 照会結果セッション初期化
+    delete (<Express.Session>req.session).inquiryResult;
 
     if (req.method === 'POST') {
         // formバリデーション
@@ -69,7 +68,8 @@ export async function search(req: Request, res: Response): Promise<void> {
                 const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
                 const transactionRepo = new ttts.repository.Transaction(ttts.mongoose.connection);
 
-                const reservations = await reservationRepo.reservationModel.find(conditions).exec();
+                const reservations = await reservationRepo.reservationModel.find(conditions)
+                    .exec().then((docs) => docs.map((doc) => <ttts.factory.reservation.event.IReservation>doc.toObject()));
                 debug('reservations found.', reservations);
 
                 // データ有りの時
@@ -78,7 +78,7 @@ export async function search(req: Request, res: Response): Promise<void> {
                     const returnOrderTransaction = await transactionRepo.transactionModel.findOne(
                         {
                             typeOf: ttts.factory.transactionType.ReturnOrder,
-                            'object.transaction.id': reservations[0].get('transaction')
+                            'object.transaction.id': reservations[0].transaction
                         }
                     ).exec();
                     debug('returnOrderTransaction:', returnOrderTransaction);
@@ -86,8 +86,18 @@ export async function search(req: Request, res: Response): Promise<void> {
                         throw new Error(req.__('MistakeInput'));
                     }
 
-                    // 予約照会・検索結果画面へ遷移
-                    (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS] = reservations;
+                    // バウチャー印刷トークンを発行
+                    const tokenRepo = new ttts.repository.Token(redisClient);
+                    const printToken = await tokenRepo.createPrintToken(
+                        reservations.filter((r) => r.status === ttts.factory.reservationStatusType.ReservationConfirmed).map((r) => r.id)
+                    );
+                    debug('token created.', printToken);
+
+                    // 結果をセッションに保管して結果画面へ遷移
+                    (<Express.Session>req.session).inquiryResult = {
+                        printToken: printToken,
+                        reservations: reservations
+                    };
                     res.redirect('/inquiry/search/result');
 
                     return;
@@ -130,7 +140,12 @@ export async function result(req: Request, res: Response, next: NextFunction): P
             next(new Error(messageNotFound));
         }
 
-        let reservations: ttts.factory.reservation.event.IReservation[] = (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS];
+        const inquiryResult = (<Express.Session>req.session).inquiryResult;
+        if (inquiryResult === undefined) {
+            throw new Error(messageNotFound);
+        }
+
+        let reservations = inquiryResult.reservations;
         if (!Array.isArray(reservations) || reservations.length === 0) {
             next(new Error(messageNotFound));
 
@@ -140,21 +155,14 @@ export async function result(req: Request, res: Response, next: NextFunction): P
         // "予約"のデータのみセット(Extra分を削除)
         reservations = reservations.filter((reservation) => reservation.status === ttts.factory.reservationStatusType.ReservationConfirmed);
 
-        const tokenRepo = new ttts.repository.Token(redisClient);
-        const printToken = await tokenRepo.createPrintToken(reservations.map((r) => r.id));
-        debug('token created.', printToken);
-
         // 券種ごとに合計枚数算出
         const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
         // キャンセル料は1予約あたり1000円固定
-        const fee: number = CANCEL_CHARGE;
-
-        (<any>req.session)[SESSION_KEY_INQUIRY_CANCELLATIONFEE] = fee;
-        const cancellationFee: string = numeral(fee).format('0,0');
+        const cancellationFee: string = numeral(CANCEL_CHARGE).format('0,0');
 
         // 画面描画
         res.render('inquiry/result', {
-            printToken: printToken,
+            printToken: inquiryResult.printToken,
             moment: moment,
             reservations: reservations,
             ticketInfos: ticketInfos,
@@ -177,15 +185,15 @@ export async function result(req: Request, res: Response, next: NextFunction): P
  */
 // tslint:disable-next-line:max-func-body-length
 export async function cancel(req: Request, res: Response): Promise<void> {
-    let cancellationFee: number = 0;
-
     // 予約取得
     let reservations: ttts.factory.reservation.event.IReservation[];
     try {
-        reservations = (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS];
+        const inquiryResult = (<Express.Session>req.session).inquiryResult;
+        if (inquiryResult === undefined) {
+            throw new Error(req.__('NotFound'));
+        }
 
-        // キャンセル料セット
-        cancellationFee = (<any>req.session)[SESSION_KEY_INQUIRY_CANCELLATIONFEE];
+        reservations = inquiryResult.reservations;
     } catch (err) {
         res.status(INTERNAL_SERVER_ERROR).json({
             errors: [{
@@ -196,6 +204,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         return;
     }
 
+    const cancellationFee = CANCEL_CHARGE;
     let returnOrderTransaction: ttts.factory.transaction.returnOrder.ITransaction;
     try {
         // キャンセルリクエスト
@@ -236,8 +245,8 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         // メール送信に失敗しても、返品処理は走るので、成功
     }
 
-    // セッションから削除
-    delete (<any>req.session)[SESSION_KEY_INQUIRY_RESERVATIONS];
+    // セッションから照会結果を削除
+    delete (<Express.Session>req.session).inquiryResult;
 
     res.status(CREATED).json({
         id: returnOrderTransaction.id,
@@ -248,7 +257,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
 /**
  * 予約照会画面検証
  *
- * @param {any} req
+ * @param {Request} req
  * @param {string} type
  */
 function validate(req: Request): void {
@@ -332,12 +341,12 @@ async function sendEmail(transactionId: string, name: string, to: string, text: 
  * キャンセルメール本文取得
  * @function getCancelMail
  * @param {Request} req
- * @param {any[]}reservations
+ * @param {ttts.factory.reservation.event.IReservation[]}reservations
  * @returns {string}
  */
 function getCancelMail(req: Request, reservations: ttts.factory.reservation.event.IReservation[], fee: number): string {
     const mail: string[] = [];
-    const locale: string = (<any>req.session).locale;
+    const locale: string = (<Express.Session>req.session).locale;
 
     // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
     mail.push(req.__('EmailTitleCan'));
