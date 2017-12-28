@@ -68,9 +68,13 @@ export async function search(req: Request, res: Response): Promise<void> {
                 const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
                 const transactionRepo = new ttts.repository.Transaction(ttts.mongoose.connection);
 
-                const reservations = await reservationRepo.reservationModel.find(conditions)
+                let reservations = await reservationRepo.reservationModel.find(conditions)
                     .exec().then((docs) => docs.map((doc) => <ttts.factory.reservation.event.IReservation>doc.toObject()));
                 debug('reservations found.', reservations);
+
+                // "予約"のデータのみセット(Extra分を削除)
+                reservations =
+                    reservations.filter((reservation) => reservation.status === ttts.factory.reservationStatusType.ReservationConfirmed);
 
                 // データ有りの時
                 if (reservations.length > 0) {
@@ -88,9 +92,7 @@ export async function search(req: Request, res: Response): Promise<void> {
 
                     // バウチャー印刷トークンを発行
                     const tokenRepo = new ttts.repository.Token(redisClient);
-                    const printToken = await tokenRepo.createPrintToken(
-                        reservations.filter((r) => r.status === ttts.factory.reservationStatusType.ReservationConfirmed).map((r) => r.id)
-                    );
+                    const printToken = await tokenRepo.createPrintToken(reservations.map((r) => r.id));
                     debug('token created.', printToken);
 
                     // 結果をセッションに保管して結果画面へ遷移
@@ -145,15 +147,12 @@ export async function result(req: Request, res: Response, next: NextFunction): P
             throw new Error(messageNotFound);
         }
 
-        let reservations = inquiryResult.reservations;
+        const reservations = inquiryResult.reservations;
         if (!Array.isArray(reservations) || reservations.length === 0) {
             next(new Error(messageNotFound));
 
             return;
         }
-
-        // "予約"のデータのみセット(Extra分を削除)
-        reservations = reservations.filter((reservation) => reservation.status === ttts.factory.reservationStatusType.ReservationConfirmed);
 
         // 券種ごとに合計枚数算出
         const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
