@@ -56,7 +56,7 @@ page-inquiry page-search page-<%- locale %>
         </div>
 
         <div class="form-group form-seachqueryinput">
-            <label for="input_purchaserTel"><%- __('Tel') %></label>
+            <label for="input_purchaserTel"><%- __('Tel') %><%- __('Last4Digits') %></label>
             <input id="input_purchaserTel" type="text" class="form-control input-required" name="purchaserTel" value="<%= req.body.purchaserTel %>" maxlength="4" data-pattern="^[0-9]+$" data-fieldname="<%- __('Tel') %>" required>
             <p class="errmsg errmsg-purchaserTel"><%- (errors && errors.purchaserTel ? __('Last4Digits') : '') %></p>
         </div>
