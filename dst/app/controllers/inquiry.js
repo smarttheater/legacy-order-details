@@ -12,6 +12,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 const ttts = require("@motionpicture/ttts-domain");
 const conf = require("config");
 const createDebug = require("debug");
@@ -28,6 +29,20 @@ const redisClient = ttts.redis.createClient({
     port: parseInt(process.env.REDIS_PORT, 10),
     password: process.env.REDIS_KEY,
     tls: { servername: process.env.REDIS_HOST }
+});
+const authClient = new tttsapi.auth.ClientCredentials({
+    domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
+    clientId: process.env.API_CLIENT_ID,
+    clientSecret: process.env.API_CLIENT_SECRET,
+    scopes: [
+        `${process.env.API_RESOURECE_SERVER_IDENTIFIER}/performances.read-only`,
+        `${process.env.API_RESOURECE_SERVER_IDENTIFIER}/transactions`
+    ],
+    state: ''
+});
+const returnOrderTransactionService = new tttsapi.service.transaction.ReturnOrder({
+    endpoint: process.env.API_ENDPOINT,
+    auth: authClient
 });
 // キャンセル料(1予約あたり1000円固定)
 const CANCEL_CHARGE = 1000;
@@ -195,13 +210,13 @@ function cancel(req, res) {
         let returnOrderTransaction;
         try {
             // キャンセルリクエスト
-            returnOrderTransaction = yield ttts.service.transaction.returnOrder.confirm({
-                agentId: process.env.API_CLIENT_ID,
-                transactionId: reservations[0].transaction,
+            returnOrderTransaction = yield returnOrderTransactionService.confirm({
+                performanceDay: reservations[0].performance_day,
+                paymentNo: reservations[0].payment_no,
                 cancellationFee: cancellationFee,
                 forcibly: false,
                 reason: ttts.factory.transaction.returnOrder.Reason.Customer
-            })(new ttts.repository.Transaction(ttts.mongoose.connection));
+            });
         }
         catch (err) {
             if (err instanceof ttts.factory.errors.Argument) {
@@ -229,10 +244,7 @@ function cancel(req, res) {
         }
         // セッションから照会結果を削除
         delete req.session.inquiryResult;
-        res.status(http_status_1.CREATED).json({
-            id: returnOrderTransaction.id,
-            status: returnOrderTransaction.status
-        });
+        res.status(http_status_1.CREATED).json(returnOrderTransaction);
     });
 }
 exports.cancel = cancel;

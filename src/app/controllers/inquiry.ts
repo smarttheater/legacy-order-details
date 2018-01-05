@@ -3,6 +3,7 @@
  * @namespace inquiry
  */
 
+import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import * as ttts from '@motionpicture/ttts-domain';
 import * as conf from 'config';
 import * as createDebug from 'debug';
@@ -23,6 +24,22 @@ const redisClient = ttts.redis.createClient({
     port: parseInt(<string>process.env.REDIS_PORT, 10),
     password: <string>process.env.REDIS_KEY,
     tls: { servername: <string>process.env.REDIS_HOST }
+});
+
+const authClient = new tttsapi.auth.ClientCredentials({
+    domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
+    clientId: <string>process.env.API_CLIENT_ID,
+    clientSecret: <string>process.env.API_CLIENT_SECRET,
+    scopes: [
+        `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/performances.read-only`,
+        `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/transactions`
+    ],
+    state: ''
+});
+
+const returnOrderTransactionService = new tttsapi.service.transaction.ReturnOrder({
+    endpoint: <string>process.env.API_ENDPOINT,
+    auth: authClient
 });
 
 // キャンセル料(1予約あたり1000円固定)
@@ -204,16 +221,16 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     }
 
     const cancellationFee = CANCEL_CHARGE;
-    let returnOrderTransaction: ttts.factory.transaction.returnOrder.ITransaction;
+    let returnOrderTransaction: { id: string };
     try {
         // キャンセルリクエスト
-        returnOrderTransaction = await ttts.service.transaction.returnOrder.confirm({
-            agentId: <string>process.env.API_CLIENT_ID,
-            transactionId: reservations[0].transaction,
+        returnOrderTransaction = await returnOrderTransactionService.confirm({
+            performanceDay: reservations[0].performance_day,
+            paymentNo: reservations[0].payment_no,
             cancellationFee: cancellationFee,
             forcibly: false,
             reason: ttts.factory.transaction.returnOrder.Reason.Customer
-        })(new ttts.repository.Transaction(ttts.mongoose.connection));
+        });
     } catch (err) {
         if (err instanceof ttts.factory.errors.Argument) {
             res.status(BAD_REQUEST).json({
@@ -247,10 +264,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     // セッションから照会結果を削除
     delete (<Express.Session>req.session).inquiryResult;
 
-    res.status(CREATED).json({
-        id: returnOrderTransaction.id,
-        status: returnOrderTransaction.status
-    });
+    res.status(CREATED).json(returnOrderTransaction);
 }
 
 /**

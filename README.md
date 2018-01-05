@@ -46,31 +46,25 @@ scssビルド
 npm run css
 ```
 
-## Required environment variables
-```shell
-set NODE_ENV=**********環境名(development,test,productionなど)**********
-set REDIS_HOST=**********パフォーマンス空席状況保管先redis host**********
-set REDIS_PORT=**********パフォーマンス空席状況保管先redis port**********
-set REDIS_KEY=**********パフォーマンス空席状況保管先redis key**********
-set API_ENDPOINT=**********frontと連携するttts apiのエンドポイント**********
-set MONGOLAB_URI=**********mongodb接続URI**********
+### Environment variables
 
-
-```
-only on Aure WebApps
-
-```shell
-set WEBSITE_NODE_DEFAULT_VERSION=**********node.jsバージョン**********
-set WEBSITE_TIME_ZONE=Tokyo Standard Time
-```
-
-
-```
-DEBUG
-
-```shell
-set DEBUG=ttts-authentication*
-```
+| Name                              | Required | Value                 | Purpose |
+| --------------------------------- | -------- | --------------------- | ------- |
+| `DEBUG`                           | false    | ttts-authentication:* | Debug   |
+| `NPM_TOKEN`                       | true     |                       |         |
+| `NODE_ENV`                        | true     |                       |         |
+| `SENDGRID_API_KEY`                | true     |                       |         |
+| `REDIS_HOST`                      | true     |                       |         |
+| `REDIS_PORT`                      | true     |                       |         |
+| `REDIS_KEY`                       | true     |                       |         |
+| `MONGOLAB_URI`                    | true     |                       |         |
+| `NODE_CONFIG_DIR`                 | true     |                       |         |
+| `TTTS_TOKEN_SECRET`               | true     |                       |         |
+| `API_ENDPOINT`                    | true     |                       |         |
+| `API_CLIENT_ID`                   | true     |                       |         |
+| `API_CLIENT_SECRET`               | true     |                       |         |
+| `API_AUTHORIZE_SERVER_DOMAIN`     | true     |                       |         |
+| `API_RESOURECE_SERVER_IDENTIFIER` | true     |                       |         |
 
 
 # tslint
