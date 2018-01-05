@@ -1,24 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const base_1 = require("./base");
 /**
  * 入場管理者ユーザー
- *
  * @export
- * @class MasterAdminUser
+ * @class CheckinAdminUser
  * @extends {BaseUser}
  */
-class CheckInAdminUser extends base_1.default {
+class CheckinAdminUser {
     static PARSE(session) {
-        const user = new CheckInAdminUser();
+        const user = new CheckinAdminUser();
         // セッション値からオブジェクトにセット
-        if (session !== undefined && session.hasOwnProperty(CheckInAdminUser.AUTH_SESSION_NAME)) {
-            Object.keys(session[CheckInAdminUser.AUTH_SESSION_NAME]).forEach((propertyName) => {
-                user[propertyName] = session[CheckInAdminUser.AUTH_SESSION_NAME][propertyName];
-            });
+        if (session !== undefined && session.checkinAdminUser !== undefined) {
+            user.group = session.checkinAdminUser.group;
+            user.familyName = session.checkinAdminUser.familyName;
+            user.givenName = session.checkinAdminUser.givenName;
+            user.email = session.checkinAdminUser.email;
+            user.telephone = session.checkinAdminUser.telephone;
+            user.username = session.checkinAdminUser.username;
         }
         return user;
     }
+    /**
+     * サインイン中かどうか
+     */
+    isAuthenticated() {
+        return (this.username !== undefined);
+    }
 }
-CheckInAdminUser.AUTH_SESSION_NAME = 'TTTSCheckinAdminUser';
-exports.default = CheckInAdminUser;
+exports.default = CheckinAdminUser;

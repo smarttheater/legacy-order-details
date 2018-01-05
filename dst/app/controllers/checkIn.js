@@ -34,7 +34,7 @@ function confirm(req, res, next) {
         }
         try {
             res.render('checkIn/confirm', {
-                staffUser: req.staffUser,
+                checkinAdminUser: req.checkinAdminUser,
                 layout: 'layouts/checkIn/layout'
             });
         }
@@ -52,7 +52,7 @@ function confirmTest(req, res, next) {
                 next(new Error('unexepected error'));
             }
             res.render('checkIn/confirmTest', {
-                staffUser: req.staffUser,
+                checkinAdminUser: req.checkinAdminUser,
                 layout: 'layouts/checkIn/layout'
             });
         }
@@ -122,11 +122,11 @@ exports.getReservations = getReservations;
  */
 function getReservation(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (req.staffUser === undefined) {
-            throw new Error('staffUser not defined.');
+        if (req.checkinAdminUser === undefined) {
+            throw new Error('checkinAdminUser not defined.');
         }
-        if (!req.staffUser.isAuthenticated()) {
-            throw new Error('staffUser not authenticated.');
+        if (!req.checkinAdminUser.isAuthenticated()) {
+            throw new Error('checkinAdminUser not authenticated.');
         }
         try {
             const reservation = yield getReservationByQR(req.params.qr);
@@ -157,11 +157,11 @@ exports.getReservation = getReservation;
 function addCheckIn(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            if (req.staffUser === undefined) {
-                throw new Error('staffUser not defined.');
+            if (req.checkinAdminUser === undefined) {
+                throw new Error('checkinAdminUser not defined.');
             }
-            if (!req.staffUser.isAuthenticated()) {
-                throw new Error('staffUser not authenticated.');
+            if (!req.checkinAdminUser.isAuthenticated()) {
+                throw new Error('checkinAdminUser not authenticated.');
             }
             if (!req.body.when || !req.body.where || !req.body.how) {
                 res.status(http_status_1.BAD_REQUEST).json({
@@ -211,11 +211,11 @@ exports.addCheckIn = addCheckIn;
 function removeCheckIn(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            if (req.staffUser === undefined) {
-                throw new Error('staffUser not defined.');
+            if (req.checkinAdminUser === undefined) {
+                throw new Error('checkinAdminUser not defined.');
             }
-            if (!req.staffUser.isAuthenticated()) {
-                throw new Error('staffUser not authenticated.');
+            if (!req.checkinAdminUser.isAuthenticated()) {
+                throw new Error('checkinAdminUser not authenticated.');
             }
             if (!req.body.when) {
                 res.status(http_status_1.BAD_REQUEST).json({

@@ -8,7 +8,7 @@ page-checkin page-confirm
 <%- contentFor('body') %>
 
 <div class="header">
-    <h1 class="pointname"><span><%- staffUser.name.ja %></span></h1>
+    <h1 class="pointname"><span><%- checkinAdminUser.familyName %> <%- checkinAdminUser.givenName %></span></h1>
     <a class="logout" id="btn_logout" href="#"></a>
 </div>
 
@@ -32,5 +32,5 @@ page-checkin page-confirm
     <tbody></tbody>
 </table>
 
-<input type="hidden" name="input_username" id="input_username" value="<%- staffUser.name %>">
-<input type="hidden" name="pointgroup" id="input_pointgroup" value="<%- staffUser.group %>">
+<input type="hidden" name="input_username" id="input_username" value="<%- checkinAdminUser.username %>">
+<input type="hidden" name="pointgroup" id="input_pointgroup" value="<%- checkinAdminUser.group %>">

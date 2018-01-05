@@ -26,7 +26,7 @@ export async function confirm(req: Request, res: Response, next: NextFunction): 
     }
     try {
         res.render('checkIn/confirm', {
-            staffUser: req.staffUser,
+            checkinAdminUser: req.checkinAdminUser,
             layout: 'layouts/checkIn/layout'
         });
     } catch (error) {
@@ -40,7 +40,7 @@ export async function confirmTest(req: Request, res: Response, next: NextFunctio
             next(new Error('unexepected error'));
         }
         res.render('checkIn/confirmTest', {
-            staffUser: req.staffUser,
+            checkinAdminUser: req.checkinAdminUser,
             layout: 'layouts/checkIn/layout'
         });
     } catch (error) {
@@ -110,11 +110,11 @@ export async function getReservations(req: Request, res: Response): Promise<void
  * @returns {Promise<void>}
  */
 export async function getReservation(req: Request, res: Response): Promise<void> {
-    if (req.staffUser === undefined) {
-        throw new Error('staffUser not defined.');
+    if (req.checkinAdminUser === undefined) {
+        throw new Error('checkinAdminUser not defined.');
     }
-    if (!req.staffUser.isAuthenticated()) {
-        throw new Error('staffUser not authenticated.');
+    if (!req.checkinAdminUser.isAuthenticated()) {
+        throw new Error('checkinAdminUser not authenticated.');
     }
 
     try {
@@ -143,11 +143,11 @@ export async function getReservation(req: Request, res: Response): Promise<void>
  */
 export async function addCheckIn(req: Request, res: Response): Promise<void> {
     try {
-        if (req.staffUser === undefined) {
-            throw new Error('staffUser not defined.');
+        if (req.checkinAdminUser === undefined) {
+            throw new Error('checkinAdminUser not defined.');
         }
-        if (!req.staffUser.isAuthenticated()) {
-            throw new Error('staffUser not authenticated.');
+        if (!req.checkinAdminUser.isAuthenticated()) {
+            throw new Error('checkinAdminUser not authenticated.');
         }
         if (!req.body.when || !req.body.where || !req.body.how) {
             res.status(BAD_REQUEST).json({
@@ -199,11 +199,11 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
  */
 export async function removeCheckIn(req: Request, res: Response): Promise<void> {
     try {
-        if (req.staffUser === undefined) {
-            throw new Error('staffUser not defined.');
+        if (req.checkinAdminUser === undefined) {
+            throw new Error('checkinAdminUser not defined.');
         }
-        if (!req.staffUser.isAuthenticated()) {
-            throw new Error('staffUser not authenticated.');
+        if (!req.checkinAdminUser.isAuthenticated()) {
+            throw new Error('checkinAdminUser not authenticated.');
         }
         if (!req.body.when) {
             res.status(BAD_REQUEST).json({

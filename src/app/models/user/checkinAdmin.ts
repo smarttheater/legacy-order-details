@@ -1,24 +1,37 @@
-import BaseUser from './base';
-
 /**
  * 入場管理者ユーザー
- *
  * @export
- * @class MasterAdminUser
+ * @class CheckinAdminUser
  * @extends {BaseUser}
  */
-export default class CheckInAdminUser extends BaseUser {
-    public static AUTH_SESSION_NAME: string = 'TTTSCheckinAdminUser';
+export default class CheckinAdminUser {
+    public group: string;
+    public familyName: string;
+    public givenName: string;
+    public email: string;
+    public telephone: string;
+    public username: string;
 
-    public static PARSE(session: Express.Session | undefined): CheckInAdminUser {
-        const user = new CheckInAdminUser();
+    public static PARSE(session: Express.Session | undefined): CheckinAdminUser {
+        const user = new CheckinAdminUser();
+
         // セッション値からオブジェクトにセット
-        if (session !== undefined && session.hasOwnProperty(CheckInAdminUser.AUTH_SESSION_NAME)) {
-            Object.keys(session[CheckInAdminUser.AUTH_SESSION_NAME]).forEach((propertyName) => {
-                (<any>user)[propertyName] = session[CheckInAdminUser.AUTH_SESSION_NAME][propertyName];
-            });
+        if (session !== undefined && session.checkinAdminUser !== undefined) {
+            user.group = session.checkinAdminUser.group;
+            user.familyName = session.checkinAdminUser.familyName;
+            user.givenName = session.checkinAdminUser.givenName;
+            user.email = session.checkinAdminUser.email;
+            user.telephone = session.checkinAdminUser.telephone;
+            user.username = session.checkinAdminUser.username;
         }
 
         return user;
+    }
+
+    /**
+     * サインイン中かどうか
+     */
+    public isAuthenticated(): boolean {
+        return (this.username !== undefined);
     }
 }

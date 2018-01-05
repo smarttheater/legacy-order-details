@@ -1,8 +1,7 @@
 "use strict";
 /**
- * マスタ管理者認証コントローラー
- *
- * @namespace controller/auth
+ * 入場認証コントローラー
+ * @namespace controllers.auth
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -15,10 +14,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const ttts = require("@motionpicture/ttts-domain");
 const AWS = require("aws-sdk");
+const crypto = require("crypto");
 const createDebug = require("debug");
 const _ = require("underscore");
 const Message = require("../../common/Const/Message");
-const checkinAdmin_1 = require("../models/user/checkinAdmin");
 const debug = createDebug('ttts-authentication:controllers:auth');
 const checkInHome = '/checkin/confirm';
 const cookieName = 'remember_checkin_admin';
@@ -27,7 +26,7 @@ const cookieName = 'remember_checkin_admin';
  */
 function login(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (req.staffUser !== undefined && req.staffUser.isAuthenticated()) {
+        if (req.checkinAdminUser !== undefined && req.checkinAdminUser.isAuthenticated()) {
             res.redirect(checkInHome);
             return;
         }
@@ -42,11 +41,7 @@ function login(req, res, next) {
         }
         cognitoUsers = cognitoUsers.filter((u) => u.UserStatus === 'CONFIRMED');
         debug('cognitoUsers:', cognitoUsers);
-        // ユーザー認証(notesフィールドが、入場認証に使えるユーザーのフラグ)
-        const ownerRepo = new ttts.repository.Owner(ttts.mongoose.connection);
-        const owners = yield ownerRepo.ownerModel.find({ notes: '1' }).exec();
-        debug('number of owners:', owners.length);
-        if (owners.length === undefined || owners.length <= 0) {
+        if (cognitoUsers.length <= 0) {
             next(new Error(Message.Common.unexpectedError));
             return;
         }
@@ -57,35 +52,33 @@ function login(req, res, next) {
             const validatorResult = yield req.getValidationResult();
             errors = req.validationErrors(true);
             if (validatorResult.isEmpty()) {
-                // ユーザー認証
-                const signedOwner = owners.find((owner) => (owner.get('username') === req.body.username));
-                if (signedOwner === undefined) {
+                try {
+                    // ログイン情報が有効であれば、Cognitoでもログイン
+                    req.session.cognitoCredentials =
+                        yield getCognitoCredentials(req.body.username, req.body.password);
+                    debug('cognito credentials published.', req.session.cognitoCredentials);
+                }
+                catch (error) {
                     errors = { username: { msg: 'IDもしくはパスワードの入力に誤りがあります' } };
                 }
-                else {
-                    // パスワードチェック
-                    if (signedOwner.get('password_hash') !== ttts.CommonUtil.createHash(req.body.password, signedOwner.get('password_salt'))) {
-                        errors = { username: { msg: 'IDもしくはパスワードの入力に誤りがあります' } };
-                    }
-                    else {
-                        // ログイン記憶
-                        if (req.body.remember === 'on') {
-                            // トークン生成
-                            const authentication = yield ttts.Models.Authentication.create({
-                                token: ttts.CommonUtil.createToken(),
-                                owner: signedOwner.get('id'),
-                                signature: req.body.signature
-                            });
-                            // tslint:disable-next-line:no-cookies
-                            res.cookie(cookieName, authentication.get('token'), { path: '/', httpOnly: true, maxAge: 604800000 });
-                        }
-                        req.session[checkinAdmin_1.default.AUTH_SESSION_NAME] = signedOwner.toObject();
-                        req.session[checkinAdmin_1.default.AUTH_SESSION_NAME].signature = req.body.signature;
-                        // 入場確認へ
-                        const cb = (!_.isEmpty(req.query.cb)) ? req.query.cb : checkInHome;
-                        res.redirect(cb);
-                        return;
-                    }
+                const cognitoCredentials = req.session.cognitoCredentials;
+                if (cognitoCredentials !== undefined) {
+                    const cognitoUser = yield getCognitoUser(cognitoCredentials.AccessToken);
+                    // ログイン記憶
+                    // いったん保留
+                    // if (req.body.remember === 'on') {
+                    //     res.cookie(
+                    //         'remember_staff',
+                    //         authentication.get('token'),
+                    //         { path: '/', httpOnly: true, maxAge: 604800000 }
+                    //     );
+                    // }
+                    // ログイン
+                    req.session.checkinAdminUser = cognitoUser;
+                    // 入場確認へ
+                    const cb = (!_.isEmpty(req.query.cb)) ? req.query.cb : checkInHome;
+                    res.redirect(cb);
+                    return;
                 }
             }
         }
@@ -95,9 +88,6 @@ function login(req, res, next) {
             title: '入場管理ログイン',
             errors: errors,
             cognitoUsers: cognitoUsers,
-            usernames: owners.map((owner) => {
-                return { id: owner.get('username'), name: owner.get('name') };
-            }),
             layout: 'layouts/checkIn/layout'
         });
     });
@@ -106,6 +96,98 @@ exports.login = login;
 function validate(req) {
     req.checkBody('username', Message.Common.required.replace('$fieldName$', 'ID')).notEmpty();
     req.checkBody('password', Message.Common.required.replace('$fieldName$', 'パスワード')).notEmpty();
+}
+function getCognitoUser(accesssToken) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve, reject) => {
+            const cognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider({
+                apiVersion: 'latest',
+                region: 'ap-northeast-1'
+            });
+            cognitoIdentityServiceProvider.getUser({
+                AccessToken: accesssToken
+            }, (err, data) => {
+                if (err instanceof Error) {
+                    reject(err);
+                }
+                else {
+                    cognitoIdentityServiceProvider.adminListGroupsForUser({
+                        Username: data.Username,
+                        UserPoolId: process.env.COGNITO_USER_POOL_ID
+                    }, (err2, data2) => {
+                        if (err2 instanceof Error) {
+                            reject(err);
+                        }
+                        else {
+                            if (!Array.isArray(data2.Groups)) {
+                                reject(new Error('Unexpected.'));
+                            }
+                            else {
+                                resolve({
+                                    group: data2.Groups[0].GroupName,
+                                    username: data.Username,
+                                    // tslint:disable-next-line:max-line-length
+                                    familyName: data.UserAttributes.find((a) => a.Name === 'family_name').Value,
+                                    // tslint:disable-next-line:max-line-length
+                                    givenName: data.UserAttributes.find((a) => a.Name === 'given_name').Value,
+                                    // tslint:disable-next-line:max-line-length
+                                    email: data.UserAttributes.find((a) => a.Name === 'email').Value,
+                                    // tslint:disable-next-line:max-line-length
+                                    telephone: data.UserAttributes.find((a) => a.Name === 'phone_number').Value
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    });
+}
+/**
+ * Cognito認証情報を取得する
+ * @param {string} username ユーザーネーム
+ * @param {string} password パスワード
+ */
+function getCognitoCredentials(username, password) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve, reject) => {
+            const cognitoidentityserviceprovider = new AWS.CognitoIdentityServiceProvider({
+                region: 'ap-northeast-1',
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+            });
+            const hash = crypto.createHmac('sha256', process.env.API_OAUTH2_CLIENT_SECRET)
+                .update(`${username}${process.env.API_OAUTH2_CLIENT_ID}`)
+                .digest('base64');
+            const params = {
+                UserPoolId: process.env.COGNITO_USER_POOL_ID,
+                ClientId: process.env.API_OAUTH2_CLIENT_ID,
+                AuthFlow: 'ADMIN_NO_SRP_AUTH',
+                AuthParameters: {
+                    USERNAME: username,
+                    SECRET_HASH: hash,
+                    PASSWORD: password
+                }
+                // ClientMetadata?: ClientMetadataType;
+                // AnalyticsMetadata?: AnalyticsMetadataType;
+                // ContextData?: ContextDataType;
+            };
+            cognitoidentityserviceprovider.adminInitiateAuth(params, (err, data) => {
+                debug('adminInitiateAuth result:', err, data);
+                if (err instanceof Error) {
+                    reject(err);
+                }
+                else {
+                    if (data.AuthenticationResult === undefined) {
+                        reject(new Error('Unexpected.'));
+                    }
+                    else {
+                        resolve(data.AuthenticationResult);
+                    }
+                }
+            });
+        });
+    });
 }
 function getCognitoUsers(groupName) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -145,7 +227,7 @@ function logout(req, res, next) {
             next(new Error(Message.Common.unexpectedError));
             return;
         }
-        delete req.session[checkinAdmin_1.default.AUTH_SESSION_NAME];
+        delete req.session.checkinAdminUser;
         yield ttts.Models.Authentication.remove({ token: req.cookies[cookieName] }).exec();
         res.clearCookie(cookieName);
         res.redirect('/checkin/login');

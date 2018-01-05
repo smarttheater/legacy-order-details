@@ -5,33 +5,27 @@
  */
 
 import * as ttts from '@motionpicture/ttts-domain';
+import CheckinAdminUser from '../app/models/user/checkinAdmin';
 
 declare global {
     namespace Express {
         // tslint:disable-next-line:interface-name
         export interface Request {
-            staffUser?: StaffUser;
+            checkinAdminUser?: CheckinAdminUser;
         }
 
-        /**
-         * ログインベースユーザー
-         * @class
-         */
-        export class BaseUser {
-            public isAuthenticated(): boolean;
-            // tslint:disable-next-line:no-reserved-keywords
-            public get(key: string): any;
-        }
-
-        /**
-         * ログインスタッフユーザー
-         * @class
-         */
-        export class StaffUser extends BaseUser {
+        interface ICheckinAdminUser {
+            group: string;
+            familyName: string;
+            givenName: string;
+            email: string;
+            telephone: string;
+            username: string;
         }
 
         // tslint:disable-next-line:interface-name
         export interface Session {
+            checkinAdminUser?: ICheckinAdminUser;
             /**
              * チケット照会結果
              */
