@@ -14,6 +14,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ttts = require("@motionpicture/ttts-domain");
+const AWS = require("aws-sdk");
 const createDebug = require("debug");
 const _ = require("underscore");
 const Message = require("../../common/Const/Message");
@@ -30,10 +31,21 @@ function login(req, res, next) {
             res.redirect(checkInHome);
             return;
         }
+        // cognitoから入場ユーザーを検索
+        let cognitoUsers = [];
+        try {
+            cognitoUsers.push(...(yield getCognitoUsers('DAITEN_AUTH')));
+            cognitoUsers.push(...(yield getCognitoUsers('TOPDECK_AUTH')));
+        }
+        catch (error) {
+            console.error(error);
+        }
+        cognitoUsers = cognitoUsers.filter((u) => u.UserStatus === 'CONFIRMED');
+        debug('cognitoUsers:', cognitoUsers);
         // ユーザー認証(notesフィールドが、入場認証に使えるユーザーのフラグ)
         const ownerRepo = new ttts.repository.Owner(ttts.mongoose.connection);
         const owners = yield ownerRepo.ownerModel.find({ notes: '1' }).exec();
-        debug('owners:', owners);
+        debug('number of owners:', owners.length);
         if (owners.length === undefined || owners.length <= 0) {
             next(new Error(Message.Common.unexpectedError));
             return;
@@ -82,6 +94,7 @@ function login(req, res, next) {
             displayId: 'Aa-1',
             title: '入場管理ログイン',
             errors: errors,
+            cognitoUsers: cognitoUsers,
             usernames: owners.map((owner) => {
                 return { id: owner.get('username'), name: owner.get('name') };
             }),
@@ -93,6 +106,35 @@ exports.login = login;
 function validate(req) {
     req.checkBody('username', Message.Common.required.replace('$fieldName$', 'ID')).notEmpty();
     req.checkBody('password', Message.Common.required.replace('$fieldName$', 'パスワード')).notEmpty();
+}
+function getCognitoUsers(groupName) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve, reject) => {
+            const cognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider({
+                apiVersion: 'latest',
+                region: 'ap-northeast-1',
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+            });
+            cognitoIdentityServiceProvider.listUsersInGroup({
+                GroupName: groupName,
+                UserPoolId: process.env.COGNITO_USER_POOL_ID
+            }, (err, data) => {
+                debug('listUsersInGroup result:', err, data);
+                if (err instanceof Error) {
+                    reject(err);
+                }
+                else {
+                    if (data.Users === undefined) {
+                        reject(new Error('Unexpected.'));
+                    }
+                    else {
+                        resolve(data.Users);
+                    }
+                }
+            });
+        });
+    });
 }
 /**
  * マスタ管理ログアウト

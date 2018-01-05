@@ -5,6 +5,7 @@
  */
 
 import * as ttts from '@motionpicture/ttts-domain';
+import * as AWS from 'aws-sdk';
 import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
 import * as _ from 'underscore';
@@ -26,10 +27,21 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
         return;
     }
 
+    // cognitoから入場ユーザーを検索
+    let cognitoUsers: AWS.CognitoIdentityServiceProvider.UsersListType = [];
+    try {
+        cognitoUsers.push(...(await getCognitoUsers('DAITEN_AUTH')));
+        cognitoUsers.push(...(await getCognitoUsers('TOPDECK_AUTH')));
+    } catch (error) {
+        console.error(error);
+    }
+    cognitoUsers = cognitoUsers.filter((u) => u.UserStatus === 'CONFIRMED');
+    debug('cognitoUsers:', cognitoUsers);
+
     // ユーザー認証(notesフィールドが、入場認証に使えるユーザーのフラグ)
     const ownerRepo = new ttts.repository.Owner(ttts.mongoose.connection);
     const owners = await ownerRepo.ownerModel.find({ notes: '1' }).exec();
-    debug('owners:', owners);
+    debug('number of owners:', owners.length);
     if (owners.length === undefined || owners.length <= 0) {
         next(new Error(Message.Common.unexpectedError));
 
@@ -89,6 +101,7 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
         displayId: 'Aa-1',
         title: '入場管理ログイン',
         errors: errors,
+        cognitoUsers: cognitoUsers,
         usernames: owners.map((owner) => {
             return { id: owner.get('username'), name: owner.get('name') };
         }),
@@ -101,6 +114,34 @@ function validate(req: Request): void {
     req.checkBody('password', Message.Common.required.replace('$fieldName$', 'パスワード')).notEmpty();
 }
 
+async function getCognitoUsers(groupName: string) {
+    return new Promise<AWS.CognitoIdentityServiceProvider.UsersListType>((resolve, reject) => {
+        const cognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider({
+            apiVersion: 'latest',
+            region: 'ap-northeast-1',
+            accessKeyId: <string>process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: <string>process.env.AWS_SECRET_ACCESS_KEY
+        });
+
+        cognitoIdentityServiceProvider.listUsersInGroup(
+            {
+                GroupName: groupName,
+                UserPoolId: <string>process.env.COGNITO_USER_POOL_ID
+            },
+            (err, data) => {
+                debug('listUsersInGroup result:', err, data);
+                if (err instanceof Error) {
+                    reject(err);
+                } else {
+                    if (data.Users === undefined) {
+                        reject(new Error('Unexpected.'));
+                    } else {
+                        resolve(data.Users);
+                    }
+                }
+            });
+    });
+}
 /**
  * マスタ管理ログアウト
  */

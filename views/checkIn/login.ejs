@@ -9,8 +9,10 @@ page-checkin page-login
         <div class="col-sm-9">
             <select name="username" id="username" class="form-control">
                 <option value="">選択してください</option>
-                <% usernames.forEach((username) => { %>
-                <option value="<%- username.id %>" <%- (req.body.username === username.id) ? 'selected' : '' %>><%- username.name %></option>
+                <% cognitoUsers.forEach((cognitoUser) => { %>
+                <option value="<%- cognitoUser.Username %>" <%- (req.body.username === cognitoUser.Username) ? 'selected' : '' %>>
+                <%= cognitoUser.Attributes.find((a)=>a.Name === 'family_name').Value %> <%= cognitoUser.Attributes.find((a)=>a.Name === 'given_name').Value %>
+                </option>
                 <% }); %>
             </select>
             <p class="error message" style="text-align:left;">
