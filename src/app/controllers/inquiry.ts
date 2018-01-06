@@ -365,8 +365,12 @@ function getCancelMail(req: Request, reservations: ttts.factory.reservation.even
     mail.push(req.__('EmailTitleCan'));
     mail.push('');
 
+    // 姓名編集: 日本語の時は"姓名"他は"名姓"
+    const purchaserName = (locale === 'ja') ?
+    `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}` :
+    `${reservations[0].purchaser_first_name} ${reservations[0].purchaser_last_name}`;
     // XXXX XXXX 様
-    mail.push(req.__('EmailDestinationName{{name}}', { name: reservations[0].purchaser_name }));
+    mail.push(req.__('EmailDestinationName{{name}}', { name: purchaserName }));
     mail.push('');
 
     // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
