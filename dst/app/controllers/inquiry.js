@@ -70,10 +70,13 @@ function search(req, res) {
             const validatorResult = yield req.getValidationResult();
             errors = validatorResult.mapped();
             debug('validatorResult:', validatorResult);
+            // 日付編集
+            let performanceDay = req.body.day;
+            performanceDay = performanceDay.replace(/\-/g, '').replace(/\//g, '');
             if (validatorResult.isEmpty()) {
                 // 存在チェック(電話番号は下4桁)
                 const conditions = {
-                    performance_day: req.body.day,
+                    performance_day: performanceDay,
                     payment_no: req.body.paymentNo,
                     purchaser_tel: { $regex: new RegExp(`${req.body.purchaserTel}$`) }
                 };

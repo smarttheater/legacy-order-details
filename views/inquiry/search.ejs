@@ -11,6 +11,8 @@ page-inquiry page-search page-<%- locale %>
         maxLength: "<%-__('MaxLength{{fieldName}}{{max}}', { fieldName: '{{fieldName}}', max: '{{max}}' }) %>"
     };
 </script>
+<link href="/css/flatpickr.css" rel="stylesheet">
+<script src="/js/flatpickr/flatpickr.min.js"></script>
 <script src="/js/inquiry/search.js"></script>
 <%- contentFor('body') %>
 <input type="hidden" name="apiEndpoint" value="<%= process.env.API_ENDPOINT %>">
@@ -29,24 +31,7 @@ page-inquiry page-search page-<%- locale %>
         </div>
         <div class="form-group"> 
             <label><%- __('PurchaseContentDay') %></label>
-            <select class="form-control" name="day">
-                <%
-                let now = moment();
-                let start = moment(event.start);
-                let end = moment(event.end);
-                let options = '';
-                while (start.format('YYYYMMDD') <= end.format('YYYYMMDD')) {
-                    options += `<option value="${start.format('YYYYMMDD')}"`;
-                    if (req.body.day === start.format('YYYYMMDD')) {
-                        options += ' selected';
-                    }
-                    options += `>${start.format('MM/DD')}</option>`;
-                    start = start.add(+1, 'days');
-                    continue;
-                }
-                %>
-                <%- options %>
-            </select>
+            <input name="day" id="day" class="form-control flatpickr-input active" id="input_performancedate" type="text" value="">
         </div>
 
         <div class="form-group form-seachqueryinput">
@@ -74,6 +59,11 @@ page-inquiry page-search page-<%- locale %>
     <a class="btn-back" href="javascript:void(0)"><span><%- __('Back') %></span></a>
 </div>
 
+<div class="modal-calender">
+    <div class="modal-calender-content">
+        <div id="calendercontainer"></div>
+    </div>
+</div>
 
 <div class="modal fade loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static">
     <div class="modal-dialog" role="document">

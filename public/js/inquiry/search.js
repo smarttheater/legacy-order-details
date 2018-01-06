@@ -1,4 +1,27 @@
 $(function () {
+
+    // 日付選択カレンダー (再読込時のために日付はsessionStorageにキープしておく)
+    window.flatpickr.localize(window.flatpickr.l10ns.ja);
+    var input_day = document.getElementById('day');
+    var $modal_calender = $('.modal-calender');
+    var calendar = new window.flatpickr(input_day, {
+        allowInput: true,
+        appendTo: $('#calendercontainer').on('click', function (e) { e.stopPropagation(); })[0], // モーダル内コンテナに挿入しつつカレンダークリックでモーダルが閉じるのを防止
+        defaultDate: 'today',
+        disableMobile: true, // 端末自前の日付選択UIを使わない
+        locale: 'ja',
+        // minDate: moment().add(-3, 'months').toDate(),
+        // maxDate: moment().add(3, 'months').toDate(),
+        onOpen: function () {
+            $modal_calender.fadeIn(200);
+        },
+        onClose: function () {
+            $modal_calender.hide();
+        }
+    });
+    // モーダルを閉じたら中のカレンダーも閉じる
+    $modal_calender.click(function () { calendar.close(); });
+
     var validateInquiryInputs = function() {
         var bool_valid = true;
         Array.prototype.forEach.call(document.getElementsByClassName('input-required'), function(elm) {
