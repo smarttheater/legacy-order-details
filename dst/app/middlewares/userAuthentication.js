@@ -12,6 +12,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const ttts = require("@motionpicture/ttts-domain");
 const createDebug = require("debug");
 const checkinAdmin_1 = require("../models/user/checkinAdmin");
 const debug = createDebug('ttts-backend:middlewares:userAuthentication');
@@ -22,6 +23,9 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
     debug('req.checkinAdminUser:', req.checkinAdminUser);
     // 既ログインの場合
     if (req.checkinAdminUser.isAuthenticated()) {
+        // ユーザーグループ名を取得
+        const groups = yield ttts.service.admin.getGroupsByUsername(process.env.AWS_ACCESS_KEY_ID, process.env.AWS_SECRET_ACCESS_KEY, process.env.COGNITO_USER_POOL_ID, req.checkinAdminUser.username)();
+        req.checkinAdminUser.group = groups[0];
         next();
         return;
     }

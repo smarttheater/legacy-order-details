@@ -18,8 +18,7 @@
   ],
   "dependencies": {
     "@motionpicture/ttts-api-nodejs-client": "0.0.0-alpha.3",
-    "@motionpicture/ttts-domain": "^12.0.0-alpha.61",
-    "aws-sdk": "^2.176.0",
+    "@motionpicture/ttts-domain": "^12.0.0-alpha.64",
     "body-parser": "^1.18.2",
     "config": "^1.29.0",
     "connect-redis": "^3.3.3",
@@ -55,7 +54,7 @@
     "gulp-autoprefixer": "^3.1.1",
     "gulp-concat": "^2.6.1",
     "gulp-csscomb": "^3.0.8",
-    "gulp-csso": "^3.0.0",
+    "gulp-csso": "^3.0.1",
     "gulp-merge-media-queries": "^0.2.1",
     "gulp-plumber": "^1.1.0",
     "gulp-sass": "^3.1.0",

@@ -3,6 +3,7 @@
  * @namespace middlewares.userAuthentication
  */
 
+import * as ttts from '@motionpicture/ttts-domain';
 import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
 
@@ -18,6 +19,16 @@ export default async (req: Request, res: Response, next: NextFunction) => {
 
     // 既ログインの場合
     if (req.checkinAdminUser.isAuthenticated()) {
+        // ユーザーグループ名を取得
+        const groups = await ttts.service.admin.getGroupsByUsername(
+            <string>process.env.AWS_ACCESS_KEY_ID,
+            <string>process.env.AWS_SECRET_ACCESS_KEY,
+            <string>process.env.COGNITO_USER_POOL_ID,
+            req.checkinAdminUser.username
+        )();
+
+        req.checkinAdminUser.group = groups[0];
+
         next();
 
         return;

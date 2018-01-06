@@ -25,7 +25,8 @@ declare global {
 
         // tslint:disable-next-line:interface-name
         export interface Session {
-            checkinAdminUser?: ICheckinAdminUser;
+            checkinAdminUser?: ttts.service.admin.IAdmin;
+            cognitoCredentials?: ttts.service.admin.ICredentials;
             /**
              * チケット照会結果
              */

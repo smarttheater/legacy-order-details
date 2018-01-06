@@ -10,8 +10,8 @@ page-checkin page-login
             <select name="username" id="username" class="form-control">
                 <option value="">選択してください</option>
                 <% cognitoUsers.forEach((cognitoUser) => { %>
-                <option value="<%- cognitoUser.Username %>" <%- (req.body.username === cognitoUser.Username) ? 'selected' : '' %>>
-                <%= cognitoUser.Attributes.find((a)=>a.Name === 'family_name').Value %> <%= cognitoUser.Attributes.find((a)=>a.Name === 'given_name').Value %>
+                <option value="<%- cognitoUser.username %>" <%- (req.body.username === cognitoUser.Username) ? 'selected' : '' %>>
+                <%= cognitoUser.familyName %> <%= cognitoUser.givenName %>
                 </option>
                 <% }); %>
             </select>
