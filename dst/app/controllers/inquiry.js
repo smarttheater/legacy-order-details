@@ -23,24 +23,22 @@ const util = require("util");
 const Text = require("../../common/Const/Text");
 const ticket = require("../../common/Util/ticket");
 const debug = createDebug('ttts-authentication:controllers.inquiry');
-const redisClient = ttts.redis.createClient({
-    host: process.env.REDIS_HOST,
-    // tslint:disable-next-line:no-magic-numbers
-    port: parseInt(process.env.REDIS_PORT, 10),
-    password: process.env.REDIS_KEY,
-    tls: { servername: process.env.REDIS_HOST }
-});
 const authClient = new tttsapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: process.env.API_CLIENT_ID,
     clientSecret: process.env.API_CLIENT_SECRET,
     scopes: [
+        `${process.env.API_RESOURECE_SERVER_IDENTIFIER}/orders.read-only`,
         `${process.env.API_RESOURECE_SERVER_IDENTIFIER}/performances.read-only`,
         `${process.env.API_RESOURECE_SERVER_IDENTIFIER}/transactions`
     ],
     state: ''
 });
 const returnOrderTransactionService = new tttsapi.service.transaction.ReturnOrder({
+    endpoint: process.env.API_ENDPOINT,
+    auth: authClient
+});
+const orderService = new tttsapi.service.Order({
     endpoint: process.env.API_ENDPOINT,
     auth: authClient
 });
@@ -74,50 +72,38 @@ function search(req, res) {
             let performanceDay = req.body.day;
             performanceDay = performanceDay.replace(/\-/g, '').replace(/\//g, '');
             if (validatorResult.isEmpty()) {
-                // 存在チェック(電話番号は下4桁)
-                const conditions = {
-                    performance_day: performanceDay,
-                    payment_no: req.body.paymentNo,
-                    purchaser_tel: { $regex: new RegExp(`${req.body.purchaserTel}$`) }
-                };
-                debug('seaching reservations...', conditions);
                 try {
-                    // 予約検索
-                    const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-                    const transactionRepo = new ttts.repository.Transaction(ttts.mongoose.connection);
-                    let reservations = yield reservationRepo.reservationModel.find(conditions)
-                        .exec().then((docs) => docs.map((doc) => doc.toObject()));
-                    debug('reservations found.', reservations);
+                    // 注文照会
+                    debug('inquiring...', req.body.paymentNo);
+                    const order = yield orderService.findByOrderInquiryKey({
+                        performanceDay: performanceDay,
+                        paymentNo: req.body.paymentNo,
+                        telephone: req.body.purchaserTel
+                    });
+                    debug('order found.', order.orderNumber);
+                    let reservations = order.acceptedOffers.map((o) => o.itemOffered);
                     // "予約"のデータのみセット(Extra分を削除)
-                    reservations =
-                        reservations.filter((reservation) => reservation.status === ttts.factory.reservationStatusType.ReservationConfirmed);
-                    // データ有りの時
-                    if (reservations.length > 0) {
-                        // 取引に対する返品リクエストがすでにあるかどうか
-                        const returnOrderTransaction = yield transactionRepo.transactionModel.findOne({
-                            typeOf: ttts.factory.transactionType.ReturnOrder,
-                            'object.transaction.id': reservations[0].transaction
-                        }).exec();
-                        debug('returnOrderTransaction:', returnOrderTransaction);
-                        if (returnOrderTransaction !== null) {
-                            throw new Error(req.__('MistakeInput'));
-                        }
-                        // バウチャー印刷トークンを発行
-                        const tokenRepo = new ttts.repository.Token(redisClient);
-                        const printToken = yield tokenRepo.createPrintToken(reservations.map((r) => r.id));
-                        debug('token created.', printToken);
-                        // 結果をセッションに保管して結果画面へ遷移
-                        req.session.inquiryResult = {
-                            printToken: printToken,
-                            reservations: reservations
-                        };
-                        res.redirect('/inquiry/search/result');
-                        return;
+                    reservations = reservations.filter((r) => r.status === tttsapi.factory.reservationStatusType.ReservationConfirmed);
+                    // 返品済であれば入力ミス
+                    if (order.orderStatus === tttsapi.factory.orderStatus.OrderReturned) {
+                        throw new Error(req.__('MistakeInput'));
                     }
-                    message = req.__('MistakeInput');
+                    // 結果をセッションに保管して結果画面へ遷移
+                    req.session.inquiryResult = {
+                        printToken: order.printToken,
+                        reservations: reservations
+                    };
+                    res.redirect('/inquiry/search/result');
+                    return;
                 }
                 catch (error) {
-                    message = error.message;
+                    // tslint:disable-next-line:prefer-conditional-expression
+                    if (!(error instanceof tttsapi.factory.errors.NotFound)) {
+                        message = req.__('MistakeInput');
+                    }
+                    else {
+                        message = error.message;
+                    }
                 }
             }
         }
@@ -218,11 +204,11 @@ function cancel(req, res) {
                 paymentNo: reservations[0].payment_no,
                 cancellationFee: cancellationFee,
                 forcibly: false,
-                reason: ttts.factory.transaction.returnOrder.Reason.Customer
+                reason: tttsapi.factory.transaction.returnOrder.Reason.Customer
             });
         }
         catch (err) {
-            if (err instanceof ttts.factory.errors.Argument) {
+            if (err instanceof tttsapi.factory.errors.Argument) {
                 res.status(http_status_1.BAD_REQUEST).json({
                     errors: [{
                             message: err.message
@@ -290,7 +276,7 @@ function sendEmail(transactionId, name, to, text) {
         };
         // メール作成
         const taskRepo = new ttts.repository.Task(ttts.mongoose.connection);
-        const emailMessage = ttts.factory.creativeWork.message.email.create({
+        const emailMessage = tttsapi.factory.creativeWork.message.email.create({
             identifier: `returnOrderTransaction-${transactionId}`,
             sender: {
                 typeOf: 'Corporation',
@@ -298,7 +284,7 @@ function sendEmail(transactionId, name, to, text) {
                 email: emailAttributes.sender.email
             },
             toRecipient: {
-                typeOf: ttts.factory.personType.Person,
+                typeOf: tttsapi.factory.personType.Person,
                 name: emailAttributes.toRecipient.name,
                 email: emailAttributes.toRecipient.email
             },
@@ -306,7 +292,7 @@ function sendEmail(transactionId, name, to, text) {
             text: emailAttributes.text
         });
         const taskAttributes = ttts.factory.task.sendEmailNotification.createAttributes({
-            status: ttts.factory.taskStatus.Ready,
+            status: tttsapi.factory.taskStatus.Ready,
             runsAt: new Date(),
             remainingNumberOfTries: 10,
             lastTriedAt: null,
@@ -325,7 +311,7 @@ function sendEmail(transactionId, name, to, text) {
  * キャンセルメール本文取得
  * @function getCancelMail
  * @param {Request} req
- * @param {ttts.factory.reservation.event.IReservation[]}reservations
+ * @param {tttsapi.factory.reservation.event.IReservation[]}reservations
  * @returns {string}
  */
 function getCancelMail(req, reservations, fee) {

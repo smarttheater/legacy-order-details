@@ -18,19 +18,12 @@ import * as ticket from '../../common/Util/ticket';
 
 const debug = createDebug('ttts-authentication:controllers.inquiry');
 
-const redisClient = ttts.redis.createClient({
-    host: <string>process.env.REDIS_HOST,
-    // tslint:disable-next-line:no-magic-numbers
-    port: parseInt(<string>process.env.REDIS_PORT, 10),
-    password: <string>process.env.REDIS_KEY,
-    tls: { servername: <string>process.env.REDIS_HOST }
-});
-
 const authClient = new tttsapi.auth.ClientCredentials({
     domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: <string>process.env.API_CLIENT_ID,
     clientSecret: <string>process.env.API_CLIENT_SECRET,
     scopes: [
+        `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/orders.read-only`,
         `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/performances.read-only`,
         `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/transactions`
     ],
@@ -38,6 +31,11 @@ const authClient = new tttsapi.auth.ClientCredentials({
 });
 
 const returnOrderTransactionService = new tttsapi.service.transaction.ReturnOrder({
+    endpoint: <string>process.env.API_ENDPOINT,
+    auth: authClient
+});
+
+const orderService = new tttsapi.service.Order({
     endpoint: <string>process.env.API_ENDPOINT,
     auth: authClient
 });
@@ -76,58 +74,41 @@ export async function search(req: Request, res: Response): Promise<void> {
         performanceDay = performanceDay.replace(/\-/g, '').replace(/\//g, '');
 
         if (validatorResult.isEmpty()) {
-            // 存在チェック(電話番号は下4桁)
-            const conditions = {
-                performance_day: performanceDay,
-                payment_no: req.body.paymentNo,
-                purchaser_tel: { $regex: new RegExp(`${req.body.purchaserTel}$`) }
-            };
-            debug('seaching reservations...', conditions);
             try {
-                // 予約検索
-                const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-                const transactionRepo = new ttts.repository.Transaction(ttts.mongoose.connection);
+                // 注文照会
+                debug('inquiring...', req.body.paymentNo);
+                const order = await orderService.findByOrderInquiryKey({
+                    performanceDay: performanceDay,
+                    paymentNo: req.body.paymentNo,
+                    telephone: req.body.purchaserTel
+                });
+                debug('order found.', order.orderNumber);
 
-                let reservations = await reservationRepo.reservationModel.find(conditions)
-                    .exec().then((docs) => docs.map((doc) => <ttts.factory.reservation.event.IReservation>doc.toObject()));
-                debug('reservations found.', reservations);
+                let reservations = order.acceptedOffers.map((o) => o.itemOffered);
 
                 // "予約"のデータのみセット(Extra分を削除)
-                reservations =
-                    reservations.filter((reservation) => reservation.status === ttts.factory.reservationStatusType.ReservationConfirmed);
+                reservations = reservations.filter((r) => r.status === tttsapi.factory.reservationStatusType.ReservationConfirmed);
 
-                // データ有りの時
-                if (reservations.length > 0) {
-                    // 取引に対する返品リクエストがすでにあるかどうか
-                    const returnOrderTransaction = await transactionRepo.transactionModel.findOne(
-                        {
-                            typeOf: ttts.factory.transactionType.ReturnOrder,
-                            'object.transaction.id': reservations[0].transaction
-                        }
-                    ).exec();
-                    debug('returnOrderTransaction:', returnOrderTransaction);
-                    if (returnOrderTransaction !== null) {
-                        throw new Error(req.__('MistakeInput'));
-                    }
-
-                    // バウチャー印刷トークンを発行
-                    const tokenRepo = new ttts.repository.Token(redisClient);
-                    const printToken = await tokenRepo.createPrintToken(reservations.map((r) => r.id));
-                    debug('token created.', printToken);
-
-                    // 結果をセッションに保管して結果画面へ遷移
-                    (<Express.Session>req.session).inquiryResult = {
-                        printToken: printToken,
-                        reservations: reservations
-                    };
-                    res.redirect('/inquiry/search/result');
-
-                    return;
+                // 返品済であれば入力ミス
+                if (order.orderStatus === tttsapi.factory.orderStatus.OrderReturned) {
+                    throw new Error(req.__('MistakeInput'));
                 }
 
-                message = req.__('MistakeInput');
+                // 結果をセッションに保管して結果画面へ遷移
+                (<Express.Session>req.session).inquiryResult = {
+                    printToken: order.printToken,
+                    reservations: reservations
+                };
+                res.redirect('/inquiry/search/result');
+
+                return;
             } catch (error) {
-                message = error.message;
+                // tslint:disable-next-line:prefer-conditional-expression
+                if (!(error instanceof tttsapi.factory.errors.NotFound)) {
+                    message = req.__('MistakeInput');
+                } else {
+                    message = error.message;
+                }
             }
         }
     }
@@ -205,7 +186,7 @@ export async function result(req: Request, res: Response, next: NextFunction): P
 // tslint:disable-next-line:max-func-body-length
 export async function cancel(req: Request, res: Response): Promise<void> {
     // 予約取得
-    let reservations: ttts.factory.reservation.event.IReservation[];
+    let reservations: tttsapi.factory.reservation.event.IReservation[];
     try {
         const inquiryResult = (<Express.Session>req.session).inquiryResult;
         if (inquiryResult === undefined) {
@@ -232,10 +213,10 @@ export async function cancel(req: Request, res: Response): Promise<void> {
             paymentNo: reservations[0].payment_no,
             cancellationFee: cancellationFee,
             forcibly: false,
-            reason: ttts.factory.transaction.returnOrder.Reason.Customer
+            reason: tttsapi.factory.transaction.returnOrder.Reason.Customer
         });
     } catch (err) {
-        if (err instanceof ttts.factory.errors.Argument) {
+        if (err instanceof tttsapi.factory.errors.Argument) {
             res.status(BAD_REQUEST).json({
                 errors: [{
                     message: err.message
@@ -304,7 +285,7 @@ async function sendEmail(transactionId: string, name: string, to: string, text: 
         'Notice of Completion of Cancel for TTTS Tickets'
     );
 
-    const emailAttributes: ttts.factory.creativeWork.message.email.IAttributes = {
+    const emailAttributes: tttsapi.factory.creativeWork.message.email.IAttributes = {
         sender: {
             name: conf.get<string>('email.fromname'),
             email: conf.get<string>('email.from')
@@ -320,7 +301,7 @@ async function sendEmail(transactionId: string, name: string, to: string, text: 
     // メール作成
     const taskRepo = new ttts.repository.Task(ttts.mongoose.connection);
 
-    const emailMessage = ttts.factory.creativeWork.message.email.create({
+    const emailMessage = tttsapi.factory.creativeWork.message.email.create({
         identifier: `returnOrderTransaction-${transactionId}`,
         sender: {
             typeOf: 'Corporation',
@@ -328,7 +309,7 @@ async function sendEmail(transactionId: string, name: string, to: string, text: 
             email: emailAttributes.sender.email
         },
         toRecipient: {
-            typeOf: ttts.factory.personType.Person,
+            typeOf: tttsapi.factory.personType.Person,
             name: emailAttributes.toRecipient.name,
             email: emailAttributes.toRecipient.email
         },
@@ -337,7 +318,7 @@ async function sendEmail(transactionId: string, name: string, to: string, text: 
     });
 
     const taskAttributes = ttts.factory.task.sendEmailNotification.createAttributes({
-        status: ttts.factory.taskStatus.Ready,
+        status: tttsapi.factory.taskStatus.Ready,
         runsAt: new Date(), // なるはやで実行
         remainingNumberOfTries: 10,
         lastTriedAt: null,
@@ -357,10 +338,10 @@ async function sendEmail(transactionId: string, name: string, to: string, text: 
  * キャンセルメール本文取得
  * @function getCancelMail
  * @param {Request} req
- * @param {ttts.factory.reservation.event.IReservation[]}reservations
+ * @param {tttsapi.factory.reservation.event.IReservation[]}reservations
  * @returns {string}
  */
-function getCancelMail(req: Request, reservations: ttts.factory.reservation.event.IReservation[], fee: number): string {
+function getCancelMail(req: Request, reservations: tttsapi.factory.reservation.event.IReservation[], fee: number): string {
     const mail: string[] = [];
     const locale: string = (<Express.Session>req.session).locale;
 
@@ -370,8 +351,8 @@ function getCancelMail(req: Request, reservations: ttts.factory.reservation.even
 
     // 姓名編集: 日本語の時は"姓名"他は"名姓"
     const purchaserName = (locale === 'ja') ?
-    `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}` :
-    `${reservations[0].purchaser_first_name} ${reservations[0].purchaser_last_name}`;
+        `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}` :
+        `${reservations[0].purchaser_first_name} ${reservations[0].purchaser_last_name}`;
     // XXXX XXXX 様
     mail.push(req.__('EmailDestinationName{{name}}', { name: purchaserName }));
     mail.push('');
