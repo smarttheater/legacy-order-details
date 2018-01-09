@@ -13,6 +13,7 @@ page-inquiry page-search page-<%- locale %>
 </script>
 <link href="/css/flatpickr.css" rel="stylesheet">
 <script src="/js/flatpickr/flatpickr.min.js"></script>
+<script src="/js/flatpickr/flatpickr.locale.<%= locale %>.js"></script>
 <script src="/js/inquiry/search.js"></script>
 <%- contentFor('body') %>
 <input type="hidden" name="apiEndpoint" value="<%= process.env.API_ENDPOINT %>">

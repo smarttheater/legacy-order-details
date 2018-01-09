@@ -18,7 +18,7 @@
   ],
   "dependencies": {
     "@motionpicture/ttts-api-nodejs-client": "0.0.0-alpha.5",
-    "@motionpicture/ttts-domain": "^12.0.0-alpha.64",
+    "@motionpicture/ttts-domain": "^12.0.0-alpha.68",
     "body-parser": "^1.18.2",
     "config": "^1.29.0",
     "connect-redis": "^3.3.3",

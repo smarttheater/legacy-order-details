@@ -1,7 +1,7 @@
 $(function () {
 
     // 日付選択カレンダー (再読込時のために日付はsessionStorageにキープしておく)
-    window.flatpickr.localize(window.flatpickr.l10ns.ja);
+    window.flatpickr.localize(window.flatpickr.l10ns[window.ttts.currentLocale]);
     var input_day = document.getElementById('day');
     var $modal_calender = $('.modal-calender');
     var calendar = new window.flatpickr(input_day, {
@@ -9,7 +9,7 @@ $(function () {
         appendTo: $('#calendercontainer').on('click', function (e) { e.stopPropagation(); })[0], // モーダル内コンテナに挿入しつつカレンダークリックでモーダルが閉じるのを防止
         defaultDate: 'today',
         disableMobile: true, // 端末自前の日付選択UIを使わない
-        locale: 'ja',
+        locale: window.ttts.currentLocale,
         // minDate: moment().add(-3, 'months').toDate(),
         // maxDate: moment().add(3, 'months').toDate(),
         onOpen: function () {
