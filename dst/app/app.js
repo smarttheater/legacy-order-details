@@ -1,11 +1,8 @@
 "use strict";
 /**
  * expressアプリケーション
- *
  * @module app
- * @global
  */
-const ttts = require("@motionpicture/ttts-domain");
 const bodyParser = require("body-parser");
 const conf = require("config");
 const cookieParser = require("cookie-parser");
@@ -13,15 +10,13 @@ const express = require("express");
 const expressValidator = require("express-validator");
 const i18n = require("i18n");
 const _ = require("underscore");
+// tslint:disable-next-line:no-var-requires no-require-imports
+const expressLayouts = require('express-ejs-layouts');
 // ミドルウェア
 const session_1 = require("./middlewares/session");
 const userAuthentication_1 = require("./middlewares/userAuthentication");
-const mongooseConnectionOptions_1 = require("../mongooseConnectionOptions");
 // ルーター
-//import authCheckinRouter from './routes/auth';
 const router_1 = require("./routes/router");
-// tslint:disable-next-line:no-var-requires no-require-imports
-const expressLayouts = require('express-ejs-layouts');
 const app = express();
 app.use(session_1.default); // セッション
 // view engine setup
@@ -69,17 +64,4 @@ app.use(expressValidator());
 router_1.default(app);
 // ユーザー認証(ログインの登録の後で実行すること)
 app.use(userAuthentication_1.default);
-/*
- * Mongoose by default sets the auto_reconnect option to true.
- * We recommend setting socket options at both the server and replica set level.
- * We recommend a 30 second connection timeout because it allows for
- * plenty of time in most operating environments.
- */
-const MONGOLAB_URI = process.env.MONGOLAB_URI;
-if (MONGOLAB_URI === undefined) {
-    throw new Error('Environment variable MONGOLAB_URI is required for connecting MongoDB. Please set it.');
-}
-// Use native promises
-ttts.mongoose.Promise = global.Promise;
-ttts.mongoose.connect(MONGOLAB_URI, mongooseConnectionOptions_1.default);
 module.exports = app;

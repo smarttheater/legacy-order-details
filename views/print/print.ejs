@@ -76,22 +76,22 @@ for (let reservation of reservations) {
                     <td class="main-info">
                         <div class="pr-rsrvnum">
                         <h3><%- __('PaymentNo') %></h3>
-                            <strong><%- reservation.get('payment_no') %></strong>
+                            <strong><%- reservation.payment_no %></strong>
                         </div>
 
                         <div class="pr-day">
                             <h3><%- __('PurchaseContentDay') %></h3>
-                            <strong><%- moment(reservation.get('performance_day'), 'YYYYMMDD').format('LL (ddd)') %></strong>
+                            <strong><%- moment(reservation.performance_day, 'YYYYMMDD').format('LL (ddd)') %></strong>
                         </div>
 
                         <div class="pr-time">
                             <h3><%- __('PurchaseContentTime') %></h3>
-                            <strong><%- moment(reservation.get('performance_start_time'), 'HHmm').format('HH:mm') %> - <%- moment(reservation.get('performance_end_time'), 'HHmm').format('HH:mm') %> (JST)</strong>
+                            <strong><%- moment(reservation.performance_start_time, 'HHmm').format('HH:mm') %> - <%- moment(reservation.performance_end_time, 'HHmm').format('HH:mm') %> (JST)</strong>
                         </div>
 
                         <div class="pr-entrytime">
                             <h3><%- __('PurchaseEntryTime') %></h3>
-                            <strong><%- moment(reservation.get('performance_start_time'), 'HHmm').add(5, 'minute').format('HH:mm') %> - <%- moment(reservation.get('performance_end_time'), 'HHmm').add(10, 'minute').format('HH:mm') %> (JST)</strong>
+                            <strong><%- moment(reservation.performance_start_time, 'HHmm').add(5, 'minute').format('HH:mm') %> - <%- moment(reservation.performance_end_time, 'HHmm').add(10, 'minute').format('HH:mm') %> (JST)</strong>
                         </div>
 
                         <div class="pr-tournumber">
@@ -101,7 +101,7 @@ for (let reservation of reservations) {
 
                         <div class="pr-ticket">
                             <h3><%- __('TicketType') %></h3>
-                            <strong><span class="ticketname"><%- reservation.get('ticket_type_name')[locale] %></span> / <%- ((!isNoCharge) ? '<span class="is-ja">&yen;</span>' + reservation.get('ticket_type_charge') + '<span class="is-not-ja"> JPY</span>&nbsp;' : '') %>(<%- reservation.seat_code %>)</strong>
+                            <strong><span class="ticketname"><%- reservation.ticket_type_name[locale] %></span> / <%- ((!isNoCharge) ? '<span class="is-ja">&yen;</span>' + reservation.ticket_type_charge + '<span class="is-not-ja"> JPY</span>&nbsp;' : '') %>(<%- reservation.seat_code %>)</strong>
                         </div>
 
                         <div class="pr-term">

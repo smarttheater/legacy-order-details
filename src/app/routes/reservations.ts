@@ -3,19 +3,28 @@
  * @ignore
  */
 
-import * as ttts from '@motionpicture/ttts-domain';
+import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import * as createDebug from 'debug';
 import { Router } from 'express';
+import * as jwt from 'jsonwebtoken';
+
 const reservationsRouter = Router();
 
 const debug = createDebug('ttts-authentication:routes:reservations');
 
-const redisClient = ttts.redis.createClient({
-    host: <string>process.env.REDIS_HOST,
-    // tslint:disable-next-line:no-magic-numbers
-    port: parseInt(<string>process.env.REDIS_PORT, 10),
-    password: <string>process.env.REDIS_KEY,
-    tls: { servername: <string>process.env.REDIS_HOST }
+const authClient = new tttsapi.auth.ClientCredentials({
+    domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
+    clientId: <string>process.env.API_CLIENT_ID,
+    clientSecret: <string>process.env.API_CLIENT_SECRET,
+    scopes: [
+        `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/reservations.read-only`
+    ],
+    state: ''
+});
+
+const reservationService = new tttsapi.service.Reservation({
+    endpoint: <string>process.env.API_ENDPOINT,
+    auth: authClient
 });
 
 /**
@@ -26,42 +35,47 @@ reservationsRouter.get(
     '/print',
     async (req, res, next) => {
         try {
-            const tokenRepo = new ttts.repository.Token(redisClient);
-            const ids = await tokenRepo.verifyPrintToken(req.query.token);
-            debug('token verified.', ids);
+            // tslint:disable-next-line:no-suspicious-comment
+            // TODO トークン期限チェック
 
-            const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-            const reservations = await reservationRepo.reservationModel.find({
-                _id: { $in: ids },
-                status: ttts.factory.reservationStatusType.ReservationConfirmed
-            }).sort({ seat_code: 1 }).exec();
+            jwt.verify(<string>req.query.token, <string>process.env.TTTS_TOKEN_SECRET, async (jwtErr, decoded: any) => {
+                if (jwtErr instanceof Error) {
+                    next(jwtErr);
+                } else {
+                    debug('token verified.', decoded.object);
+                    const ids = <string[]>decoded.object;
 
-            if (reservations.length === 0) {
-                next(new Error(req.__('NotFound')));
+                    let reservations = await Promise.all(ids.map(async (id) => reservationService.findById({ id: id })));
+                    reservations = reservations.filter((r) => r.status === tttsapi.factory.reservationStatusType.ReservationConfirmed);
 
-                return;
-            }
+                    if (reservations.length === 0) {
+                        next(new Error(req.__('NotFound')));
 
-            const output = req.query.output;
-            switch (output) {
-                // サーマル印刷
-                case 'thermal':
-                    res.render('print/print_pcthermal', {
-                        layout: false,
-                        reservations: reservations
-                    });
+                        return;
+                    }
 
-                    break;
+                    const output = req.query.output;
+                    switch (output) {
+                        // サーマル印刷
+                        case 'thermal':
+                            res.render('print/print_pcthermal', {
+                                layout: false,
+                                reservations: reservations
+                            });
 
-                // デフォルトはA4印刷
-                default:
-                    res.render('print/print', {
-                        layout: false,
-                        reservations: reservations
-                    });
+                            break;
 
-                    break;
-            }
+                        // デフォルトはA4印刷
+                        default:
+                            res.render('print/print', {
+                                layout: false,
+                                reservations: reservations
+                            });
+
+                            break;
+                    }
+                }
+            });
         } catch (error) {
             next(new Error(req.__('UnexpectedError')));
         }
