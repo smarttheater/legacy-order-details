@@ -1,10 +1,9 @@
 /**
  * 予約照会コントローラー
- * @namespace inquiry
+ * @namespace controllers.inquiry
  */
 
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
-import * as ttts from '@motionpicture/ttts-domain';
 import * as conf from 'config';
 import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
@@ -234,12 +233,31 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     }
 
     try {
-        await sendEmail(
-            returnOrderTransaction.id,
-            reservations[0].purchaser_name,
-            reservations[0].purchaser_email,
-            getCancelMail(req, reservations, cancellationFee)
+        const subject = util.format(
+            '%s%s %s',
+            (process.env.NODE_ENV !== 'production') ? `[${process.env.NODE_ENV}]` : '',
+            'TTTS_EVENT_NAMEチケット キャンセル完了のお知らせ',
+            'Notice of Completion of Cancel for TTTS Tickets'
         );
+
+        const emailAttributes: tttsapi.factory.creativeWork.message.email.IAttributes = {
+            sender: {
+                name: conf.get<string>('email.fromname'),
+                email: conf.get<string>('email.from')
+            },
+            toRecipient: {
+                name: reservations[0].purchaser_name,
+                email: reservations[0].purchaser_email
+            },
+            about: subject,
+            text: getCancelMail(req, reservations, cancellationFee)
+        };
+
+        await returnOrderTransactionService.sendEmailNotification({
+            transactionId: returnOrderTransaction.id,
+            emailMessageAttributes: emailAttributes
+        });
+        debug('email sent.');
     } catch (err) {
         // no op
         // メール送信に失敗しても、返品処理は走るので、成功
@@ -268,70 +286,6 @@ function validate(req: Request): void {
         'purchaserTel',
         req.__('Message.minLength{{fieldName}}{{min}}', { fieldName: req.__('Label.Tel'), min: '4' })
     ).len({ min: 4 });
-}
-
-/**
- * メールを送信する
- * @function sendEmail
- * @param {string} to
- * @param {string} text
- * @returns {void}
- */
-async function sendEmail(transactionId: string, name: string, to: string, text: string): Promise<void> {
-    const subject = util.format(
-        '%s%s %s',
-        (process.env.NODE_ENV !== 'production') ? `[${process.env.NODE_ENV}]` : '',
-        'TTTS_EVENT_NAMEチケット キャンセル完了のお知らせ',
-        'Notice of Completion of Cancel for TTTS Tickets'
-    );
-
-    const emailAttributes: tttsapi.factory.creativeWork.message.email.IAttributes = {
-        sender: {
-            name: conf.get<string>('email.fromname'),
-            email: conf.get<string>('email.from')
-        },
-        toRecipient: {
-            name: name,
-            email: to
-        },
-        about: subject,
-        text: text
-    };
-
-    // メール作成
-    const taskRepo = new ttts.repository.Task(ttts.mongoose.connection);
-
-    const emailMessage = tttsapi.factory.creativeWork.message.email.create({
-        identifier: `returnOrderTransaction-${transactionId}`,
-        sender: {
-            typeOf: 'Corporation',
-            name: emailAttributes.sender.name,
-            email: emailAttributes.sender.email
-        },
-        toRecipient: {
-            typeOf: tttsapi.factory.personType.Person,
-            name: emailAttributes.toRecipient.name,
-            email: emailAttributes.toRecipient.email
-        },
-        about: emailAttributes.about,
-        text: emailAttributes.text
-    });
-
-    const taskAttributes = ttts.factory.task.sendEmailNotification.createAttributes({
-        status: tttsapi.factory.taskStatus.Ready,
-        runsAt: new Date(), // なるはやで実行
-        remainingNumberOfTries: 10,
-        lastTriedAt: null,
-        numberOfTried: 0,
-        executionResults: [],
-        data: {
-            transactionId: transactionId,
-            emailMessage: emailMessage
-        }
-    });
-
-    await taskRepo.save(taskAttributes);
-    debug('sendEmail task created.');
 }
 
 /**

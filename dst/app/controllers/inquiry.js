@@ -1,7 +1,7 @@
 "use strict";
 /**
  * 予約照会コントローラー
- * @namespace inquiry
+ * @namespace controllers.inquiry
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13,7 +13,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
-const ttts = require("@motionpicture/ttts-domain");
 const conf = require("config");
 const createDebug = require("debug");
 const http_status_1 = require("http-status");
@@ -225,7 +224,24 @@ function cancel(req, res) {
             return;
         }
         try {
-            yield sendEmail(returnOrderTransaction.id, reservations[0].purchaser_name, reservations[0].purchaser_email, getCancelMail(req, reservations, cancellationFee));
+            const subject = util.format('%s%s %s', (process.env.NODE_ENV !== 'production') ? `[${process.env.NODE_ENV}]` : '', 'TTTS_EVENT_NAMEチケット キャンセル完了のお知らせ', 'Notice of Completion of Cancel for TTTS Tickets');
+            const emailAttributes = {
+                sender: {
+                    name: conf.get('email.fromname'),
+                    email: conf.get('email.from')
+                },
+                toRecipient: {
+                    name: reservations[0].purchaser_name,
+                    email: reservations[0].purchaser_email
+                },
+                about: subject,
+                text: getCancelMail(req, reservations, cancellationFee)
+            };
+            yield returnOrderTransactionService.sendEmailNotification({
+                transactionId: returnOrderTransaction.id,
+                emailMessageAttributes: emailAttributes
+            });
+            debug('email sent.');
         }
         catch (err) {
             // no op
@@ -251,61 +267,6 @@ function validate(req) {
     //req.checkBody('purchaserTel', req.__('NoInput{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
     //req.checkBody('purchaserTel', req.__('NoInput{{fieldName}}', { fieldName: req.__('Label.Tel') })).notEmpty();
     req.checkBody('purchaserTel', req.__('Message.minLength{{fieldName}}{{min}}', { fieldName: req.__('Label.Tel'), min: '4' })).len({ min: 4 });
-}
-/**
- * メールを送信する
- * @function sendEmail
- * @param {string} to
- * @param {string} text
- * @returns {void}
- */
-function sendEmail(transactionId, name, to, text) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const subject = util.format('%s%s %s', (process.env.NODE_ENV !== 'production') ? `[${process.env.NODE_ENV}]` : '', 'TTTS_EVENT_NAMEチケット キャンセル完了のお知らせ', 'Notice of Completion of Cancel for TTTS Tickets');
-        const emailAttributes = {
-            sender: {
-                name: conf.get('email.fromname'),
-                email: conf.get('email.from')
-            },
-            toRecipient: {
-                name: name,
-                email: to
-            },
-            about: subject,
-            text: text
-        };
-        // メール作成
-        const taskRepo = new ttts.repository.Task(ttts.mongoose.connection);
-        const emailMessage = tttsapi.factory.creativeWork.message.email.create({
-            identifier: `returnOrderTransaction-${transactionId}`,
-            sender: {
-                typeOf: 'Corporation',
-                name: emailAttributes.sender.name,
-                email: emailAttributes.sender.email
-            },
-            toRecipient: {
-                typeOf: tttsapi.factory.personType.Person,
-                name: emailAttributes.toRecipient.name,
-                email: emailAttributes.toRecipient.email
-            },
-            about: emailAttributes.about,
-            text: emailAttributes.text
-        });
-        const taskAttributes = ttts.factory.task.sendEmailNotification.createAttributes({
-            status: tttsapi.factory.taskStatus.Ready,
-            runsAt: new Date(),
-            remainingNumberOfTries: 10,
-            lastTriedAt: null,
-            numberOfTried: 0,
-            executionResults: [],
-            data: {
-                transactionId: transactionId,
-                emailMessage: emailMessage
-            }
-        });
-        yield taskRepo.save(taskAttributes);
-        debug('sendEmail task created.');
-    });
 }
 /**
  * キャンセルメール本文取得
