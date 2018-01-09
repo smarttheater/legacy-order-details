@@ -31,35 +31,6 @@ exports.default = (req, res, next) => __awaiter(this, void 0, void 0, function* 
     }
     // 自動ログインチェック
     // いったん保留
-    // if (req.cookies[cookieName] !== undefined) {
-    //     try {
-    //         const authenticationDoc = await ttts.Models.Authentication.findOne(
-    //             {
-    //                 token: req.cookies[cookieName],
-    //                 owner: { $ne: null }
-    //             }
-    //         ).exec();
-    //         if (authenticationDoc === null) {
-    //             res.clearCookie(cookieName);
-    //         } else {
-    //             // トークン再生成
-    //             const token = ttts.CommonUtil.createToken();
-    //             await authenticationDoc.update({ token: token }).exec();
-    //             // tslint:disable-next-line:no-cookies
-    //             res.cookie(cookieName, token, { path: '/', httpOnly: true, maxAge: 604800000 });
-    //             const ownerRepo = new ttts.repository.Owner(ttts.mongoose.connection);
-    //             const owner = await ownerRepo.ownerModel.findOne({ _id: authenticationDoc.get('owner') }).exec();
-    //             // ログインしてリダイレクト
-    //             if (owner !== null) {
-    //                 (<Express.Session>req.session)[CheckInAdminUser.AUTH_SESSION_NAME] = owner.toObject();
-    //             }
-    //             res.redirect(req.originalUrl);
-    //             return;
-    //         }
-    //     } catch (error) {
-    //         console.error(error);
-    //     }
-    // }
     if (req.xhr) {
         res.json({
             success: false,

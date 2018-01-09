@@ -1,14 +1,33 @@
 /**
  * 入場コントローラー
  * 上映当日入場画面から使う機能はここにあります。
- * @namespace checkIn
+ * @namespace controllers.checkIn
  */
 
-import * as ttts from '@motionpicture/ttts-domain';
+import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
+import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
 import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, NO_CONTENT, NOT_FOUND } from 'http-status';
 import * as moment from 'moment';
 import * as _ from 'underscore';
+
+const debug = createDebug('ttts-authentication:controllers:checkIn');
+
+const authClient = new tttsapi.auth.ClientCredentials({
+    domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
+    clientId: <string>process.env.API_CLIENT_ID,
+    clientSecret: <string>process.env.API_CLIENT_SECRET,
+    scopes: [
+        `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/reservations.read-only`,
+        `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/reservations.checkins`
+    ],
+    state: ''
+});
+
+const reservationService = new tttsapi.service.Reservation({
+    endpoint: <string>process.env.API_ENDPOINT,
+    auth: authClient
+});
 
 /**
  * QRコード認証画面
@@ -58,35 +77,26 @@ export async function confirmTest(req: Request, res: Response, next: NextFunctio
  */
 export async function getReservations(req: Request, res: Response): Promise<void> {
     try {
-        // 予約検索条件(デフォルトはReservationConfirmedステータス)
-        const conditions: any = {
-            status: ttts.factory.reservationStatusType.ReservationConfirmed
-        };
-        if (!_.isEmpty(req.body.performanceId)) {
-            conditions.performance = req.body.performanceId;
-        } else {
-            // パフォーマンスの指定がなければ、その時点での上映を指定する
-            const now = moment();
-            const day = now.format('YYYYMMDD');
-            const time = now.format('HHmm');
-            conditions.performance_day = day;
-            conditions.performance_start_time = { $lte: time };
-            conditions.performance_end_time = { $gte: time };
-        }
+        const now = moment();
 
         // 予約を検索
-        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-        const reservations = await reservationRepo.reservationModel.find(conditions).exec();
+        const reservations = await reservationService.search({
+            status: tttsapi.factory.reservationStatusType.ReservationConfirmed,
+            performanceId: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
+            performanceStartThrough: now.toDate(),
+            performanceEndFrom: now.toDate()
+        });
+        debug(reservations.length, 'reservations found.');
 
         const reservationsById: {
-            [id: string]: ttts.mongoose.Document
+            [id: string]: tttsapi.factory.reservation.event.IReservation
         } = {};
         const reservationIdsByQrStr: {
             [qr: string]: string
         } = {};
         reservations.forEach((reservation) => {
-            reservationsById[reservation.get('id')] = reservation;
-            reservationIdsByQrStr[reservation.get('qr_str')] = reservation.get('id');
+            reservationsById[reservation.id] = reservation;
+            reservationIdsByQrStr[reservation.qr_str] = reservation.id;
         });
 
         res.json({
@@ -119,13 +129,18 @@ export async function getReservation(req: Request, res: Response): Promise<void>
 
     try {
         const reservation = await getReservationByQR(req.params.qr);
-
-        if (reservation === null) {
+        if (reservation.status !== tttsapi.factory.reservationStatusType.ReservationConfirmed) {
             res.status(NOT_FOUND).json(null);
         } else {
             res.json(reservation);
         }
     } catch (error) {
+        if (error.code === NOT_FOUND) {
+            res.status(NOT_FOUND).json(null);
+
+            return;
+        }
+
         res.status(INTERNAL_SERVER_ERROR).json({
             error: '予約情報取得失敗',
             message: error
@@ -159,30 +174,19 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
         }
 
         const checkin = {
-            when: req.body.when,
+            when: moment(req.body.when).toDate(),
             where: req.body.where,
             why: '',
             how: req.body.how
         };
-        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-        const newReservation = await reservationRepo.reservationModel.findOneAndUpdate(
-            {
-                qr_str: req.params.qr
-            },
-            {
-                $push: {
-                    checkins: checkin
-                }
-            },
-            { new: true }
-        ).exec();
+        await reservationService.addCheckin({
+            reservationId: req.params.qr,
+            checkin: checkin
+        });
 
-        if (newReservation === null) {
-            res.status(NOT_FOUND).json(null);
-        } else {
-            res.status(CREATED).json(checkin);
-        }
+        res.status(CREATED).json(checkin);
     } catch (error) {
+        console.error(error);
         res.status(INTERNAL_SERVER_ERROR).json({
             error: 'チェックイン情報作成失敗',
             message: error.message
@@ -214,24 +218,12 @@ export async function removeCheckIn(req: Request, res: Response): Promise<void> 
             return;
         }
 
-        const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-        const newReservation = await reservationRepo.reservationModel.findOneAndUpdate(
-            {
-                qr_str: req.params.qr
-            },
-            {
-                $pull: {
-                    checkins: { when: req.body.when }
-                }
-            },
-            { new: true }
-        ).exec();
+        await reservationService.cancelCheckin({
+            reservationId: req.params.qr,
+            when: moment(req.body.when).toDate()
+        });
 
-        if (newReservation === null) {
-            res.status(NOT_FOUND).json(null);
-        } else {
-            res.status(NO_CONTENT).end();
-        }
+        res.status(NO_CONTENT).end();
     } catch (error) {
         res.status(INTERNAL_SERVER_ERROR).json({
             error: 'チェックイン取り消し失敗',
@@ -247,13 +239,6 @@ export async function removeCheckIn(req: Request, res: Response): Promise<void> 
  * @param {string} qr
  * @returns {Promise<any>}
  */
-async function getReservationByQR(qr: string): Promise<ttts.factory.reservation.event.IReservation | null> {
-    const reservationRepo = new ttts.repository.Reservation(ttts.mongoose.connection);
-
-    return reservationRepo.reservationModel.findOne(
-        {
-            qr_str: qr,
-            status: ttts.factory.reservationStatusType.ReservationConfirmed
-        }
-    ).exec().then((doc) => (doc === null) ? null : <ttts.factory.reservation.event.IReservation>doc.toObject());
+async function getReservationByQR(qr: string): Promise<tttsapi.factory.reservation.event.IReservation> {
+    return reservationService.findById({ id: qr });
 }
