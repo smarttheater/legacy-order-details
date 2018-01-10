@@ -11,7 +11,7 @@ page-checkin page-login
                 <option value="">選択してください</option>
                 <% cognitoUsers.forEach((cognitoUser) => { %>
                 <option value="<%- cognitoUser.username %>" <%- (req.body.username === cognitoUser.Username) ? 'selected' : '' %>>
-                <%= cognitoUser.familyName %> <%= cognitoUser.givenName %>
+                <%= cognitoUser.name %>
                 </option>
                 <% }); %>
             </select>

@@ -48,23 +48,24 @@ npm run css
 
 ### Environment variables
 
-| Name                              | Required | Value                 | Purpose |
-| --------------------------------- | -------- | --------------------- | ------- |
-| `DEBUG`                           | false    | ttts-authentication:* | Debug   |
-| `NPM_TOKEN`                       | true     |                       |         |
-| `NODE_ENV`                        | true     |                       |         |
-| `SENDGRID_API_KEY`                | true     |                       |         |
-| `REDIS_HOST`                      | true     |                       |         |
-| `REDIS_PORT`                      | true     |                       |         |
-| `REDIS_KEY`                       | true     |                       |         |
-| `MONGOLAB_URI`                    | true     |                       |         |
-| `NODE_CONFIG_DIR`                 | true     |                       |         |
-| `TTTS_TOKEN_SECRET`               | true     |                       |         |
-| `API_ENDPOINT`                    | true     |                       |         |
-| `API_CLIENT_ID`                   | true     |                       |         |
-| `API_CLIENT_SECRET`               | true     |                       |         |
-| `API_AUTHORIZE_SERVER_DOMAIN`     | true     |                       |         |
-| `API_RESOURECE_SERVER_IDENTIFIER` | true     |                       |         |
+| Name                                | Required | Value                 | Purpose |
+| ----------------------------------- | -------- | --------------------- | ------- |
+| `DEBUG`                             | false    | ttts-authentication:* | Debug   |
+| `NPM_TOKEN`                         | true     |                       |         |
+| `NODE_ENV`                          | true     |                       |         |
+| `REDIS_HOST`                        | true     |                       |         |
+| `REDIS_PORT`                        | true     |                       |         |
+| `REDIS_KEY`                         | true     |                       |         |
+| `NODE_CONFIG_DIR`                   | true     |                       |         |
+| `TTTS_TOKEN_SECRET`                 | true     |                       |         |
+| `API_ENDPOINT`                      | true     |                       |         |
+| `API_CLIENT_ID`                     | true     |                       |         |
+| `API_CLIENT_SECRET`                 | true     |                       |         |
+| `API_AUTHORIZE_SERVER_DOMAIN`       | true     |                       |         |
+| `API_RESOURECE_SERVER_IDENTIFIER`   | true     |                       |         |
+| `ADMIN_API_AUTHORIZE_SERVER_DOMAIN` | true     |                       |         |
+| `ADMIN_API_CLIENT_ID`               | true     |                       |         |
+| `ADMIN_API_CLIENT_SECRET`           | true     |                       |         |
 
 
 # tslint

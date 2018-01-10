@@ -17,8 +17,7 @@
     }
   ],
   "dependencies": {
-    "@motionpicture/ttts-api-nodejs-client": "0.0.0-alpha.7",
-    "@motionpicture/ttts-domain": "^12.0.0-alpha.69",
+    "@motionpicture/ttts-api-nodejs-client": "0.0.0-alpha.8",
     "body-parser": "^1.18.2",
     "config": "^1.29.0",
     "connect-redis": "^3.3.3",
@@ -35,6 +34,8 @@
     "moment": "^2.20.1",
     "numeral": "^2.0.6",
     "redis": "^2.8.0",
+    "request": "^2.83.0",
+    "request-promise-native": "^1.0.5",
     "underscore": "^1.8.3"
   },
   "description": "This is a repogitory for TTTS online authentication.",
@@ -51,6 +52,8 @@
     "@types/mocha": "^2.2.46",
     "@types/numeral": "0.0.20",
     "@types/redis": "^0.12.36",
+    "@types/request": "^2.0.9",
+    "@types/request-promise-native": "^1.0.10",
     "@types/underscore": "^1.8.6",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^3.1.1",

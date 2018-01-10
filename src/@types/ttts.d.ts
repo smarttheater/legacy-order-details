@@ -4,7 +4,7 @@
  * @ignore
  */
 
-import * as ttts from '@motionpicture/ttts-domain';
+import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import CheckinAdminUser from '../app/models/user/checkinAdmin';
 
 declare global {
@@ -14,8 +14,13 @@ declare global {
             checkinAdminUser?: CheckinAdminUser;
         }
 
-        interface ICheckinAdminUser {
-            group: string;
+        export interface IGroup {
+            name: string;
+            description: string;
+        }
+
+        export interface ICheckinAdminUser {
+            group: IGroup;
             familyName: string;
             givenName: string;
             email: string;
@@ -23,16 +28,24 @@ declare global {
             username: string;
         }
 
+        export interface ICredentials {
+            accessToken: string;
+            expiresIn: number;
+            idToken: string;
+            refreshToken: string;
+            tokenType: string;
+        }
+
         // tslint:disable-next-line:interface-name
         export interface Session {
-            checkinAdminUser?: ttts.service.admin.IAdmin;
-            cognitoCredentials?: ttts.service.admin.ICredentials;
+            checkinAdminUser?: ICheckinAdminUser;
+            cognitoCredentials?: ICredentials;
             /**
              * チケット照会結果
              */
             inquiryResult?: {
                 printToken: string;
-                reservations: ttts.factory.reservation.event.IReservation[];
+                reservations: tttsapi.factory.reservation.event.IReservation[];
             };
         }
     }

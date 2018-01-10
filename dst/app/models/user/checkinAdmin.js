@@ -11,6 +11,7 @@ class CheckinAdminUser {
         const user = new CheckinAdminUser();
         // セッション値からオブジェクトにセット
         if (session !== undefined && session.checkinAdminUser !== undefined) {
+            user.group = session.checkinAdminUser.group;
             user.familyName = session.checkinAdminUser.familyName;
             user.givenName = session.checkinAdminUser.givenName;
             user.email = session.checkinAdminUser.email;

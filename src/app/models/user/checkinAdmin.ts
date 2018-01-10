@@ -1,4 +1,7 @@
-import * as ttts from '@motionpicture/ttts-domain';
+interface IGroup {
+    name: string;
+    description: string;
+}
 
 /**
  * 入場管理者ユーザー
@@ -7,7 +10,7 @@ import * as ttts from '@motionpicture/ttts-domain';
  * @extends {BaseUser}
  */
 export default class CheckinAdminUser {
-    public group: ttts.service.admin.IGroup;
+    public group: IGroup;
     public familyName: string;
     public givenName: string;
     public email: string;
@@ -19,6 +22,7 @@ export default class CheckinAdminUser {
 
         // セッション値からオブジェクトにセット
         if (session !== undefined && session.checkinAdminUser !== undefined) {
+            user.group = session.checkinAdminUser.group;
             user.familyName = session.checkinAdminUser.familyName;
             user.givenName = session.checkinAdminUser.givenName;
             user.email = session.checkinAdminUser.email;
