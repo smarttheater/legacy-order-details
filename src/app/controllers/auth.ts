@@ -18,6 +18,7 @@ const cookieName = 'remember_checkin_admin';
 /**
  * 入場管理ログイン
  */
+// tslint:disable-next-line:max-func-body-length
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
         if (req.checkinAdminUser !== undefined && req.checkinAdminUser.isAuthenticated()) {
@@ -49,6 +50,10 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
                     (<Express.Session>req.session).cognitoCredentials = await request.post(
                         `${process.env.API_ENDPOINT}/oauth/token`,
                         {
+                            auth: {
+                                user: <string>process.env.ADMIN_API_CLIENT_ID,
+                                pass: <string>process.env.ADMIN_API_CLIENT_SECRET
+                            },
                             json: true,
                             body: {
                                 username: req.body.username,
@@ -130,6 +135,7 @@ export async function logout(req: Request, res: Response, next: NextFunction): P
     }
 
     delete req.session.checkinAdminUser;
+    delete req.session.cognitoCredentials;
 
     res.clearCookie(cookieName);
     res.redirect('/checkin/login');

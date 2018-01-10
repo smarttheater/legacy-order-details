@@ -23,6 +23,7 @@ const cookieName = 'remember_checkin_admin';
 /**
  * 入場管理ログイン
  */
+// tslint:disable-next-line:max-func-body-length
 function login(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -49,6 +50,10 @@ function login(req, res, next) {
                     try {
                         // ログイン情報が有効であれば、Cognitoでもログイン
                         req.session.cognitoCredentials = yield request.post(`${process.env.API_ENDPOINT}/oauth/token`, {
+                            auth: {
+                                user: process.env.ADMIN_API_CLIENT_ID,
+                                pass: process.env.ADMIN_API_CLIENT_SECRET
+                            },
                             json: true,
                             body: {
                                 username: req.body.username,
@@ -123,6 +128,7 @@ function logout(req, res, next) {
             return;
         }
         delete req.session.checkinAdminUser;
+        delete req.session.cognitoCredentials;
         res.clearCookie(cookieName);
         res.redirect('/checkin/login');
     });
