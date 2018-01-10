@@ -39,6 +39,8 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(this, void 0, voi
     try {
         // tslint:disable-next-line:no-suspicious-comment
         // TODO トークン期限チェック
+        // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
+        req.session.locale = req.params.locale;
         jwt.verify(req.query.token, process.env.TTTS_TOKEN_SECRET, (jwtErr, decoded) => __awaiter(this, void 0, void 0, function* () {
             if (jwtErr instanceof Error) {
                 next(jwtErr);

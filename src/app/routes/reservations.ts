@@ -38,6 +38,9 @@ reservationsRouter.get(
             // tslint:disable-next-line:no-suspicious-comment
             // TODO トークン期限チェック
 
+            // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
+            (<any>req.session).locale = req.params.locale;
+
             jwt.verify(<string>req.query.token, <string>process.env.TTTS_TOKEN_SECRET, async (jwtErr, decoded: any) => {
                 if (jwtErr instanceof Error) {
                     next(jwtErr);
