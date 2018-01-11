@@ -3,6 +3,7 @@
  * expressアプリケーション
  * @module app
  */
+const middlewares = require("@motionpicture/express-middleware");
 const bodyParser = require("body-parser");
 const conf = require("config");
 const cookieParser = require("cookie-parser");
@@ -18,6 +19,10 @@ const userAuthentication_1 = require("./middlewares/userAuthentication");
 // ルーター
 const router_1 = require("./routes/router");
 const app = express();
+app.use(middlewares.basicAuth({
+    name: process.env.BASIC_AUTH_NAME,
+    pass: process.env.BASIC_AUTH_PASS
+}));
 app.use(session_1.default); // セッション
 // view engine setup
 app.set('views', `${__dirname}/../../views`);

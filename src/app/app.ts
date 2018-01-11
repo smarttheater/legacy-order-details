@@ -3,6 +3,7 @@
  * @module app
  */
 
+import * as middlewares from '@motionpicture/express-middleware';
 import * as bodyParser from 'body-parser';
 import * as conf from 'config';
 import * as cookieParser from 'cookie-parser';
@@ -22,6 +23,10 @@ import router from './routes/router';
 
 const app = express();
 
+app.use(middlewares.basicAuth({ // ベーシック認証
+    name: process.env.BASIC_AUTH_NAME,
+    pass: process.env.BASIC_AUTH_PASS
+}));
 app.use(session); // セッション
 
 // view engine setup
