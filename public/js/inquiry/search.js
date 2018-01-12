@@ -10,8 +10,8 @@ $(function () {
         defaultDate: 'today',
         disableMobile: true, // 端末自前の日付選択UIを使わない
         locale: window.ttts.currentLocale,
+        maxDate: window.ttts.reservableMaxDate || '',
         // minDate: moment().add(-3, 'months').toDate(),
-        // maxDate: moment().add(3, 'months').toDate(),
         onOpen: function () {
             $modal_calender.fadeIn(200);
         },

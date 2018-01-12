@@ -8,8 +8,9 @@ page-inquiry page-search page-<%- locale %>
         empty: "<%-__('NoInput{{fieldName}}', { fieldName: '{{fieldName}}' }) %>",
         invalid: "<%-__('Invalid{{fieldName}}', { fieldName: '{{fieldName}}' }) %>",
         match: "<%-__('Match{{fieldName}}', { fieldName: '{{fieldName}}' }) %>",
-        maxLength: "<%-__('MaxLength{{fieldName}}{{max}}', { fieldName: '{{fieldName}}', max: '{{max}}' }) %>"
+        maxLength: "<%-__('MaxLength{{fieldName}}{{max}}', { fieldName: '{{fieldName}}', max: '{{max}}' }) %>",
     };
+    window.ttts.reservableMaxDate = '<%= reserveMaxDate %>';
 </script>
 <link href="/css/flatpickr.css" rel="stylesheet">
 <script src="/js/flatpickr/flatpickr.min.js"></script>

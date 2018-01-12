@@ -43,6 +43,8 @@ const orderService = new tttsapi.service.Order({
 });
 // キャンセル料(1予約あたり1000円固定)
 const CANCEL_CHARGE = 1000;
+// 予約可能日数定義
+const reserveMaxDateInfo = conf.get('reserve_max_date');
 if (process.env.API_CLIENT_ID === undefined) {
     throw new Error('Please set an environment variable \'API_CLIENT_ID\'');
 }
@@ -106,15 +108,20 @@ function search(req, res) {
                 }
             }
         }
+        const maxDate = moment();
+        Object.keys(reserveMaxDateInfo).forEach((key) => {
+            maxDate.add(reserveMaxDateInfo[key], key);
+        });
+        const reserveMaxDate = maxDate.format('YYYY/MM/DD');
         // 予約照会画面描画
         res.render('inquiry/search', {
             message: message,
             errors: errors,
             event: {
                 start: moment(),
-                // tslint:disable-next-line:no-magic-numbers
-                end: moment().add(2, 'months')
+                end: reserveMaxDate
             },
+            reserveMaxDate: reserveMaxDate,
             layout: 'layouts/inquiry/layout'
         });
     });
@@ -307,11 +314,15 @@ function getCancelMail(req, reservations, fee) {
     Object.keys(ticketInfos).forEach((key) => {
         mail.push(ticketInfos[key].info);
     });
+    // 合計金額算出
+    const price = reservations.reduce((a, b) => a + b.charge, 0);
     mail.push('-------------------------------------');
     // 合計枚数
     mail.push(req.__('EmailTotalTicketCount{{n}}', { n: reservations.length.toString() }));
+    // 合計金額
+    mail.push(`${req.__('TotalPrice')} ${req.__('{{price}} yen', { price: numeral(price).format('0,0') })}`);
     // キャンセル料
-    mail.push(`${req.__('CancellationFee')} ${req.__('{{price}} yen', { price: fee.toString() })}`);
+    mail.push(`${req.__('CancellationFee')} ${req.__('{{price}} yen', { price: numeral(fee).format('0,0') })}`);
     mail.push('-------------------------------------');
     mail.push('');
     // ご注意事項
