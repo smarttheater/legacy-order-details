@@ -54,6 +54,16 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(this, void 0, voi
                     next(new Error(req.__('NotFound')));
                     return;
                 }
+                // チケットコード順にソート
+                reservations.sort((a, b) => {
+                    if (a.ticket_type < b.ticket_type) {
+                        return -1;
+                    }
+                    if (a.ticket_type > b.ticket_type) {
+                        return 1;
+                    }
+                    return 0;
+                });
                 const output = req.query.output;
                 switch (output) {
                     // サーマル印刷
