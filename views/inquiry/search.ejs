@@ -38,7 +38,7 @@ page-inquiry page-search page-<%- locale %>
 
         <div class="form-group form-seachqueryinput">
             <label for="input_paymentNo"><%- __('PaymentNo') %></label>
-            <input id="input_paymentNo" type="text" class="form-control input-required" name="paymentNo" value="<%= req.body.paymentNo %>" maxlength="9" data-pattern="^[0-9]+$" data-fieldname="<%- __('PaymentNo') %>" required>
+            <input id="input_paymentNo" type="text" class="form-control input-required" name="paymentNo" value="<%= req.body.paymentNo %>" maxlength="6" data-pattern="^[0-9]+$" data-fieldname="<%- __('PaymentNo') %>" required>
             <p class="errmsg errmsg-paymentNo"><%- (errors && errors.paymentNo ? errors.paymentNo.msg : '') %></p>
         </div>
 
