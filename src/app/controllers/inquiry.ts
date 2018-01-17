@@ -156,7 +156,8 @@ export async function result(req: Request, res: Response, next: NextFunction): P
             throw new Error(messageNotFound);
         }
 
-        const reservations = inquiryResult.reservations;
+        // 予約ソート
+        const reservations = inquiryResult.reservations.sort((a, b) => (a.ticket_type < b.ticket_type) ? 0 : 1);
         if (!Array.isArray(reservations) || reservations.length === 0) {
             next(new Error(messageNotFound));
 
