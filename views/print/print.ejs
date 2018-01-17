@@ -91,7 +91,7 @@ for (let reservation of reservations) {
 
                         <div class="pr-entrytime">
                             <h3><%- __('PurchaseEntryTime') %></h3>
-                            <strong><%- moment(reservation.performance_start_time, 'HHmm').add(5, 'minute').format('HH:mm') %> - <%- moment(reservation.performance_end_time, 'HHmm').add(10, 'minute').format('HH:mm') %> (JST)</strong>
+                            <strong><%- moment(reservation.performance_start_time, 'HHmm').format('HH:mm') %> - <%- moment(reservation.performance_end_time, 'HHmm').add(5, 'minute').format('HH:mm') %> (JST)</strong>
                         </div>
 
                         <div class="pr-tournumber">

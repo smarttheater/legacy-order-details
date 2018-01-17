@@ -107,42 +107,42 @@
         "ru": "https://www.tokyotower.co.jp/privacypolicy/en.html"
     },
     "official_url_inquiry_by_locale": {
-        "ja": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=ja",
-        "en": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=en",
-        "zh-hant": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=zh-hant",
-        "zh-hans": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=zh-hans",
-        "ko": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=ko",
-        "th": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=th",
-        "id": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=id",
-        "vi": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=vi",
-        "fr": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=fr",
-        "de": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=de",
-        "it": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=it",
-        "es": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=es",
-        "ru": "https://ttts-authentication-test.azurewebsites.net/inquiry/search/?locale=ru"
+        "ja": "https://reference.tokyotower.co.jp/inquiry/search/?locale=ja",
+        "en": "https://reference.tokyotower.co.jp/inquiry/search/?locale=en",
+        "zh-hant": "https://reference.tokyotower.co.jp/inquiry/search/?locale=zh-hant",
+        "zh-hans": "https://reference.tokyotower.co.jp/inquiry/search/?locale=zh-hans",
+        "ko": "https://reference.tokyotower.co.jp/inquiry/search/?locale=ko",
+        "th": "https://reference.tokyotower.co.jp/inquiry/search/?locale=th",
+        "id": "https://reference.tokyotower.co.jp/inquiry/search/?locale=id",
+        "vi": "https://reference.tokyotower.co.jp/inquiry/search/?locale=vi",
+        "fr": "https://reference.tokyotower.co.jp/inquiry/search/?locale=fr",
+        "de": "https://reference.tokyotower.co.jp/inquiry/search/?locale=de",
+        "it": "https://reference.tokyotower.co.jp/inquiry/search/?locale=it",
+        "es": "https://reference.tokyotower.co.jp/inquiry/search/?locale=es",
+        "ru": "https://reference.tokyotower.co.jp/inquiry/search/?locale=ru"
     },
     "official_url_contact_by_locale": {
-        "ja": "https://www.tokyotower.co.jp/contact/",
+        "ja": "https://www.tokyotower.co.jp/contact/index.html",
         "en": "https://www.tokyotower.co.jp/contact/en.html",
-        "zh-hant": "https://www.tokyotower.co.jp/contact/en.html",
-        "zh-hans": "https://www.tokyotower.co.jp/contact/en.html",
-        "ko": "https://www.tokyotower.co.jp/contact/en.html",
-        "th": "https://www.tokyotower.co.jp/contact/en.html",
-        "id": "https://www.tokyotower.co.jp/contact/en.html",
-        "vi": "https://www.tokyotower.co.jp/contact/en.html",
-        "fr": "https://www.tokyotower.co.jp/contact/en.html",
-        "de": "https://www.tokyotower.co.jp/contact/en.html",
-        "it": "https://www.tokyotower.co.jp/contact/en.html",
-        "es": "https://www.tokyotower.co.jp/contact/en.html",
-        "ru": "https://www.tokyotower.co.jp/contact/en.html"
+        "zh-hant": "https://www.tokyotower.co.jp",
+        "zh-hans": "https://www.tokyotower.co.jp",
+        "ko": "https://www.tokyotower.co.jp",
+        "th": "https://www.tokyotower.co.jp",
+        "id": "https://www.tokyotower.co.jp",
+        "vi": "https://www.tokyotower.co.jp",
+        "fr": "https://www.tokyotower.co.jp",
+        "de": "https://www.tokyotower.co.jp",
+        "it": "https://www.tokyotower.co.jp",
+        "es": "https://www.tokyotower.co.jp",
+        "ru": "https://www.tokyotower.co.jp"
     },
     "meta": {
         "keywords": "TOKYO TOWER TOP DECK TOUR",
         "description": "TOKYO TOWER TOP DECK TOUR"
     },
     "email": {
-        "from": "noreply@default.ttts.motionpicture.jp",
-        "fromname": "Tokyo Tower Online Ticket [dev]"
+        "from": "noreply@tokyotower.co.jp",
+        "fromname": "Tokyo Tower TOP DECK TOUR Online Ticket"
     },
     "gmo_payment_api_link_multi_entry": "https://pt01.mul-pay.jp/link/tshop00026838/Multi/Entry",
     "datetimes": {
