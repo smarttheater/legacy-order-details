@@ -336,7 +336,7 @@ function getCancelMail(req, reservations, fee) {
     mail.push('');
     // ※よくあるご質問（ＦＡＱ）はこちら
     mail.push(req.__('EmailFAQURL'));
-    mail.push(conf.get('official_url_top_by_locale')[locale]);
+    mail.push(conf.get('official_url_faq_by_locale')[locale]);
     mail.push('');
     // なお、このメールは、「東京タワー トップデッキツアー」の予約システムでチケットをキャンセル…
     mail.push(req.__('EmailFoot1Can'));

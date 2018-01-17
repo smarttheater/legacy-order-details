@@ -372,7 +372,7 @@ function getCancelMail(req: Request, reservations: tttsapi.factory.reservation.e
 
     // ※よくあるご質問（ＦＡＱ）はこちら
     mail.push(req.__('EmailFAQURL'));
-    mail.push((<any>conf.get('official_url_top_by_locale'))[locale]);
+    mail.push((<any>conf.get('official_url_faq_by_locale'))[locale]);
     mail.push('');
 
     // なお、このメールは、「東京タワー トップデッキツアー」の予約システムでチケットをキャンセル…
