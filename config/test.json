@@ -5,7 +5,7 @@
         "description": "TOKYO TOWER TOP DECK TOUR"
     },
     "email": {
-        "from": "noreply@default.ttts.motionpicture.jp",
+        "from": "noreply@tokyotower.co.jp",
         "fromname": "TOKYO TOWER TOP DECK TOUR Online Ticket"
     },
     "gmo_payment_api_link_multi_entry": "https://pt01.mul-pay.jp/link/tshop00026838/Multi/Entry",
