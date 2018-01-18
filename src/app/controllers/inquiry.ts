@@ -10,7 +10,6 @@ import { NextFunction, Request, Response } from 'express';
 import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR } from 'http-status';
 import * as moment from 'moment';
 import * as numeral from 'numeral';
-import * as util from 'util';
 
 import * as Text from '../../common/Const/Text';
 import * as ticket from '../../common/Util/ticket';
@@ -243,13 +242,6 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     }
 
     try {
-        const subject = util.format(
-            '%s%s %s',
-            (process.env.NODE_ENV !== 'production') ? `[${process.env.NODE_ENV}]` : '',
-            'TTTS_EVENT_NAMEチケット キャンセル完了のお知らせ',
-            'Notice of Completion of Cancel for TTTS Tickets'
-        );
-
         const emailAttributes: tttsapi.factory.creativeWork.message.email.IAttributes = {
             sender: {
                 name: conf.get<string>('email.fromname'),
@@ -259,7 +251,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
                 name: reservations[0].purchaser_name,
                 email: reservations[0].purchaser_email
             },
-            about: subject,
+            about: req.__('EmailTitleCan'),
             text: getCancelMail(req, reservations, cancellationFee)
         };
 

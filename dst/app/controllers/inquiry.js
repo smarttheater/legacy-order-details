@@ -18,7 +18,6 @@ const createDebug = require("debug");
 const http_status_1 = require("http-status");
 const moment = require("moment");
 const numeral = require("numeral");
-const util = require("util");
 const Text = require("../../common/Const/Text");
 const ticket = require("../../common/Util/ticket");
 const debug = createDebug('ttts-authentication:controllers.inquiry');
@@ -232,7 +231,6 @@ function cancel(req, res) {
             return;
         }
         try {
-            const subject = util.format('%s%s %s', (process.env.NODE_ENV !== 'production') ? `[${process.env.NODE_ENV}]` : '', 'TTTS_EVENT_NAMEチケット キャンセル完了のお知らせ', 'Notice of Completion of Cancel for TTTS Tickets');
             const emailAttributes = {
                 sender: {
                     name: conf.get('email.fromname'),
@@ -242,7 +240,7 @@ function cancel(req, res) {
                     name: reservations[0].purchaser_name,
                     email: reservations[0].purchaser_email
                 },
-                about: subject,
+                about: req.__('EmailTitleCan'),
                 text: getCancelMail(req, reservations, cancellationFee)
             };
             yield returnOrderTransactionService.sendEmailNotification({
