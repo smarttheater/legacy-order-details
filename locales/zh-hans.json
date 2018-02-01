@@ -42,7 +42,7 @@
 	"EnterInSpecifiedLetters": "请用英文字母输入。",
 	"Email": "邮箱地址",
 	"RetypeToConfirm": "请再次输入。",
-	"SettingForLimitingEmailReception": "※【关于使用接收指定域名邮件的功能】<br>※如果手机设定了接收指定域名邮件的功能，请增加后缀“@tokyotower.co.jp”的域名。<br>※ 如果使用的是au(@ezweb.ne.jp)，除上述设置之外，还要在“垃圾邮件列表”中增加“@tokyotower.co.jp”。",
+	"SettingForLimitingEmailReception": "※请使用预约日当日可以联系的邮箱地址。<br>※【关于使用接收指定域名邮件的功能】<br>※如果手机设定了接收指定域名邮件的功能，请增加后缀“@tokyotower.co.jp”的域名。<br>※ 如果使用的是au(@ezweb.ne.jp)，除上述设置之外，还要在“垃圾邮件列表”中增加“@tokyotower.co.jp”。",
 	"Tel": "电话号码",
 	"UseHalfWidthAlphanumericWithoutHyphens": "请选择国家代码，不要使用和“-”。如果没有国家代码，请选择“Other Area”后输入代码。",
 	"Gender": "性别",

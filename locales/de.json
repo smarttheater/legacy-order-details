@@ -42,7 +42,7 @@
     "EnterInSpecifiedLetters": "Bitte geben Sie Ihren Vor- und Nachnamen an.",
     "Email": "E-Mail-Adresse",
     "RetypeToConfirm": "Wiederholte Eingabe",
-    "SettingForLimitingEmailReception": "",
+    "SettingForLimitingEmailReception": "(*) Bitte wählen Sie eine Adresse, unter der Sie am Tag der Buchung erreichbar sind.",
     "Tel": "Telefonnummer",
     "UseHalfWidthAlphanumericWithoutHyphens": "Bitte wählen Sie Ihre Landesvorwahl und geben Sie dann Ihre Telefonnummer ein (nur Zahlen). Falls Ihre Landesvorwahl nicht aufgelistet ist, wählen Sie bitte „Other Area“ und geben Sie Ihre komplette Telefonnummer mit Vorwahlen ein.",
     "Gender": "Geschlecht",

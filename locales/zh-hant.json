@@ -42,7 +42,7 @@
 	"EnterInSpecifiedLetters": "請用英文字母填寫。",
 	"Email": "E-mail",
 	"RetypeToConfirm": "為避免輸入錯誤請再填寫一次。",
-	"SettingForLimitingEmailReception": "※【使用簡訊攔截】<br>※ 若您的行動電話有設定簡訊攔截，請在設定中追加允許「@tokyotower.co.jp」帳號。<br>※ 如您使用的是au(@ezweb.ne.jp)﹐在上述設定完成後請追加設定「@tokyotower.co.jp」於「偽裝垃圾郵件的例外清單」上。",
+	"SettingForLimitingEmailReception": "※ 請使用預約日當日可以聯繫的電子信箱地址。<br>※【使用簡訊攔截】<br>※ 若您的行動電話有設定簡訊攔截，請在設定中追加允許「@tokyotower.co.jp」帳號。<br>※ 如您使用的是au(@ezweb.ne.jp)﹐在上述設定完成後請追加設定「@tokyotower.co.jp」於「偽裝垃圾郵件的例外清單」上。",
 	"Tel": "電話號碼",
 	"UseHalfWidthAlphanumericWithoutHyphens": "請先選擇國碼，不要輸入和連接號「-」。若找不到國碼，請選擇「Other Area」再填寫電話號碼。",
 	"Gender": "性別",
