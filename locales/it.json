@@ -42,7 +42,7 @@
 	"EnterInSpecifiedLetters": "Scrivere in caratteri latini normali.",
 	"Email": "Indirizzo email",
 	"RetypeToConfirm": "Reinserire l'indirizzo email per conferma.",
-	"SettingForLimitingEmailReception": "*[Per ricevere la conferma della prenotazione mediante messaggio a un normale indirizzo email]<br>*Per ricevere la conferma della prenotazione con messaggio a un numero di cellulare aggiungere anche la parte \"@tokyotower.co.jp\" dell'operatore telefonico<br>*I titolari d'indirizzo au(@ezweb.ne.jp) devono impostare \"@tokyotower.co.jp\" anche nella lista antispoofing",
+	"SettingForLimitingEmailReception": "*Si prega di utilizzare l'indirizzo che può essere contattato al momento della prenotazione.<br>*[Per ricevere la conferma della prenotazione mediante messaggio a un normale indirizzo email]<br>*Per ricevere la conferma della prenotazione con messaggio a un numero di cellulare aggiungere anche la parte \"@tokyotower.co.jp\" dell'operatore telefonico<br>*I titolari d'indirizzo au(@ezweb.ne.jp) devono impostare \"@tokyotower.co.jp\" anche nella lista antispoofing",
 	"Tel": "Numero di telefono",
 	"UseHalfWidthAlphanumericWithoutHyphens": "Inserire anche il prefisso internazionale ma senza trattino. Se nell'elenco non appare il il proprio paese selezionare \"Other Area\" e inserire il numero telefonico",
 	"Gender": "Sesso",

@@ -42,7 +42,7 @@
 	"EnterInSpecifiedLetters": "Enter in Japanese or English.",
 	"Email": "E-mail Address",
 	"RetypeToConfirm": "Enter once again for confirmation purposes.",
-	"SettingForLimitingEmailReception": "* [Use of Specified Domain Reception] * Add [@tokyotower.co.jp] to your cellphone settings if you intend to use reception from the specified domain. * If your service provider is au (@ezweb.ne.jp), also add [@tokyotower.co.jp] to the [List of addresses exempt from identity theft restrictions].",
+	"SettingForLimitingEmailReception": "* Please use an address that can be used to contact you on the day of the reservation.<br>* [Use of Specified Domain Reception] * Add [@tokyotower.co.jp] to your cellphone settings if you intend to use reception from the specified domain. * If your service provider is au (@ezweb.ne.jp), also add [@tokyotower.co.jp] to the [List of addresses exempt from identity theft restrictions].",
 	"Tel": "Telephone No.",
 	"UseHalfWidthAlphanumericWithoutHyphens": "Select the country code and enter the number without the use of hyphens. Select [Other Area] and enter the number if the country code for your country is not available.",
 	"Gender": "Gender",

@@ -42,7 +42,7 @@
 	"EnterInSpecifiedLetters": "Masukkan nama Anda dalam bahasa Inggris",
 	"Email": "Alamat email",
 	"RetypeToConfirm": "Untuk konfirmasi, silakan masukkan kembali.",
-	"SettingForLimitingEmailReception": "*[Terkait penggunaan untuk menerima lewat domain yang ditentukan]<br>*Bila Anda menentukan domain penerima untuk telepon seluler, silakan atur dengan menambahkan \"@tokyotower.co.jp\".<br>*Bila Anda menggunakan au(@ezweb.ne.jp), di samping hal di atas, silakan atur dengan menambahkan juga \"xxxx.xx\" pada \"Daftar penghindaran batasan peniruan identitas\".",
+	"SettingForLimitingEmailReception": "*Silakan gunakan alamat email yang dapat dihubungi pada hari-H reservasi.<br>*[Terkait penggunaan untuk menerima lewat domain yang ditentukan]<br>*Bila Anda menentukan domain penerima untuk telepon seluler, silakan atur dengan menambahkan \"@tokyotower.co.jp\".<br>*Bila Anda menggunakan au(@ezweb.ne.jp), di samping hal di atas, silakan atur dengan menambahkan juga \"xxxx.xx\" pada \"Daftar penghindaran batasan peniruan identitas\".",
 	"Tel": "Nomor telepon",
 	"UseHalfWidthAlphanumericWithoutHyphens": "Pilih nomor negara lalu masukkan angka alfanumerik tanpa tanda hubung (-). Bila tidak terdapat nomor negara, pilih \"Other Area\" lalu masukkan nomor Anda.",
 	"Gender": "Jenis kelamin",

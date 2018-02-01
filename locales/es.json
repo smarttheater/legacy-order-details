@@ -42,7 +42,7 @@
     "EnterInSpecifiedLetters": "Por favor ingrese aquí su nombre y apellido. ",
     "Email": "Correo electrónico",
     "RetypeToConfirm": "Ingrese otra vez para la confirmación.",
-    "SettingForLimitingEmailReception": "※ [En caso de usar la recepción especificada por el dominio]<br>※ Si está recibiendo la designación de dominio del teléfono móvil, configure \"@ xxxx.xx\" adicionalmente.<br>※ Si usa \"au\" (@ ezweb.ne.jp), configure \"@ xxxx.xx\" adicionalmente a la \"Lista de deshabilitación de la protección contra la suplantación de identidad\" además de la anterior.",
+    "SettingForLimitingEmailReception": "※ Utilice la dirección electrónica que se le pueda contactar el día de reserva.<br>※ [En caso de usar la recepción especificada por el dominio]<br>※ Si está recibiendo la designación de dominio del teléfono móvil, configure \"@ xxxx.xx\" adicionalmente.<br>※ Si usa \"au\" (@ ezweb.ne.jp), configure \"@ xxxx.xx\" adicionalmente a la \"Lista de deshabilitación de la protección contra la suplantación de identidad\" además de la anterior.",
     "Tel": "Número de teléfono",
     "UseHalfWidthAlphanumericWithoutHyphens": "Seleccione el código de país, ingréselo a medio ancho sin guión \"-\". Si no existe código de país, seleccione \"Other Area\" e ingrese el número.",
     "Gender": "Sexo",

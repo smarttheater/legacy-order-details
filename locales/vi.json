@@ -42,7 +42,7 @@
 	"EnterInSpecifiedLetters": "Hãy nhập tên bằng tiếng Việt không dấu",
 	"Email": "Địa chỉ Email ",
 	"RetypeToConfirm": "Hãy nhập lại một lần nữa",
-	"SettingForLimitingEmailReception": "※【Trường hợp chỉ định DOMAIN để nhận thư】                                      ※ Trường hợp dùng DOMAIN là hòm thư trên điện thoại di động xin hãy bổ sung cài đặt 「@tokyotower.co.jp」                                                                     ※ Trường hợp dùng au(@ezweb.ne.jp) xin hãy bổ sung cài đặt「@tokyotower.co.jp」, ngoài ra hãy chọn phần “ Danh sách tránh quy chế người lạ mặt đóng giả” và tương tự bổ sung「@tokyotower.co.jp」vào phần cài đặt.",
+	"SettingForLimitingEmailReception": "※Xin quý khách hãy sử dụng địa chỉ Email có thể liên lạc được trong ngày dự kiến thăm quan.<br>※【Trường hợp chỉ định DOMAIN để nhận thư】<br>※ Trường hợp dùng DOMAIN là hòm thư trên điện thoại di động xin hãy bổ sung cài đặt 「@tokyotower.co.jp」<br>※ Trường hợp dùng au(@ezweb.ne.jp) xin hãy bổ sung cài đặt「@tokyotower.co.jp」, ngoài ra hãy chọn phần “ Danh sách tránh quy chế người lạ mặt đóng giả” và tương tự bổ sung「@tokyotower.co.jp」vào phần cài đặt.",
 	"Tel": "Số điện thoại",
 	"UseHalfWidthAlphanumericWithoutHyphens": "Chọn đầu số gọi quốc tế, sau đó nhập số điện thoại của quý khách (không dùng dấu ngạch ngang). Trường hợp không hiện đầu số quốc tế xin hãy chọn mục “ Other Area”.",
 	"Gender": "Giới tính",

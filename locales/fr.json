@@ -42,7 +42,7 @@
 	"EnterInSpecifiedLetters": "Veuillez saisir votre nom complet.",
 	"Email": "Adresse mail",
 	"RetypeToConfirm": "Veuillez confirmer votre adresse mail.",
-	"SettingForLimitingEmailReception": "* [Utilisation de la réception de domaine spécifié]<br>* Ajoutez [@ xxxx.xx] aux paramètres de votre téléphone portable si vous avez l'intention d'utiliser la réception du domaine spécifié.<br>* Si votre fournisseur de services est (@ ezweb.ne.jp), veuillez également ajouter [@ xxxx.xx] à la [Liste des adresses exemptes de restrictions d'usurpation].",
+	"SettingForLimitingEmailReception": "* Veuillez utiliser une adresse sur laquelle nous pouvons vous contacter le jour de votre réservation.<br>* [Utilisation de la réception de domaine spécifié]<br>* Ajoutez [@ xxxx.xx] aux paramètres de votre téléphone portable si vous avez l'intention d'utiliser la réception du domaine spécifié.<br>* Si votre fournisseur de services est (@ ezweb.ne.jp), veuillez également ajouter [@ xxxx.xx] à la [Liste des adresses exemptes de restrictions d'usurpation].",
 	"Tel": "Numéro de téléphone",
 	"UseHalfWidthAlphanumericWithoutHyphens": "Veuillez saisir le code de votre pays sans utiliser de trait d'union. Si votre pays n'apparaît pas dans la liste, sélectionnez « Autre zone » et entrez votre numéro de téléphone.",
 	"Gender": "Sexe",
