@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Tokyo Tower PRINT TICKET</title>
+<link href="/css/print.css" rel="stylesheet">
+<style>
+/* 東京タワー専用プレプリント厚紙 印字領域 = 72mm */
+@page {
+    size: 66mm auto;
+    margin: 0 auto;
+}
+html,
+body {
+    width: 66mm;
+    margin: 0 auto;
+}
+</style>
+</head>
+<body>
+
+<%
+moment.locale('ja');
+for (let reservation of reservations) {
+    let isNoCharge = (reservation.payment_method === 'Invitation');
+%>
+<div class="pcthermarl72mmprintcontent">
+
+    <p class="header">
+        <img class="img-logo-ttts" src="/images/common/logo_black.svg"><br>
+        チケット兼領収書<br>
+        -TICKET &amp; RECEIPT-<br>
+        <img class="img-logo-tour" src="/images/common/logo_tour_black.svg">
+    </p>
+
+    <div class="tour">
+        <div class="date">
+            <p>
+                ツアー予約日時<br>-DATE-<br>
+                <%- moment(reservation.performance_day, 'YYYYMMDD').format('YYYY/MM/DD') %><br>
+                <%- moment(reservation.performance_start_time, 'HHmm').format('HH:mm') + '-' + moment(reservation.performance_end_time, 'HHmm').format('HH:mm') %>
+            </p>
+        </div>
+        <div class="tournumber">
+            <p>
+                ツアーナンバー<br>
+                -TOUR NUMBER-<br>
+                <%- reservation.performance_ttts_extension.tour_number %>
+            </p>
+        </div>
+    </div>
+
+    <div class="ticket">
+        <h2><%- reservation.ticket_type_name.ja %></h2>
+        <p>
+            <%- reservation.ticket_type_name.en %><br>
+            <%- ((!isNoCharge) ? ('￥' + reservation.ticket_type_charge + ' ') : '') + '(' + reservation.seat_code + ')' %>
+        </p>
+    </div>
+
+    <p class="qr">
+        <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>">
+    </p>
+
+    <p class="footer">
+        購入番号 -PAYMENT NUMBER- <%- reservation.payment_no %><br>
+        <%- moment().format('YYYY/MM/DD HH:mm:ss') %>
+    </p>
+
+</div>
+<% } %>
+
+</body>
+</html>

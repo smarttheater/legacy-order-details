@@ -28,7 +28,7 @@ for (let reservation of reservations) {
     <p class="pr-header">
         <img class="img-logo-ttts" src="/images/common/logo.svg"><br>
         <img class="img-logo-tour" src="/images/common/logo_tour_black.svg"><br>        
-        チケット兼領収書
+        チケット兼領収書<br>-TICKET &amp; RECEIPT-
     </p>
 
     <p class="pr-guide">QRコードを入場時にかざしてください</p>
@@ -43,7 +43,7 @@ for (let reservation of reservations) {
     </div>
 
     <div class="pr-date">
-        <h3>ご来塔ご予約日時<br>-DATE-</h3>
+        <h3>ツアー予約日時<br>-DATE-</h3>
         <p>
             <%- moment(reservation.performance_day, 'YYYYMMDD').format('YYYY/MM/DD') %><br>
             <%- moment(reservation.performance_start_time, 'HHmm').format('HH:mm') + '-' + moment(reservation.performance_end_time, 'HHmm').format('HH:mm') %>
