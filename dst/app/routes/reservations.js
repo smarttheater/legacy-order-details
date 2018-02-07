@@ -66,8 +66,15 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(this, void 0, voi
                 });
                 const output = req.query.output;
                 switch (output) {
-                    // サーマル印刷
+                    // サーマル印刷 (72mm幅プレプリント厚紙)
                     case 'thermal':
+                        res.render('print/thermal', {
+                            layout: false,
+                            reservations: reservations
+                        });
+                        break;
+                    // サーマル印刷 (58mm幅普通紙)
+                    case 'thermal_normal':
                         res.render('print/print_pcthermal', {
                             layout: false,
                             reservations: reservations

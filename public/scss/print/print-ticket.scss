@@ -147,6 +147,7 @@ body {
                     max-width: 128px;
                     max-height: 128px;
                     vertical-align: middle;
+                    image-rendering: pixelated;
                 }
             }
         }
@@ -359,6 +360,74 @@ body {
     .pr-publish {
         text-align: right;
         padding-right: 1em;
+    }
+    
+}
+
+
+.pcthermarl72mmprintcontent {
+    position: relative;
+    margin: 0 auto;
+    padding: 0;
+    line-height: 1.4;
+    width: 66mm;
+    padding: 0 0 6mm;
+    font-size: 13px;
+    font-family: '游ゴシック', meiryo, sans-serif;
+    overflow: hidden;
+    page-break-after: always!important;
+    -webkit-print-color-adjust: exact;
+    text-align: center;
+
+    .header {
+        position: relative;
+        font-size: 15px;
+        .img-logo-ttts {
+            max-width: 34mm;
+            margin-bottom: 4px;
+        }
+        .img-logo-tour {
+            position: absolute;
+            top: 0;
+            right: 2px;
+            max-width: 14mm;
+        }
+    }
+
+    .tour {
+        margin-top: 8px;
+        .date {
+            float: left;
+            text-align: left;
+        }
+        .tournumber {
+            float: right;
+            text-align: right;
+        }
+        &::after {
+            content: '';
+            display: table;
+            clear: both;
+        }
+    }
+
+    .ticket {
+        border-top: 2px dotted #ccc;
+        margin-top: 8px;
+        padding-top: 8px;
+        font-size: 14px;
+        h2 {
+            font-size: 18px;
+            font-weight: bold;
+        }
+    }
+
+    .qr {
+        img {
+            width: 100px;
+            height: 100px;
+            image-rendering: pixelated;
+        }
     }
     
 }
