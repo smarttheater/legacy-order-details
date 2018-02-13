@@ -33,8 +33,12 @@ $(function() {
     /* チェックイン時効果音 */
     var audioYes = new Audio('/audio/yes01.mp3');
     audioYes.load();
+    // チェックインNG時汎用
     var audioNo = new Audio('/audio/no01.mp3');
     audioNo.load();
+    // 多重チェックイン時用
+    var audioNo_reentry = new Audio('/audio/no_reentry.mp3');
+    audioNo_reentry.load();
     // ※iOSの制約のため非同期イベントでAudioを再生するには一度ユーザーイベントからAudioを再生しておく必要がある (一度でも再生すれば以降は自由に再生できる)
     // 運用マニュアルに「ログイン後に一回時計をタップして音声を初期化する」を追加？
     $('.timecontainer').one('click', function() {
@@ -42,6 +46,8 @@ $(function() {
         audioYes.play();
         audioNo.volume = 0.0;
         audioNo.play();
+        audioNo_reentry.volume = 0.0;
+        audioNo_reentry.play();
     });
 
     var $body = $(document.body);
@@ -67,6 +73,9 @@ $(function() {
         audioNo.pause();
         audioNo.currentTime = 0.0;
         audioNo.volume = 1.0;
+        audioNo_reentry.pause();
+        audioNo_reentry.currentTime = 0.0;
+        audioNo_reentry.volume = 1.0;
         audioYes.pause();
         audioYes.currentTime = 0.0;
         audioYes.volume = 1.0;
@@ -106,11 +115,12 @@ $(function() {
         // チェックインログを降順で表示
         $checkinlogtablebody.html(checkinLogHtmlArray.reverse().join(''));
 
-
         // 今実行されたチェックイン(checkinsの最新)
         var currentCheckin = reservation.checkins[reservation.checkins.length - 1];
+
         // 判定されたエラー
         var errmsg = [];
+        var errflg_reentry = false; // 多重チェックイン
 
         // 予約パフォーマンスの時間枠
         var moment_start = moment(reservation.performance_day + reservation.performance_start_time, 'YYYYMMDDHHmm');
@@ -127,11 +137,16 @@ $(function() {
         // 同一グループでのチェックインが重複してたらNG
         if (countByCheckinGroup[currentCheckin.where] > 1) {
             errmsg.push('多重チェックイン');
+            errflg_reentry = true;
         }
 
         if (errmsg.length) {
             $body.addClass('is-ng-currentcheckin'); // チェックイン履歴の一番上が赤くなる
-            audioNo.play();
+            if (errflg_reentry) { // 多重チェックイン発生時は専用NG音を優先
+                audioNo_reentry.play();
+            } else {
+                audioNo.play();
+            }
         } else {
             audioYes.play();
         }
@@ -279,7 +294,7 @@ $(function() {
             currentReservation = $.extend(true, {}, reservation);
             btn_delete.style.display = 'table';
         }).fail(function(errMsg) {
-            audioNo.play();
+            audioNo.play(); // QRコードが異常 || 通信エラー
             alert(errMsg);
             $qrdetail.html('次のQRを読み取ってください');
         }).always(function() {
