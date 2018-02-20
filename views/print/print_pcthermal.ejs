@@ -6,12 +6,12 @@
 <link href="/css/print.css" rel="stylesheet">
 <style>
 @page {
-    size: 48mm auto;
+    size: 45mm auto;
     margin: 0;
 }
 html,
 body {
-    width: 48mm;
+    width: 45mm;
     margin: 0 auto;
 }
 </style>
@@ -19,7 +19,7 @@ body {
 <body>
 
 <%
-moment.locale(locale);
+moment.locale('ja');
 for (let reservation of reservations) {
     let isNoCharge = (reservation.payment_method === 'Invitation');
 %>
@@ -67,7 +67,7 @@ for (let reservation of reservations) {
     </div>
 
     <div class="pr-publish">
-        <p><%- moment().format('YYYY/MM/DD HH:mm:ss') %></p>
+        <p><%- moment().add(9, 'hour').format('YYYY/MM/DD HH:mm:ss') %></p>
     </div>
 
 </div>

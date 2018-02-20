@@ -64,7 +64,7 @@ for (let reservation of reservations) {
 
     <p class="footer">
         購入番号 -PAYMENT NUMBER- <%- reservation.payment_no %><br>
-        <%- moment().format('YYYY/MM/DD HH:mm:ss') %>
+        <%- moment().add(9, 'hour').format('YYYY/MM/DD HH:mm:ss') %> (JST)
     </p>
 
 </div>
