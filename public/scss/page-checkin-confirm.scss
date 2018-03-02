@@ -146,6 +146,11 @@
         }
     }
 
+    #apistatus_checkin,
+    #apistatus_delete {
+        cursor: pointer;
+    }
+
     #btn_delete {
         width: 200px;
         height: 40px;
