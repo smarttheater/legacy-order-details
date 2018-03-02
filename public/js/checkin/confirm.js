@@ -200,7 +200,10 @@ $(function() {
             $dfd.resolve(reservationsById[reservationIdsByQrStr[qrStr]]);
             // どこにも無いのでAPIに聞く
         } else {
-            $.get('/checkin/reservation/' + qrStr).done(function(data) {
+            $.ajax({
+                url: '/checkin/reservation/' + qrStr,
+                timeout: 15000
+            }).done(function(data) {
                 $dfd.resolve(data);
             }).fail(function(jqxhr, textStatus, error) {
                 if (jqxhr.status === 404) {
@@ -279,10 +282,6 @@ $(function() {
      */
     var busy_check = false;
     var check = function(qrStr) {
-        // 連続チェックイン操作阻止
-        if (busy_check) {
-            return alert('[連続操作エラー] 1つ前に読み取ったQRの判定が完了していません');
-        }
         if (enteringReservationsByQrStr[qrStr]) {
             return alert('[連続操作エラー] 先ほど実行したチェックインの内部処理がまだ完了していません');
         }
@@ -494,7 +493,9 @@ $(function() {
     // QR読み取りイベント (※1文字ずつkeypressされてくる)
     var tempQrStr = '';
     $(window).keypress(function(e) {
+        // ※読んだのQRの check() が完了するまでは次のQRを読まない
         if (busy_check) {
+            // alert('[連続操作エラー] 1つ前に読み取ったQRの判定が完了していません');
             tempQrStr = '';
             return false;
         }
@@ -529,5 +530,4 @@ $(function() {
         clearTimeout(timeout_syncDeleteCheckinWithApi);
         syncDeleteCheckinWithApi();
     };
-
 });
