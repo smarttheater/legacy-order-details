@@ -29,8 +29,8 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 
         // cognitoから入場ユーザーを検索
         const cognitoUsers = [
-            { username: '1F-ELEVATOR', name: 'フットタウン 1F' },
-            { username: 'TOPDECK-ELEVATOR', name: 'TOP DECK エレベータ' }
+            { username: 'LANE', name: 'トップデッキ レーン' },
+            { username: 'GATE', name: 'トップデッキ ゲート' }
         ];
         if (cognitoUsers.length <= 0) {
             next(new Error(Message.Common.unexpectedError));
