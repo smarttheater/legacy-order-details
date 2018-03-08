@@ -50,7 +50,43 @@ gulp.task('sass',function(){
 	.pipe(gulp.dest(dir_dst+'/css'))
 });
 
-gulp.task('default',['sass'],function(){
+// チェックインアプリ用
+const browserify = require('browserify');
+const envify = require('envify/custom');
+const uglifyEs = require('uglify-es');
+const buffer = require('vinyl-buffer');
+const gulpIf = require('gulp-if');
+const uglifyComposer = require('gulp-uglify/composer');
+const minifyEs = uglifyComposer(uglifyEs, console);
+const saveLicense = require('uglify-save-license');
+const source = require('vinyl-source-stream');
+const argv = require('yargs').argv;
+const isDev = !!argv.dev;
+gulp.task('vueifyCheckinApp', () => {
+    browserify({
+        entries: [
+            `${dir_src}/js/checkin/src/main.js`,
+        ],
+	})
+	.transform(envify({ NODE_ENV: ((isDev) ? 'development' : 'production') }), {
+        global: true,
+	})
+	.bundle()
+	.pipe(plumber())
+	.pipe(source(`${dir_dst}/js/checkin/app.js`))
+	.pipe(buffer())
+	.pipe(gulpIf(!isDev, minifyEs({
+		output: {
+			comments: saveLicense,
+		},
+	})))
+	.pipe(gulp.dest('./'));
+});
+
+
+// gulp.task('default',['sass'],function(){
+gulp.task('default',['sass', 'vueifyCheckinApp'],function(){
 	gulp.watch(dir_src+'/scss/**/*.scss',['sass']);
+    gulp.watch([`${dir_src}/js/checkin/src/**/*.js`, `${dir_src}/js/checkin/src/**/*.vue`], ['vueifyCheckinApp']);
 });
 

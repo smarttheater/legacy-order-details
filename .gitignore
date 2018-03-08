@@ -1,8 +1,12 @@
 iisnode.yml
 lock/
 logs/
+test/reports/
+test/errorShots/
+test/**/*.log
 node_modules/
 npm-debug.log*
+yarn-error.log
 typings/
 iisnode/
 docs
