@@ -1,7 +1,7 @@
 <template>
 <div class="appcontent">
     <div class="header" v-once>
-        <h1 class="pointname"><span>{{ `${checkinAdminUser.familyName}${checkinAdminUser.givenName}` }}</span></h1>
+        <h1 class="pointname" @click="toggleShowingQueue"><span>{{ `${checkinAdminUser.familyName}${checkinAdminUser.givenName}` }}</span></h1>
         <a class="logout" id="btn_logout" href="#" @click="logout"></a>
     </div>
 
@@ -49,10 +49,10 @@
     <div class="api-status">
         <hr>
         <p @click="restartSubmitCheckinTimeout">チェックイン通信中: <span class="count-unsent">{{ unsentQrStrArray.length }}</span> 件</p>
-        <div v-html="unsentQrStrArray.join('<br>')"></div>
+        <div v-if="is_showingQueue" v-html="unsentQrStrArray.join('<br>')"></div>
         <hr>
         <p @click="restartSubmitCancelTimeout">チェックイン取り消し通信中: <span class="count-canceling">{{ cancelingQrStrArray.length }}</span> 件</p>
-        <div v-html="cancelingQrStrArray.join('<br>')"></div>
+        <div v-if="is_showingQueue" v-html="cancelingQrStrArray.join('<br>')"></div>
         <hr>
     </div>
 
@@ -110,6 +110,7 @@ export default {
             is_processing: false, // 処理中フラグ
             is_confirmingCancel: false, // 確認フラグ(CSS用)
             is_showingErrorlog: false, // エラーログ表示フラグ
+            is_showingQueue: false, // 送信キューの中身表示フラグ
             timeout_submitCheckin: null, // チェックイン送信のsetTimeoutインスタンス
             timeout_submitCancel: null, // キャンセル送信のsetTimeoutインスタンス
             timeout_updateReservationsCache: null, // キャッシュ更新のsetTimeoutインスタンス
@@ -176,6 +177,10 @@ export default {
             audioYes.pause();
             audioYes.currentTime = 0.0;
             audioYes.volume = 1.0;
+        },
+        // 送信待機中QRコードの表示toggle
+        toggleShowingQueue() {
+            this.is_showingQueue = !this.is_showingQueue;
         },
         // 券種名に対応したclassNameを返す
         getClassNameByTicketName(ticketName) {
@@ -468,7 +473,7 @@ export default {
             tempReservation.time = `${moment_start.format('HH:mm')}～${moment_end.format('HH:mm')}`;
 
             // 送信キューにcheckinオブジェクトを追加
-            this.unsentCheckinsByQrStr[reservation.qr_str] = tempCheckin;
+            this.unsentCheckinsByQrStr[reservation.qr_str] = JSON.parse(JSON.stringify(tempCheckin));
             this.unsentQrStrArray.push(reservation.qr_str);
 
             // DOM更新
@@ -531,9 +536,9 @@ export default {
         },
         // timeout_submitCheckin をセットし直す
         restartSubmitCheckinTimeout() {
-            this.addLog(`[${moment().format('HH:mm:ss')}][restartSubmitCheckinTimeout]`);
             clearTimeout(this.timeout_submitCheckin);
             this.setSubmitCheckinTimeout();
+            this.addLog(`[${moment().format('HH:mm:ss')}][restartSubmitCheckinTimeout]`);
         },
         // INTERVALMS_SUBMITCANCEL の間隔で submitCancel() を繰り返す
         setSubmitCancelTimeout() {
@@ -544,9 +549,9 @@ export default {
         },
         // timeout_submitCancel をセットし直す
         restartSubmitCancelTimeout() {
-            this.addLog(`[${moment().format('HH:mm:ss')}][restartSubmitCancelTimeout]`);
             clearTimeout(this.timeout_submitCancel);
             this.setSubmitCancelTimeout();
+            this.addLog(`[${moment().format('HH:mm:ss')}][restartSubmitCancelTimeout]`);
         },
         // INTERVALMS_UPDATECACHES の間隔で updateReservationsCache() を繰り返す
         setUpdateReservationsCacheTimeout() {
@@ -572,6 +577,7 @@ export default {
             alert('ログインしたIDに紐付いたチェックポイント情報が読み取れませんでした。ログイン情報を確認してください。');
             return window.location.replace('/checkin/logout');
         }
+        window.checkinApp = this;
         return this.init();
     },
     // 閉じる前にイベントリスナとタイマーを破棄
