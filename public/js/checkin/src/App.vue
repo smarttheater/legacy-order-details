@@ -61,6 +61,22 @@
 </template>
 
 <script>
+/*
+  チェックイン用アプリ
+  ・iOSのQRスキャナー(AsReader)と専用ブラウザ(AsWeb2)からwindow.keypressイベントでQR文字列を受け取って処理する
+  ・QRコードから予約を参照(getReservationByQrStr)してチェックインを判定&追加(processScanResult)してAPIに報告する
+  ・発生したチェックインは入場可否の判定結果に関係なくAPIに送信される(読み取り後の効果音と画面の表示以外に処理に差は出ない)
+  ・読み取り直後で表示中の予約(tempReservation)のチェックインは取消ボタンで上から順に取り消すことができる(cancelLastCheckin)
+  ・発生(or取り消し)したチェックインのAPIへの報告は都度行わずにキュー(unsentQrStrArray)に溜めておいてバックグラウンドで送信実行(submitCheckin, submitCancel)して消化していく
+  ・QRコードから予約をすぐ参照できるように近い時間帯の予約をバックグラウンドで定期的にキャッシュする(updateReservationsCache, setUpdateReservationsCacheTimeout)
+  ・チェックポイント名を触ると送信・取消中のQRの一覧をトグル表示できる(toggleShowingQueue)
+  ・通信中ステータスに触れるとバックグラウンドのキュー消化プロセスをリスタートできる(restartSubmitCheckinTimeout, restartSubmitCancelTimeout)
+  ・不穏な動きがあった時は画面上にログメッセージを表示する(addLog)
+メモ
+  ・元からGulpとTypeScriptが入っていたのでVueify + TypeScriptで組む気だったが色々設定が円滑にいかなかったのでBabelにしている
+  ・何故かtypeof演算子を使うとコンパイル後に実行エラーになることがある
+*/
+
 import * as axios from 'axios';
 
 const moment = require('moment'); // ※importだと余計なlocaleが含まれる
@@ -137,7 +153,7 @@ export default {
         sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         },
-        // 直近のエラーログを10件まで保持
+        // 直近のログを10件まで保持
         addLog(errmsg) {
             this.logArray.unshift(errmsg);
             if (this.logArray.length > 10) {
@@ -400,7 +416,15 @@ export default {
         },
         // 得た reservation を表示用に整形しつつ送信キューに入れる
         processScanResult(reservation) {
-            // 効果音の状態を初期化
+            // チェックインを作成 (checkinsがArrayなのはgetReservationByQrStrで確認済)
+            reservation.checkins.push({
+                when: (new Date()).toISOString(),
+                where: this.checkinAdminUser.group.name,
+                why: '',
+                how: this.checkinAdminUser.username,
+            });
+
+            // 効果音の再生状態を初期化しておく
             this.resetAudioState();
 
             // 処理中のreservationが取得キャッシュに上書きされないように転写
@@ -495,13 +519,6 @@ export default {
                         alert(result);
                         return resolve();
                     }
-                    // チェックイン発生
-                    result.checkins.push({
-                        when: (new Date()).toISOString(),
-                        where: this.checkinAdminUser.group.name,
-                        why: '',
-                        how: this.checkinAdminUser.username,
-                    });
                     this.processScanResult(result);
                 } catch (e) {
                     this.addLog(`[${moment().format('HH:mm:ss')}][catched][checkQr][${qrStr}] ${e.message}`);
