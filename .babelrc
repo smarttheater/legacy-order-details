@@ -1,0 +1,4 @@
+{
+  "presets": ["es2015", "stage-2", "vue-app"],
+  "plugins": ["transform-vue-jsx", "transform-runtime", "transform-async-to-generator"]
+}

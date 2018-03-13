@@ -79,3 +79,9 @@ npm run css
 mochaフレームワークでテスト実行。
 * [mocha](https://www.npmjs.com/package/mocha)
 `npm test`でテスト実行。だが、現状テストコードなし。テストコードを増やしていくことが望ましい。
+
+# チェックインアプリのテスト
+WebdriverIO + mochaでe2eテストを行う (Seleniumを動かすので要Javaインストール)
+* [WebdriverIO](http://webdriver.io)
+`yarn run testCheckinApp`でテスト実行。
+`/test/specs/checkinApp`内の`test.conf.js`(テスト設定)と`qrcodes.js`(読み取りQR配列)を適宜編集してやっていく。
