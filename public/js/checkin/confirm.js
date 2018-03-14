@@ -13,7 +13,7 @@ $(function() {
 
     /* 通過判定分岐用 */
     // var is_DAITEN_AUTH = (checkPointGroup === 'DAITEN_AUTH');
-    var is_TOPDECK_AUTH = (checkPointGroup === 'TOPDECK_AUTH');
+    var is_TOPDECK_AUTH = (checkPointGroup === 'TOPDECK_AUTH'); // ＝トップデッキゲート
 
     /* 取得済み予約キャッシュ */
     var reservationsById = {};
@@ -113,7 +113,7 @@ $(function() {
             );
         });
         // チェックインログを降順で表示
-        $checkinlogtablebody.html(checkinLogHtmlArray.reverse().join(''));
+        $checkinlogtablebody.html(checkinLogHtmlArray.reverse().join('')).show();
 
         // 今実行されたチェックイン(checkinsの最新)
         var currentCheckin = reservation.checkins[reservation.checkins.length - 1];
@@ -177,7 +177,7 @@ $(function() {
             '<span class="msg">' + errmsg.join('<br>') + '</span>' +
             '</p>' +
             '</div>' +
-            '<div class="' + ticketClassName + '"><p class="inner">' + ticketName + '</div>'
+            '<div class="' + ticketClassName + '"><p class="inner">' + ticketName + '<br>' + reservation.seat_code + '</div>'
         );
     };
 
@@ -200,7 +200,10 @@ $(function() {
             $dfd.resolve(reservationsById[reservationIdsByQrStr[qrStr]]);
             // どこにも無いのでAPIに聞く
         } else {
-            $.get('/checkin/reservation/' + qrStr).done(function(data) {
+            $.ajax({
+                url: '/checkin/reservation/' + qrStr,
+                timeout: 15000
+            }).done(function(data) {
                 $dfd.resolve(data);
             }).fail(function(jqxhr, textStatus, error) {
                 if (jqxhr.status === 404) {
@@ -221,6 +224,7 @@ $(function() {
      * @returns {void}
      */
     var busy_syncCheckinWithApi = false;
+    var timeout_syncCheckinWithApi = null;
     var syncCheckinWithApi = function() {
         if (busy_syncCheckinWithApi) { return false; }
         busy_syncCheckinWithApi = true;
@@ -228,35 +232,41 @@ $(function() {
         var enteringReservation = enteringReservationsByQrStr[targetQr];
         // キューに無いので再帰
         if (!targetQr || !enteringReservation || !enteringReservation.checkins) {
-            return setTimeout(function() {
+            clearTimeout(timeout_syncCheckinWithApi);
+            timeout_syncCheckinWithApi = setTimeout(function() {
                 busy_syncCheckinWithApi = false;
                 syncCheckinWithApi();
             }, 2000);
+            return false;
         }
         $.ajax({
             dataType: 'json',
             url: '/checkin/reservation/' + targetQr,
             type: 'POST',
+            cache: false,
+            timeout: 15000,
             data: enteringReservation.checkins[enteringReservation.checkins.length - 1]
         }).done(function() {
             // とりあえずこの予約QRの順番は一旦終了
-            enteringReservationQrStrArray.splice(0, 1);
+            enteringReservationQrStrArray.splice(enteringReservationQrStrArray.indexOf(targetQr), 1);
             // 成功したのでそのままキューから削除
             delete enteringReservationsByQrStr[targetQr];
         }).fail(function(jqxhr, textStatus, error) {
             if (jqxhr.status === 404) {
                 console.log('QRコードに該当する予約が存在しない = ' + targetQr);
-                // 予約の状態の問題かもしれない失敗が起きたのでとりあえず後回しにする
-                enteringReservationQrStrArray.push(targetQr);
             } else {
                 console.log(jqxhr, textStatus, error);
                 $apistatus_checkin.html('[' + moment().format('HH:mm:ss') + '] チェックインAPI通信エラー発生中');
                 // エラーメッセージ表示
                 // alert(jqxhr.responseJSON.errors[0].detail);
             }
+            // 予約の状態の問題かもしれない失敗が起きたのでとりあえず後回しにする
+            enteringReservationQrStrArray.splice(enteringReservationQrStrArray.indexOf(targetQr), 1);
+            enteringReservationQrStrArray.push(targetQr);
         }).always(function() {
             $apistatus_checkin.html('チェックイン通信中: ' + enteringReservationQrStrArray.length + '件');
-            setTimeout(function() {
+            clearTimeout(timeout_syncCheckinWithApi);
+            timeout_syncCheckinWithApi = setTimeout(function() {
                 busy_syncCheckinWithApi = false;
                 syncCheckinWithApi();
             }, 2000);
@@ -272,11 +282,9 @@ $(function() {
      */
     var busy_check = false;
     var check = function(qrStr) {
-        // 連続チェックイン操作阻止
         if (enteringReservationsByQrStr[qrStr]) {
             return alert('[連続操作エラー] 先ほど実行したチェックインの内部処理がまだ完了していません');
         }
-        if (busy_check) { return false; }
         busy_check = true;
         getReservationByQrStr(qrStr).done(function(reservation) {
             // var unixTimestamp = (new Date()).toISOString();
@@ -356,6 +364,7 @@ $(function() {
      * @returns {void}
      */
     var busy_syncDeleteCheckinWithApi = false;
+    var timeout_syncDeleteCheckinWithApi = null;
     var syncDeleteCheckinWithApi = function() {
         if (busy_syncDeleteCheckinWithApi) { return false; }
         busy_syncDeleteCheckinWithApi = true;
@@ -363,38 +372,44 @@ $(function() {
         var cancelingCheckinReservation = cancelingCheckinReservationsByQrStr[targetQr];
         // キューに無いので再帰
         if (!targetQr || !cancelingCheckinReservation || !cancelingCheckinReservation.checkins) {
-            return setTimeout(function() {
+            clearTimeout(timeout_syncDeleteCheckinWithApi);
+            timeout_syncDeleteCheckinWithApi = setTimeout(function() {
                 busy_syncDeleteCheckinWithApi = false;
                 syncDeleteCheckinWithApi();
             }, 2000);
+            return false;
         }
         var targetCheckin = cancelingCheckinReservation.checkins[cancelingCheckinReservation.checkins.length - 1];
         $.ajax({
             dataType: 'json',
             url: '/checkin/reservation/' + targetQr,
             type: 'DELETE',
+            cache: false,
+            timeout: 15000,
             data: {
                 when: targetCheckin.when
             }
         }).done(function() {
             // とりあえずこの予約QRの順番は一旦終了
-            cancelingCheckinReservationQrStrArray.splice(0, 1);
+            cancelingCheckinReservationQrStrArray.splice(cancelingCheckinReservationQrStrArray.indexOf(targetQr), 1);
             // 成功したのでそのままキューから削除
             delete cancelingCheckinReservationsByQrStr[targetQr];
         }).fail(function(jqxhr, textStatus, error) {
             if (jqxhr.status === 404) {
                 $apistatus_delete.html('[' + moment().format('HH:mm:ss') + '] チェックイン取り消しAPIエラー発生 = ' + targetQr);
-                // 予約の状態の問題かもしれない失敗が起きたのでとりあえず後回しにする
-                cancelingCheckinReservationQrStrArray.push(targetQr);
             } else {
                 console.log(jqxhr, textStatus, error);
                 $apistatus_delete.html('[' + moment().format('HH:mm:ss') + '] チェックイン取り消しAPI通信エラー発生中');
                 // エラーメッセージ表示
                 // alert(jqxhr.responseJSON.errors[0].detail);
             }
+            // 予約の状態の問題かもしれない失敗が起きたのでとりあえず後回しにする
+            cancelingCheckinReservationQrStrArray.splice(cancelingCheckinReservationQrStrArray.indexOf(targetQr), 1);
+            cancelingCheckinReservationQrStrArray.push(targetQr);
         }).always(function() {
             $apistatus_delete.html('チェックイン取り消し通信中: ' + cancelingCheckinReservationQrStrArray.length + '件');
-            setTimeout(function() {
+            clearTimeout(timeout_syncDeleteCheckinWithApi);
+            timeout_syncDeleteCheckinWithApi = setTimeout(function() {
                 busy_syncDeleteCheckinWithApi = false;
                 syncDeleteCheckinWithApi();
             }, 2000);
@@ -412,7 +427,8 @@ $(function() {
         $.ajax({
             dataType: 'json',
             url: '/checkin/performance/reservations',
-            type: 'POST'
+            type: 'POST',
+            cache: false
             // ,data: { performanceId: '5965ee1ce53ebc2b4e698d3e' }
         }).done(function(data) {
             if (!data.error && data.reservationsById && data.reservationIdsByQrStr) {
@@ -477,13 +493,16 @@ $(function() {
     // QR読み取りイベント (※1文字ずつkeypressされてくる)
     var tempQrStr = '';
     $(window).keypress(function(e) {
+        // ※読んだのQRの check() が完了するまでは次のQRを読まない
         if (busy_check) {
+            // alert('[連続操作エラー] 1つ前に読み取ったQRの判定が完了していません');
             tempQrStr = '';
             return false;
         }
         // 新しい入力値の場合
         if (tempQrStr.length === 0) {
             $qrdetail.html('データ照会中...');
+            $checkinlogtablebody.hide(); // 前のQRのチェックイン履歴を非表示にする
         }
         // エンターで入力終了
         if (e.keyCode === 13) {
@@ -495,11 +514,20 @@ $(function() {
         }
     });
 
+
     // for debug
+    $('#input_username').before('<div id="devout"></div>');
     $('.pointname').click(function() {
-        if (document.documentElement.className.indexOf('development') === -1) {
-            return false;
-        }
-        check('TT-180129-231720-0');
+        document.getElementById('devout').innerHTML = '<hr><p>(↓チェックイン送信待ちQRリスト)</p>' + enteringReservationQrStrArray.join('<br>');
     });
+
+    document.getElementById('apistatus_checkin').onclick = function() {
+        clearTimeout(timeout_syncCheckinWithApi);
+        syncCheckinWithApi();
+    };
+
+    document.getElementById('apistatus_delete').onclick = function() {
+        clearTimeout(timeout_syncDeleteCheckinWithApi);
+        syncDeleteCheckinWithApi();
+    };
 });

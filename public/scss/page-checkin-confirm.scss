@@ -15,6 +15,7 @@
             font-size: 20px;
             padding: 10px 0;
             text-align: center;
+            cursor: pointer;
         }
         .logout {
             position: absolute;
@@ -42,15 +43,15 @@
         text-align: center;
         margin-top: 20px;
     }
-    #print_date {
+    .date {
         font-size: 18px;
     }
-    #print_clock {
+    .clock {
         display: block;
         font-size: 36px;
         margin-top: 8px;
     }
-    #qrdetail {
+    .qrdetail {
         padding: 10px;
         text-align: center;
         >div {
@@ -63,6 +64,7 @@
                 display: table-cell;
                 text-align: center;
                 vertical-align: middle;
+                padding: 10px;
             }            
         }
         .qrdetail-date {
@@ -81,9 +83,17 @@
                 font-weight: bold;
             }
             .msg {
+                line-height: 1.5;
+                font-size: 1.2em;
                 display: block;
             }
+            &.qrdetail-date-ng {
+                color: #fff;
+                background-color: #e83828;
+                border-color: #e83828;
+            }
         }
+
         .qrdetail-ticket {
             font-size: 20px;
             font-weight: bold;
@@ -104,7 +114,12 @@
         }
     }
 
-    #checkinlogtable {
+    .instruction {
+        text-align: center;
+        padding: 10px;
+    }
+
+    .checkinlogtable {
         font-size: 11px;
         tr {
             background-color: #7ab0e5;
@@ -112,6 +127,11 @@
             font-size: 18px;
             &.tr-ng {
                 background-color: #e83828;
+            }
+        }
+        .confirmingcancel {
+            tr:first-child {
+                background-color: blue !important;
             }
         }
         td {
@@ -131,26 +151,22 @@
         }
     }
 
-    &.is-ng-currentcheckin {
-        #qrdetail {
-            .qrdetail-date {
-                color: #fff;
-                background-color: #e83828;
-                border-color: #e83828;
-            }
-        }
-        #checkinlogtable {
-            tr:first-child {
-                background-color: #e83828;
-            }
+
+    .api-status {
+        >p {
+            cursor: pointer;
+            margin-bottom: 10px;
         }
     }
 
-    #btn_delete {
+    .btn-cancel {
         width: 200px;
         height: 40px;
         margin: 2em auto;
-        display: none; // QR読み取り後に表示
+    }
+
+    .errorlog {
+        font-size: 0.9em;
     }
 
     footer {

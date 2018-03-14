@@ -51,9 +51,9 @@ for (let reservation of reservations) {
     </div>
 
     <div class="ticket">
-        <h2><%- reservation.ticket_type_name.ja %></h2>
+        <h2><%- reservation.ticket_type_name.ja.replace(/\(/g, '<br>(') %></h2>
         <p>
-            <%- reservation.ticket_type_name.en %><br>
+            <%- reservation.ticket_type_name.en.replace(/\(/g, '<br>(') %><br>
             <%- ((!isNoCharge) ? ('￥' + reservation.ticket_type_charge + ' ') : '') + '(' + reservation.seat_code + ')' %>
         </p>
     </div>
@@ -64,7 +64,7 @@ for (let reservation of reservations) {
 
     <p class="footer">
         購入番号 -PAYMENT NUMBER- <%- reservation.payment_no %><br>
-        <%- moment().format('YYYY/MM/DD HH:mm:ss') %>
+        <%- moment().add(9, 'hour').format('YYYY/MM/DD HH:mm:ss') %> (JST)
     </p>
 
 </div>
