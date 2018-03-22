@@ -85,3 +85,5 @@ WebdriverIO + mochaでe2eテストを行う (Seleniumを動かすので要Java�
 * [WebdriverIO](http://webdriver.io)
 `yarn run testCheckinApp`でテスト実行。
 `/test/specs/checkinApp`内の`test.conf.js`(テスト設定)と`qrcodes.js`(読み取りQR配列)を適宜編集してやっていく。
+※ログインの段階などで意味不明に落ちる時はChromeDriverの更新が追い付いていない可能性大なので
+[webdriverio](https://github.com/webdriverio/webdriverio)と[wdio-selenium-standalone-service](https://github.com/webdriverio/wdio-selenium-standalone-service)のversionとIssuesを確認しつつ`node_modules`を一旦削除してから`yarn`したりしてください

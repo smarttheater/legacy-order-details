@@ -104,7 +104,7 @@
     "vueify": "9.4.1",
     "wdio-json-reporter": "0.3.1",
     "wdio-mocha-framework": "0.5.12",
-    "wdio-selenium-standalone-service": "0.0.9",
+    "wdio-selenium-standalone-service": "0.0.10",
     "webdriverio": "4.12.0-beta.1"
   },
   "engines": {
@@ -134,7 +134,8 @@
     "postversion": "git push origin --tags",
     "gulp": "gulp",
     "gulpdev": "gulp --dev",
-    "testCheckinApp": "wdio wdio.conf.js --suite checkinApp"
+    "testCheckinApp": "wdio wdio.conf.js --suite checkinApp",
+    "postinstall": "selenium-standalone install"
   },
   "browserify": {
     "transform": [

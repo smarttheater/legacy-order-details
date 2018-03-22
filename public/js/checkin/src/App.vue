@@ -69,6 +69,7 @@
   ・読み取り直後で表示中の予約(tempReservation)のチェックインは取消ボタンで上から順に取り消すことができる(cancelLastCheckin)
   ・発生(or取り消し)したチェックインのAPIへの報告は都度行わずにキュー(unsentQrStrArray)に溜めておいてバックグラウンドで送信実行(submitCheckin, submitCancel)して消化していく
   ・QRコードから予約をすぐ参照できるように近い時間帯の予約をバックグラウンドで定期的にキャッシュする(updateReservationsCache, setUpdateReservationsCacheTimeout)
+  ・予約オブジェクトには必ず型チェック(getErrStrByReservationValidator)を実行する
   ・チェックポイント名を触ると送信・取消中のQRの一覧をトグル表示できる(toggleShowingQueue)
   ・通信中ステータスに触れるとバックグラウンドのキュー消化プロセスをリスタートできる(restartSubmitCheckinTimeout, restartSubmitCancelTimeout)
   ・不穏な動きがあった時は画面上にログメッセージを表示する(addLog)
@@ -155,7 +156,7 @@ export default {
         },
         // 直近のログを10件まで保持
         addLog(errmsg) {
-            this.logArray.unshift(errmsg);
+            this.logArray.unshift(`[${moment().format('HH:mm:ss')}]${errmsg}`);
             if (this.logArray.length > 10) {
                 this.logArray.pop();
             }
@@ -219,9 +220,9 @@ export default {
             return ticketClassName;
         },
         // reservationオブジェクトを簡易検査する
-        getErrStrByReservationValidater(reservation) {
+        getErrStrByReservationValidator(reservation) {
             if (type(reservation) !== 'Object') {
-                return '異常な予約データ (not object)';
+                return `異常な予約データ (not object)(${type(reservation)})`;
             }
             const requiredItems = {
                 seat_code: 'string',
@@ -232,11 +233,43 @@ export default {
                 performance_start_time: 'string',
                 performance_end_time: 'string',
             };
-            const invalidKeyArray = Object.keys(requiredItems).filter((key) => {
+            const invalidErrorArray = Object.keys(requiredItems).filter((key) => {
                 return (type(reservation[key]) !== requiredItems[key]);
+            }).map((key) => {
+                return `"${key}" is not ${requiredItems[key]}(${type(reservation[key])})`;
             });
-            if (invalidKeyArray.length) {
-                return `異常な予約データ (invalid ${invalidKeyArray.join(', ')})`;
+            if (invalidErrorArray.length) {
+                return `異常な予約データ: ${invalidErrorArray.join(', ')})`;
+            }
+            return '';
+        },
+        // キャッシュ更新APIのレスポンスの中身( reservationsById と reservationIdsByQrStr )の検査
+        getErrStrByCacheApiResponseValidator(data) {
+            if (type(data.reservationsById) !== 'Object') {
+                return `reservationsById is not object (${type(data.reservationsById)})`;
+            }
+            if (type(data.reservationIdsByQrStr) !== 'Object') {
+                return `reservationIdsByQrStr is not object (${type(data.reservationIdsByQrStr)})`;
+            }
+            const length_reservationsById = Object.keys(data.reservationsById).length;
+            const length_reservationIdsByQrStr = Object.keys(data.reservationIdsByQrStr).length;
+            if (!length_reservationsById && !length_reservationIdsByQrStr) {
+                // 両方とも空ならそれはそれでOK (一応ログには出しておく)
+                this.addLog('[updateReservationsCache] no cache data found');
+                return '';
+            } else if (!length_reservationsById || Number.isNaN(length_reservationsById)) {
+                return 'reservationsById is empty';
+            } else if (!length_reservationIdsByQrStr || Number.isNaN(length_reservationIdsByQrStr)) {
+                return 'reservationIdsByQrStr is empty';
+            } else if (length_reservationsById !== length_reservationIdsByQrStr) {
+                return `reservationsById.length (${length_reservationsById}) !== reservationIdsByQrStr.length (${length_reservationIdsByQrStr})`;
+            }
+            // ※QrStrに対応した予約キャッシュオブジェクトが読めるかだけ確認して中身の型チェックは使用時に行う
+            const invalidCacheQrStrArray = Object.keys(data.reservationIdsByQrStr).filter((qrStr) => {
+                return (type(data.reservationsById[data.reservationIdsByQrStr[qrStr]]) !== 'Object');
+            });
+            if (invalidCacheQrStrArray.length) {
+                return `cache of ${invalidCacheQrStrArray.join(', ')} is not object`;
             }
             return '';
         },
@@ -248,18 +281,24 @@ export default {
                     const res = await axios.post('/checkin/performance/reservations', { timeout: 30000 }).catch((err) => {
                         errmsg = err.message;
                     });
-                    if (!res.data.reservationsById || !res.data.reservationIdsByQrStr) {
-                        errmsg = 'invalid response';
-                    }
                     if (errmsg) {
-                        this.addLog(`[${moment().format('HH:mm:ss')}][updateReservationsCache] ${errmsg}`);
+                        this.addLog(`[updateReservationsCache][connectionError] ${errmsg}`);
+                        return resolve();
+                    }
+                    if (res.data.error) {
+                        this.addLog(`[updateReservationsCache][errormsgFromApi] ${errmsg}`);
+                        return resolve();
+                    }
+                    errmsg = this.getErrStrByCacheApiResponseValidator(res.data);
+                    if (errmsg) {
+                        this.addLog(`[updateReservationsCache][invalidResponse] ${errmsg}`);
                         return resolve();
                     }
                     this.reservationsCacheById = res.data.reservationsById;
                     this.reservationCacheIdsByQrStr = res.data.reservationIdsByQrStr;
                     return resolve();
                 } catch (e) {
-                    this.addLog(`[${moment().format('HH:mm:ss')}][catched][updateReservationsCache] ${e.message}`);
+                    this.addLog(`[catched][updateReservationsCache] ${e.message}`);
                     return resolve();
                 }
             });
@@ -269,32 +308,35 @@ export default {
             return new Promise(async (resolve) => {
                 try {
                     if (!qrStr) {
-                        return resolve(`QRコードが読み取れていません${qrStr}`);
+                        return resolve({ errmsg: `QRコードが読み取れていません${qrStr}` });
                     }
-                    // キャッシュにあったら返す (オブジェクトを検査したうえで)
+                    // キャッシュに該当の予約オブジェクトがあったら返す (中身を検査して問題無かったら)
                     const reservationsCache = this.reservationsCacheById[this.reservationCacheIdsByQrStr[qrStr]];
-                    if (reservationsCache && !this.getErrStrByReservationValidater(reservationsCache)) {
-                        return resolve(reservationsCache);
+                    if (reservationsCache && !this.getErrStrByReservationValidator(reservationsCache)) {
+                        return resolve({ reservation: reservationsCache });
                     }
-                    // どこにも無いのでAPIに聞く
-                    // this.addLog(`[${moment().format('HH:mm:ss')}][getReservationByQrStr][${qrStr}] 予約の存在をAPIに問い合わせ`);
+                    // this.addLog(`[getReservationByQrStr][${qrStr}] 予約の存在をAPIに問い合わせ`);
                     let errmsg = '';
                     const res = await axios.get(`/checkin/reservation/${qrStr}`, { timeout: 15000 }).catch((err) => {
                         errmsg = `${/404/.test(err.message) ? '存在しない予約データです。予約管理より確認してください。' : err.message}\n`;
                     });
                     if (!errmsg) {
-                        // 予約オブジェクト検査
-                        errmsg = this.getErrStrByReservationValidater(res.data);
+                        if (!res.data) {
+                            errmsg = '予約情報取得APIの応答が空';
+                        } else {
+                            // 予約オブジェクト検査
+                            errmsg = this.getErrStrByReservationValidator(res.data);
+                        }
                     }
                     if (errmsg) {
-                        this.addLog(`[${moment().format('HH:mm:ss')}][getReservationByQrStr][${qrStr}] ${errmsg}`);
-                        return resolve(errmsg);
+                        this.addLog(`[getReservationByQrStr][${qrStr}] ${errmsg}`);
+                        return resolve({ errmsg });
                     }
-                    // this.addLog(`[${moment().format('HH:mm:ss')}][getReservationByQrStr][${qrStr}] 予約の存在確認に成功`);
-                    return resolve(res.data);
+                    // this.addLog(`[getReservationByQrStr][${qrStr}] 予約の存在確認に成功`);
+                    return resolve({ reservation: res.data });
                 } catch (e) {
-                    this.addLog(`[${moment().format('HH:mm:ss')}][catched][getReservationByQrStr][${qrStr}] ${e.message}`);
-                    return resolve('未知のエラー');
+                    this.addLog(`[catched][getReservationByQrStr][${qrStr}] ${e.message}`);
+                    return resolve({ errmsg: `例外エラー(${qrStr}) ${e.message}` });
                 }
             });
         },
@@ -319,8 +361,7 @@ export default {
                         // エラー起きたので最後尾に追加 (この時点では配列内で重複)
                         this.unsentQrStrArray.push(targetQr);
                         errmsg = `${/404/.test(err.message) ? 'QRコードに該当する予約が存在しません' : err.message}\n`;
-                        this.addLog(`[${moment().format('HH:mm:ss')}][submitCheckin][${targetQr}] ${errmsg}`);
-                        return resolve();
+                        this.addLog(`[submitCheckin][${targetQr}] ${errmsg}`);
                     }).then(() => {
                         // キューから削除
                         this.unsentQrStrArray.splice(this.unsentQrStrArray.indexOf(targetQr), 1);
@@ -328,7 +369,7 @@ export default {
                         return resolve();
                     });
                 } catch (e) {
-                    this.addLog(`[${moment().format('HH:mm:ss')}][catched][submitCheckin][${targetQr}] ${e.message}`);
+                    this.addLog(`[catched][submitCheckin][${targetQr}] ${e.message}`);
                     return resolve();
                 }
             });
@@ -356,9 +397,7 @@ export default {
                         // エラー起きたので最後尾に追加 (この時点では配列内で重複)
                         this.cancelingQrStrArray.push(targetQr);
                         errmsg = (err.response && err.response.status === 404) ? 'QRコードに該当する予約が存在しません' : `通信エラー ${err.message}`;
-                        // console.log(errmsg, err);
-                        this.addLog(`[${moment().format('HH:mm:ss')}][submitCancel][${targetQr}] ${errmsg}`);
-                        return resolve();
+                        this.addLog(`[submitCancel][${targetQr}] ${errmsg}`);
                     }).then(() => {
                         // キューから削除
                         this.cancelingQrStrArray.splice(this.cancelingQrStrArray.indexOf(targetQr), 1);
@@ -366,7 +405,7 @@ export default {
                         return resolve();
                     });
                 } catch (e) {
-                    this.addLog(`[${moment().format('HH:mm:ss')}][catched][submitCancel][${targetQr}] ${e.message}`);
+                    this.addLog(`[catched][submitCancel][${targetQr}] ${e.message}`);
                     return resolve();
                 }
             });
@@ -410,118 +449,126 @@ export default {
                 }
                 this.is_confirmingCancel = false;
             } catch (e) {
-                this.addLog(`[${moment().format('HH:mm:ss')}][catched][cancelLastCheckin][${targetQr}] ${e.message}`);
+                this.addLog(`[catched][cancelLastCheckin][${targetQr}] ${e.message}`);
             }
             return false;
         },
         // 得た reservation を表示用に整形しつつ送信キューに入れる
         processScanResult(reservation) {
-            // チェックインを作成 (checkinsがArrayなのはgetReservationByQrStrで確認済)
-            reservation.checkins.push({
-                when: (new Date()).toISOString(),
-                where: this.checkinAdminUser.group.name,
-                why: '',
-                how: this.checkinAdminUser.username,
-            });
+            try {
+                // 効果音の再生状態を初期化しておく
+                this.resetAudioState();
 
-            // 効果音の再生状態を初期化しておく
-            this.resetAudioState();
-
-            // 処理中のreservationが取得キャッシュに上書きされないように転写
-            const tempReservation = JSON.parse(JSON.stringify(reservation));
-            const tempCheckin = tempReservation.checkins[tempReservation.checkins.length - 1];
-
-            // checkinsを読み取ってチェックイン履歴表示用の配列を作る
-            const date_today = this.moment_now.format('MM/DD');
-            const moment_start = moment(reservation.performance_day + reservation.performance_start_time, 'YYYYMMDDHHmm');
-            const moment_end_default = moment(reservation.performance_day + reservation.performance_end_time, 'YYYYMMDDHHmm');
-            const moment_end_gate = moment(moment_end_default).add(EXTENDMIN_TOPDECK_AUTH, 'm');
-            const countByCheckinGroup = {};
-            const checkinLogArray = tempReservation.checkins.map((checkin) => {
-                if (!checkin || !checkin.when) { return true; }
-                // 判定で発生したNGメッセージ
-                const checkinErrArray = [];
-
-                // 多重チェックインフラグ
-                let errflg_reentry = false;
-
-                // トップデッキゲートでは予約時間枠の EXTENDMIN_TOPDECK_AUTH 分後まで通過OKとする
-                const moment_end = (checkin.where === 'TOPDECK_AUTH') ? moment_end_gate : moment_end_default;
-                // checkinのwhen(タイムスタンプ)がパフォーマンスの時間枠外だったらNG
-                if (!moment(tempCheckin.when).isBetween(moment_start, moment_end)) {
-                    checkinErrArray.push('入塔時間外');
-                }
-
-                // グループごとのチェックインをカウント
-                if (type(countByCheckinGroup[checkin.where]) === 'undefined') {
-                    countByCheckinGroup[checkin.where] = 1;
-                // グループカウント済み ＝ 多重チェックイン ＝ NG
-                } else {
-                    checkinErrArray.push('多重チェックイン');
-                    errflg_reentry = true;
-                    countByCheckinGroup[checkin.where]++;
-                }
-
-                // チェックイン実行日
-                const date = moment(checkin.when).format('MM/DD');
-                return {
-                    is_ng: !!checkinErrArray.length,
-                    day: (date_today === date) ? '本日' : date,
-                    time: moment(checkin.when).format('HH:mm'),
-                    where: checkin.how,
-                    count: countByCheckinGroup[checkin.where],
-                    errflg_reentry,
-                    checkinErrArray,
+                // チェックインを作成
+                const tempCheckin = {
+                    when: (new Date()).toISOString(),
+                    where: this.checkinAdminUser.group.name,
+                    why: '',
+                    how: this.checkinAdminUser.username,
                 };
-            }).reverse();
-            const tempCheckinLog = checkinLogArray[0];
+                reservation.checkins.push(tempCheckin);
 
-            // 今発生したチェックインに対する効果音を再生
-            if (tempCheckinLog.is_ng) {
-                if (tempCheckinLog.errflg_reentry) { // 多重チェックイン発生時は専用NG音を優先再生
-                    audioNo_reentry.play();
+                // 処理中のreservationが取得キャッシュに上書きされないように転写
+                const tempReservation = JSON.parse(JSON.stringify(reservation));
+
+                // checkinsを読み取ってチェックイン履歴表示用の配列を作る
+                const date_today = this.moment_now.format('MM/DD');
+                const moment_start = moment(reservation.performance_day + reservation.performance_start_time, 'YYYYMMDDHHmm');
+                const moment_end_default = moment(reservation.performance_day + reservation.performance_end_time, 'YYYYMMDDHHmm');
+                const moment_end_gate = moment(moment_end_default).add(EXTENDMIN_TOPDECK_AUTH, 'm');
+                const countByCheckinGroup = {};
+                const checkinLogArray = tempReservation.checkins.map((checkin) => {
+                    if (!checkin || !checkin.when) { return true; }
+                    // 判定で発生したNGメッセージ
+                    const checkinErrArray = [];
+
+                    // 多重チェックインフラグ
+                    let errflg_reentry = false;
+
+                    // トップデッキゲートでは予約時間枠の EXTENDMIN_TOPDECK_AUTH 分後まで通過OKとする
+                    const moment_end = (checkin.where === 'TOPDECK_AUTH') ? moment_end_gate : moment_end_default;
+                    // checkinのwhen(タイムスタンプ)がパフォーマンスの時間枠外だったらNG
+                    if (!moment(tempCheckin.when).isBetween(moment_start, moment_end)) {
+                        checkinErrArray.push('入塔時間外');
+                    }
+
+                    // グループごとのチェックインをカウント
+                    if (type(countByCheckinGroup[checkin.where]) === 'undefined') {
+                        countByCheckinGroup[checkin.where] = 1;
+                    // グループカウント済み ＝ 多重チェックイン ＝ NG
+                    } else {
+                        checkinErrArray.push('多重チェックイン');
+                        errflg_reentry = true;
+                        countByCheckinGroup[checkin.where]++;
+                    }
+
+                    // チェックイン実行日
+                    const date = moment(checkin.when).format('MM/DD');
+                    return {
+                        is_ng: !!checkinErrArray.length,
+                        day: (date_today === date) ? '本日' : date,
+                        time: moment(checkin.when).format('HH:mm'),
+                        where: checkin.how,
+                        count: countByCheckinGroup[checkin.where],
+                        errflg_reentry,
+                        checkinErrArray,
+                    };
+                }).reverse(); // ※チェックイン履歴は昇順で表示
+                const tempCheckinLog = checkinLogArray[0];
+
+                // 今発生したチェックインに対する効果音を再生
+                if (tempCheckinLog.is_ng) {
+                    if (tempCheckinLog.errflg_reentry) { // 多重チェックイン発生時は専用NG音を優先再生
+                        audioNo_reentry.play();
+                    } else {
+                        audioNo.play();
+                    }
+                    this.addLog(`[${tempCheckinLog.checkinErrArray.join('|')}][${reservation.qr_str}]`);
                 } else {
-                    audioNo.play();
+                    audioYes.play();
                 }
-                this.addLog(`[${moment().format('HH:mm:ss')}][${tempCheckinLog.checkinErrArray.join('|')}][${reservation.qr_str}]`);
-            } else {
-                audioYes.play();
+
+                // 画面表示用の項目を生やす
+                tempReservation.checkinLogArray = checkinLogArray;
+                tempReservation.day = tempCheckinLog.day;
+
+                // 入場可能時間の表示を判断
+                const moment_end = (this.checkinAdminUser.group.name === 'TOPDECK_AUTH') ? moment_end_default : moment_end_gate;
+                tempReservation.time = `${moment_start.format('HH:mm')}～${moment_end.format('HH:mm')}`;
+
+                // 送信キューにcheckinオブジェクトを追加
+                this.unsentCheckinsByQrStr[reservation.qr_str] = JSON.parse(JSON.stringify(tempCheckin));
+                this.unsentQrStrArray.push(reservation.qr_str);
+
+                // DOM更新
+                this.tempReservation = tempReservation;
+            } catch (e) {
+                this.addLog(`[catched][processScanResult][${reservation.qr_str}] ${e.message}`);
+                return alert(`チェックインの実行で例外が発生しました。QR(${reservation.qr_str})を再スキャンしてください\n${e.message}`);
             }
-
-            // 画面表示用の項目を生やす
-            tempReservation.checkinLogArray = checkinLogArray;
-            tempReservation.day = tempCheckinLog.day;
-
-            // 入場可能時間の表示を判断
-            const moment_end = (this.checkinAdminUser.group.name === 'TOPDECK_AUTH') ? moment_end_default : moment_end_gate;
-            tempReservation.time = `${moment_start.format('HH:mm')}～${moment_end.format('HH:mm')}`;
-
-            // 送信キューにcheckinオブジェクトを追加
-            this.unsentCheckinsByQrStr[reservation.qr_str] = JSON.parse(JSON.stringify(tempCheckin));
-            this.unsentQrStrArray.push(reservation.qr_str);
-
-            // DOM更新
-            this.tempReservation = tempReservation;
+            return true;
         },
         // スキャンしたQRコードから予約が取れたらチェックインを作成して processScanResult する
         checkQr(qrStr) {
             return new Promise(async (resolve) => {
                 try {
                     if (this.unsentCheckinsByQrStr[qrStr]) {
-                        const errmsg = '[連続操作エラー] このQRに先ほど実行したチェックインの内部処理がまだ完了していません';
+                        const errmsg = `[連続操作エラー] このQR(${qrStr})に先ほど実行したチェックインの内部処理がまだ完了していません`;
                         alert(errmsg);
-                        this.addLog(`[${moment().format('HH:mm:ss')}]${errmsg}`);
+                        this.addLog(errmsg);
                         return resolve();
                     }
+
                     const result = await this.getReservationByQrStr(qrStr);
-                    if (type(result) === 'string') {
-                        audioNo.play(); // QRコードが異常 || 通信エラー
-                        alert(result);
+                    if (type(result.errmsg) === 'string' && result.errmsg) {
+                        audioNo.play();
+                        alert(result.errmsg);
                         return resolve();
                     }
-                    this.processScanResult(result);
+
+                    this.processScanResult(result.reservation);
                 } catch (e) {
-                    this.addLog(`[${moment().format('HH:mm:ss')}][catched][checkQr][${qrStr}] ${e.message}`);
+                    this.addLog(`[catched][checkQr][${qrStr}] ${e.message}`);
                 }
                 return resolve();
             });
@@ -530,7 +577,7 @@ export default {
         scanQr(e) {
             // ※実行中の checkQr() が完了するまでは次のQRを読まない
             if (this.is_processing) {
-                return this.addLog(`[${moment().format('HH:mm:ss')}][scanQr.is_processing] 1つ前に読み取ったQR = ${this.tempQrStr} の判定が完了していません`);
+                return this.addLog(`[scanQr.is_processing] 1つ前に読み取ったQR = ${this.tempQrStr} の判定が完了していません`);
             }
             // Enter入力でスキャン文字列確定
             if (e.keyCode === 13) {
@@ -555,7 +602,7 @@ export default {
         restartSubmitCheckinTimeout() {
             clearTimeout(this.timeout_submitCheckin);
             this.setSubmitCheckinTimeout();
-            this.addLog(`[${moment().format('HH:mm:ss')}][restartSubmitCheckinTimeout]`);
+            this.addLog('[restartSubmitCheckinTimeout]');
         },
         // INTERVALMS_SUBMITCANCEL の間隔で submitCancel() を繰り返す
         setSubmitCancelTimeout() {
@@ -568,7 +615,7 @@ export default {
         restartSubmitCancelTimeout() {
             clearTimeout(this.timeout_submitCancel);
             this.setSubmitCancelTimeout();
-            this.addLog(`[${moment().format('HH:mm:ss')}][restartSubmitCancelTimeout]`);
+            this.addLog('[restartSubmitCancelTimeout]');
         },
         // INTERVALMS_UPDATECACHES の間隔で updateReservationsCache() を繰り返す
         setUpdateReservationsCacheTimeout() {
@@ -577,8 +624,18 @@ export default {
                 this.setUpdateReservationsCacheTimeout();
             }, INTERVALMS_UPDATECACHES);
         },
+        // window.onerror
+        onerror(e) {
+            this.addLog(`[window.onerror]${e.message}`);
+        },
+        // window.onunhandledrejection
+        onunhandledrejection(e) {
+            this.addLog(`[window.onunhandledrejection]${e.reason}`);
+        },
         // 初期化
         init() {
+            window.addEventListener('error', this.onerror);
+            window.addEventListener('unhandledrejection', this.onunhandledrejection);
             window.addEventListener('keypress', this.scanQr, false);
             this.updateReservationsCache();
             this.setSubmitCheckinTimeout();
@@ -599,6 +656,8 @@ export default {
     },
     // 閉じる前にイベントリスナとタイマーを破棄
     beforeDestroy() {
+        window.removeEventListener('error', this.onerror);
+        window.removeEventListener('unhandledrejection', this.onunhandledrejection);
         window.removeEventListener('keypress', this.scanQr);
         clearTimeout(this.timeout_submitCheckin);
         clearTimeout(this.timeout_submitCancel);
