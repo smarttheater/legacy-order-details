@@ -34,7 +34,8 @@ if (momentLocale === 'zh-hans') {
 }
 moment.locale(momentLocale);
 for (let reservation of reservations) {
-    let isNoCharge = (reservation.payment_method === 'Invitation');
+    // ※決済手段が「無料招待」と「トップデッキのみ（手売り）」の予約はチケット価格が非表示
+    let isNoCharge = /^(Invitation|OTC)$/.test(reservation.payment_method);
 %>
 <div class="printcontent">
 
