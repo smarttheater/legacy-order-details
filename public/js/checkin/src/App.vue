@@ -532,7 +532,7 @@ export default {
 
                 // 画面表示用の項目を生やす
                 tempReservation.checkinLogArray = checkinLogArray;
-                tempReservation.day = tempCheckinLog.day;
+                tempReservation.day = moment(tempReservation.performance_day, 'YYYYMMDD').format('MM/DD');
 
                 // 入場可能時間の表示を判断
                 const moment_end = (this.checkinAdminUser.group.name === 'TOPDECK_AUTH') ? moment_end_default : moment_end_gate;
