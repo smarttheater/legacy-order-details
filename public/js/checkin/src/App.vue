@@ -319,7 +319,7 @@ export default {
                     // this.addLog(`[getReservationByQrStr][${qrStr}] 予約の存在をAPIに問い合わせ`);
                     let errmsg = '';
                     const res = await axios.get(`/checkin/reservation/${qrStr}`, { timeout: 15000 }).catch((err) => {
-                        errmsg = `${/404/.test(err.message) ? '存在しない予約データです。予約管理より確認してください。' : err.message}\n`;
+                        errmsg = /404/.test(err.message) ? '存在しない予約データです。予約管理より確認してください。' : `通信エラー: ${err.message}`;
                     });
                     if (!errmsg) {
                         if (!res.data) {
@@ -330,7 +330,7 @@ export default {
                         }
                     }
                     if (errmsg) {
-                        console.log(res.data);
+                        console.log(`[getReservationByQrStr][${qrStr}][${errmsg}]`, res);
                         this.addLog(`[getReservationByQrStr][${qrStr}] ${errmsg}`);
                         return resolve({ errmsg });
                     }
