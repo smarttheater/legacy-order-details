@@ -278,7 +278,7 @@ export default {
             return new Promise(async (resolve) => {
                 try {
                     let errmsg = '';
-                    const res = await axios.post('/checkin/performance/reservations', { timeout: 30000 }).catch((err) => {
+                    const res = await axios.post('/checkin/performance/reservations', null, { timeout: 30000 }).catch((err) => {
                         errmsg = err.message;
                     });
                     if (errmsg) {
@@ -291,6 +291,7 @@ export default {
                     }
                     errmsg = this.getErrStrByCacheApiResponseValidator(res.data);
                     if (errmsg) {
+                        console.log(errmsg);
                         this.addLog(`[updateReservationsCache][invalidResponse] ${errmsg}`);
                         return resolve();
                     }
@@ -329,6 +330,7 @@ export default {
                         }
                     }
                     if (errmsg) {
+                        console.log(res.data);
                         this.addLog(`[getReservationByQrStr][${qrStr}] ${errmsg}`);
                         return resolve({ errmsg });
                     }
