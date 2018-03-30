@@ -134,8 +134,7 @@
     "postversion": "git push origin --tags",
     "gulp": "gulp",
     "gulpdev": "gulp --dev",
-    "testCheckinApp": "wdio wdio.conf.js --suite checkinApp",
-    "postinstall": "selenium-standalone install --singleDriverInstall=chrome"
+    "testCheckinApp": "wdio wdio.conf.js --suite checkinApp"
   },
   "browserify": {
     "transform": [
