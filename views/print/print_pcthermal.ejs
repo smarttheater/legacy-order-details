@@ -35,7 +35,8 @@ for (let reservation of reservations) {
     <p class="pr-guide">QRコードを入場時にかざしてください</p>
 
     <p class="pr-qrcode">
-        <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>">
+        <!-- <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>"> -->
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&cht=qr&data=<%= reservation.qr_str %>">
     </p>
 
     <div class="pr-paymentno">
