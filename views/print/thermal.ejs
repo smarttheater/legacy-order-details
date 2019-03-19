@@ -60,7 +60,8 @@ for (let reservation of reservations) {
     </div>
 
     <p class="qr">
-        <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>">
+        <!-- <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>"> -->
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&cht=qr&data=<%= reservation.qr_str %>">
     </p>
 
     <p class="footer">
