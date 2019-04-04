@@ -13,6 +13,7 @@ window.ttts.setSessionStorage = function(key, value) {
     }
 };
 
+
 $(function() {
     var $window = $(window);
     var CSSBREAKPOINT_MOBILE = 480;
@@ -49,4 +50,5 @@ $(function() {
             }
         }, 300);
     });
+
 });
