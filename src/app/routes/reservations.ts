@@ -95,8 +95,6 @@ reservationsRouter.get(
                                 layout: false,
                                 reservations: reservations
                             });
-
-                            break;
                     }
                 }
             });

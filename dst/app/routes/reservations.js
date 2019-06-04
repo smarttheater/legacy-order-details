@@ -86,7 +86,6 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(this, void 0, voi
                             layout: false,
                             reservations: reservations
                         });
-                        break;
                 }
             }
         }));

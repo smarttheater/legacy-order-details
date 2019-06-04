@@ -3,9 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const numeral = require("numeral");
 /**
  * 券種ごとに合計枚数算出
- * @memberof inquiry
- * @param {any} reservations
- * @returns {any>}
  */
 function getTicketInfos(reservations) {
     // 券種ごとに合計枚数算出

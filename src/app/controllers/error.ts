@@ -1,16 +1,11 @@
 /**
- * @namespace error
+ * エラーモジュール
  */
 import { Request, Response } from 'express';
 import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-status';
 
 /**
- * Not Found
- * @memberof error
- * @function notFound
- * @param {Request} req
- * @param {Response} res
- * @returns {void}
+ * 404エラー
  */
 export function notFound(req: Request, res: Response): void {
     if (req.xhr) {
@@ -23,11 +18,6 @@ export function notFound(req: Request, res: Response): void {
 
 /**
  * エラーページ
- * @memberof error
- * @function index
- * @param {Request} req
- * @param {Response} res
- * @returns {void}
  */
 export function index(err: Error, req: Request, res: Response): void {
     req.route.path = '/error/error';
