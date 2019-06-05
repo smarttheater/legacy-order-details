@@ -2,12 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const http_status_1 = require("http-status");
 /**
- * Not Found
- * @memberof error
- * @function notFound
- * @param {Request} req
- * @param {Response} res
- * @returns {void}
+ * 404エラー
  */
 function notFound(req, res) {
     if (req.xhr) {
@@ -21,11 +16,6 @@ function notFound(req, res) {
 exports.notFound = notFound;
 /**
  * エラーページ
- * @memberof error
- * @function index
- * @param {Request} req
- * @param {Response} res
- * @returns {void}
  */
 function index(err, req, res) {
     req.route.path = '/error/error';

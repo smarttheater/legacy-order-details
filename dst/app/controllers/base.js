@@ -5,18 +5,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
  *
  * 基本的にコントローラークラスはルーティングクラスより呼ばれる
  * あらゆるルーティングで実行されるメソッドは、このクラスがベースとなるので、メソッド共通の処理はここで実装するとよい
- *
- * @namespace BaseController
  */
 const conf = require("config");
 const moment = require("moment");
 /**
- * @memberof BaseController
- * @function setLocals
- * @param {Request} req
- * @param {Response} res
- * @param {NextFunction} next
- * @returns {void}
+ * 言語設定
  */
 function setLocals(req, res, next) {
     res.locals.req = req;

@@ -2,9 +2,6 @@ import { Request } from 'express';
 import * as numeral from 'numeral';
 /**
  * 券種ごとに合計枚数算出
- * @memberof inquiry
- * @param {any} reservations
- * @returns {any>}
  */
 export function getTicketInfos(reservations: any[]): any {
     // 券種ごとに合計枚数算出

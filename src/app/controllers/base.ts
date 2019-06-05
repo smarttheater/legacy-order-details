@@ -3,20 +3,13 @@
  *
  * 基本的にコントローラークラスはルーティングクラスより呼ばれる
  * あらゆるルーティングで実行されるメソッドは、このクラスがベースとなるので、メソッド共通の処理はここで実装するとよい
- *
- * @namespace BaseController
  */
 import * as conf from 'config';
 import { NextFunction, Request, Response } from 'express';
 import * as moment from 'moment';
 
 /**
- * @memberof BaseController
- * @function setLocals
- * @param {Request} req
- * @param {Response} res
- * @param {NextFunction} next
- * @returns {void}
+ * 言語設定
  */
 export function setLocals(req: Request, res: Response, next: NextFunction): void {
     res.locals.req = req;

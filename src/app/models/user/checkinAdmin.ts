@@ -5,9 +5,6 @@ interface IGroup {
 
 /**
  * 入場管理者ユーザー
- * @export
- * @class CheckinAdminUser
- * @extends {BaseUser}
  */
 export default class CheckinAdminUser {
     public group: IGroup;

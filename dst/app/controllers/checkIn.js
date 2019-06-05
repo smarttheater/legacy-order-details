@@ -36,12 +36,6 @@ const reservationService = new tttsapi.service.Reservation({
 /**
  * QRコード認証画面
  * @desc Rコードを読み取って結果を表示するための画面
- * @memberof checkIn
- * @function confirm
- * @param {Request} req
- * @param {Response} res
- * @param {NextFunction} next
- * @returns {Promise<void>}
  */
 function confirm(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -80,23 +74,19 @@ function confirmTest(req, res, next) {
 exports.confirmTest = confirmTest;
 /**
  * 予約情報取得
- * @memberof checkIn
- * @function getReservations
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
  */
 function getReservations(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const now = moment();
             // 予約を検索
-            const reservations = yield reservationService.search({
+            const searchReservationsResult = yield reservationService.search({
                 status: tttsapi.factory.reservationStatusType.ReservationConfirmed,
-                performanceId: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
+                performance: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
                 performanceStartThrough: now.toDate(),
                 performanceEndFrom: now.toDate()
             });
+            const reservations = searchReservationsResult.data;
             debug(reservations.length, 'reservations found.');
             const reservationsById = {};
             const reservationIdsByQrStr = {};
@@ -120,11 +110,6 @@ function getReservations(req, res) {
 exports.getReservations = getReservations;
 /**
  * 予約情報取得
- * @memberof checkIn
- * @function getReservation
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
  */
 function getReservation(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -158,11 +143,6 @@ function getReservation(req, res) {
 exports.getReservation = getReservation;
 /**
  * チェックイン作成
- * @memberof checkIn
- * @function addCheckIn
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
  */
 function addCheckIn(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -193,7 +173,6 @@ function addCheckIn(req, res) {
             res.status(http_status_1.CREATED).json(checkin);
         }
         catch (error) {
-            console.error(error);
             res.status(http_status_1.INTERNAL_SERVER_ERROR).json({
                 error: 'チェックイン情報作成失敗',
                 message: error.message
@@ -204,11 +183,6 @@ function addCheckIn(req, res) {
 exports.addCheckIn = addCheckIn;
 /**
  * チェックイン取り消し
- * @memberof checkIn
- * @function addCheckIn
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
  */
 function removeCheckIn(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -242,11 +216,7 @@ function removeCheckIn(req, res) {
 }
 exports.removeCheckIn = removeCheckIn;
 /**
- * QR文字列から予約情報取得
- * @memberof checkIn
- * @function getReservationByQR
- * @param {string} qr
- * @returns {Promise<any>}
+ * 文字列から予約情報取得
  */
 function getReservationByQR(qr) {
     return __awaiter(this, void 0, void 0, function* () {

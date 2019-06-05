@@ -49,12 +49,6 @@ if (process.env.API_CLIENT_ID === undefined) {
 }
 /**
  * 予約照会検索
- * @memberof inquiry
- * @function search
- * @param {Request} req
- * @param {Response} res
- * @param {NextFunction} next
- * @returns {Promise<void>}
  */
 function search(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -128,12 +122,6 @@ function search(req, res) {
 exports.search = search;
 /**
  * 予約照会結果画面(getのみ)
- * @memberof inquiry
- * @function result
- * @param {Request} req
- * @param {Response} res
- * @param {NextFunction} next
- * @returns {Promise<void>}
  */
 function result(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -175,11 +163,6 @@ function result(req, res, next) {
 exports.result = result;
 /**
  * 予約キャンセル処理
- * @memberof inquiry
- * @function cancel
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
  */
 // tslint:disable-next-line:max-func-body-length
 function cancel(req, res) {
@@ -261,9 +244,6 @@ function cancel(req, res) {
 exports.cancel = cancel;
 /**
  * 予約照会画面検証
- *
- * @param {Request} req
- * @param {string} type
  */
 function validate(req) {
     // 購入番号
@@ -276,10 +256,6 @@ function validate(req) {
 }
 /**
  * キャンセルメール本文取得
- * @function getCancelMail
- * @param {Request} req
- * @param {tttsapi.factory.reservation.event.IReservation[]}reservations
- * @returns {string}
  */
 function getCancelMail(req, reservations, fee) {
     const mail = [];
@@ -335,7 +311,7 @@ function getCancelMail(req, reservations, fee) {
     mail.push('');
     // ※よくあるご質問（ＦＡＱ）はこちら
     mail.push(req.__('EmailFAQURL'));
-    mail.push(conf.get('official_url_faq_by_locale')[locale]);
+    mail.push((conf.get('official_url_faq_by_locale'))[locale]);
     mail.push('');
     // なお、このメールは、「東京タワー トップデッキツアー」の予約システムでチケットをキャンセル…
     mail.push(req.__('EmailFoot1Can'));

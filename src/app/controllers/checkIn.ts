@@ -32,12 +32,6 @@ const reservationService = new tttsapi.service.Reservation({
 /**
  * QRコード認証画面
  * @desc Rコードを読み取って結果を表示するための画面
- * @memberof checkIn
- * @function confirm
- * @param {Request} req
- * @param {Response} res
- * @param {NextFunction} next
- * @returns {Promise<void>}
  */
 export async function confirm(req: Request, res: Response, next: NextFunction): Promise<void> {
     if (req === null) {
@@ -69,30 +63,26 @@ export async function confirmTest(req: Request, res: Response, next: NextFunctio
 
 /**
  * 予約情報取得
- * @memberof checkIn
- * @function getReservations
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
  */
 export async function getReservations(req: Request, res: Response): Promise<void> {
     try {
         const now = moment();
 
         // 予約を検索
-        const reservations = await reservationService.search({
+        const searchReservationsResult = await reservationService.search({
             status: tttsapi.factory.reservationStatusType.ReservationConfirmed,
-            performanceId: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
+            performance: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
             performanceStartThrough: now.toDate(),
             performanceEndFrom: now.toDate()
         });
+        const reservations = searchReservationsResult.data;
         debug(reservations.length, 'reservations found.');
 
         const reservationsById: {
-            [id: string]: tttsapi.factory.reservation.event.IReservation
+            [id: string]: tttsapi.factory.reservation.event.IReservation;
         } = {};
         const reservationIdsByQrStr: {
-            [qr: string]: string
+            [qr: string]: string;
         } = {};
         reservations.forEach((reservation) => {
             reservationsById[reservation.id] = reservation;
@@ -113,11 +103,6 @@ export async function getReservations(req: Request, res: Response): Promise<void
 
 /**
  * 予約情報取得
- * @memberof checkIn
- * @function getReservation
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
  */
 export async function getReservation(req: Request, res: Response): Promise<void> {
     if (req.checkinAdminUser === undefined) {
@@ -150,11 +135,6 @@ export async function getReservation(req: Request, res: Response): Promise<void>
 
 /**
  * チェックイン作成
- * @memberof checkIn
- * @function addCheckIn
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
  */
 export async function addCheckIn(req: Request, res: Response): Promise<void> {
     try {
@@ -186,7 +166,6 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
 
         res.status(CREATED).json(checkin);
     } catch (error) {
-        console.error(error);
         res.status(INTERNAL_SERVER_ERROR).json({
             error: 'チェックイン情報作成失敗',
             message: error.message
@@ -195,11 +174,6 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
 }
 /**
  * チェックイン取り消し
- * @memberof checkIn
- * @function addCheckIn
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
  */
 export async function removeCheckIn(req: Request, res: Response): Promise<void> {
     try {
@@ -233,11 +207,7 @@ export async function removeCheckIn(req: Request, res: Response): Promise<void> 
 }
 
 /**
- * QR文字列から予約情報取得
- * @memberof checkIn
- * @function getReservationByQR
- * @param {string} qr
- * @returns {Promise<any>}
+ * 文字列から予約情報取得
  */
 async function getReservationByQR(qr: string): Promise<tttsapi.factory.reservation.event.IReservation> {
     return reservationService.findById({ id: qr });

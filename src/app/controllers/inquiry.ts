@@ -50,12 +50,6 @@ if (process.env.API_CLIENT_ID === undefined) {
 
 /**
  * 予約照会検索
- * @memberof inquiry
- * @function search
- * @param {Request} req
- * @param {Response} res
- * @param {NextFunction} next
- * @returns {Promise<void>}
  */
 export async function search(req: Request, res: Response): Promise<void> {
     let message = '';
@@ -135,12 +129,6 @@ export async function search(req: Request, res: Response): Promise<void> {
 
 /**
  * 予約照会結果画面(getのみ)
- * @memberof inquiry
- * @function result
- * @param {Request} req
- * @param {Response} res
- * @param {NextFunction} next
- * @returns {Promise<void>}
  */
 export async function result(req: Request, res: Response, next: NextFunction): Promise<void> {
     const messageNotFound: string = req.__('NotFound');
@@ -185,11 +173,6 @@ export async function result(req: Request, res: Response, next: NextFunction): P
 
 /**
  * 予約キャンセル処理
- * @memberof inquiry
- * @function cancel
- * @param {Request} req
- * @param {Response} res
- * @returns {Promise<void>}
  */
 // tslint:disable-next-line:max-func-body-length
 export async function cancel(req: Request, res: Response): Promise<void> {
@@ -273,9 +256,6 @@ export async function cancel(req: Request, res: Response): Promise<void> {
 
 /**
  * 予約照会画面検証
- *
- * @param {Request} req
- * @param {string} type
  */
 function validate(req: Request): void {
     // 購入番号
@@ -292,10 +272,6 @@ function validate(req: Request): void {
 
 /**
  * キャンセルメール本文取得
- * @function getCancelMail
- * @param {Request} req
- * @param {tttsapi.factory.reservation.event.IReservation[]}reservations
- * @returns {string}
  */
 function getCancelMail(req: Request, reservations: tttsapi.factory.reservation.event.IReservation[], fee: number): string {
     const mail: string[] = [];
@@ -365,7 +341,7 @@ function getCancelMail(req: Request, reservations: tttsapi.factory.reservation.e
 
     // ※よくあるご質問（ＦＡＱ）はこちら
     mail.push(req.__('EmailFAQURL'));
-    mail.push((<any>conf.get('official_url_faq_by_locale'))[locale]);
+    mail.push((conf.get<any>('official_url_faq_by_locale'))[locale]);
     mail.push('');
 
     // なお、このメールは、「東京タワー トップデッキツアー」の予約システムでチケットをキャンセル…

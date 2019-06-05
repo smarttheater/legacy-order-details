@@ -2,9 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * 入場管理者ユーザー
- * @export
- * @class CheckinAdminUser
- * @extends {BaseUser}
  */
 class CheckinAdminUser {
     static PARSE(session) {
