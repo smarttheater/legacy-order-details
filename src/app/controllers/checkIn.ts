@@ -1,9 +1,7 @@
 /**
  * 入場コントローラー
  * 上映当日入場画面から使う機能はここにあります。
- * @namespace controllers.checkIn
  */
-
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
@@ -70,14 +68,14 @@ export async function getReservations(req: Request, res: Response): Promise<void
 
         // 予約を検索
         const searchReservationsResult = await reservationService.search({
-            limit: 1,
+            limit: 100,
             typeOf: tttsapi.factory.chevre.reservationType.EventReservation,
             status: tttsapi.factory.reservationStatusType.ReservationConfirmed,
             performance: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
             performanceStartThrough: now.toDate(),
             performanceEndFrom: now.toDate()
         });
-        const reservations = searchReservationsResult.data;
+        const reservations = searchReservationsResult.data.map(chevreReservation2ttts);
         debug(reservations.length, 'reservations found.');
 
         const reservationsById: {
@@ -116,10 +114,10 @@ export async function getReservation(req: Request, res: Response): Promise<void>
 
     try {
         const reservation = await getReservationByQR(req.params.qr);
-        if (reservation.status !== tttsapi.factory.reservationStatusType.ReservationConfirmed) {
+        if (reservation.reservationStatus !== tttsapi.factory.reservationStatusType.ReservationConfirmed) {
             res.status(NOT_FOUND).json(null);
         } else {
-            res.json(reservation);
+            res.json(chevreReservation2ttts(reservation));
         }
     } catch (error) {
         if (error.code === NOT_FOUND) {
@@ -133,6 +131,49 @@ export async function getReservation(req: Request, res: Response): Promise<void>
             message: error
         });
     }
+}
+
+function chevreReservation2ttts(params: tttsapi.factory.reservation.event.IReservation): tttsapi.factory.reservation.event.IReservation {
+    const ticketType = params.reservedTicket.ticketType;
+    const underName = params.underName;
+
+    let paymentMethod: tttsapi.factory.paymentMethodType | undefined;
+    if (underName !== undefined && Array.isArray(underName.identifier)) {
+        const paymentMethodProperty = underName.identifier.find((p) => p.name === 'paymentMethod');
+        if (paymentMethodProperty !== undefined) {
+            paymentMethod = <tttsapi.factory.paymentMethodType>paymentMethodProperty.value;
+        }
+    }
+
+    params.qr_str = params.id;
+    params.payment_no = params.reservationNumber;
+    params.performance = params.reservationFor.id;
+    params.performance_day = moment(params.reservationFor.startDate)
+        .tz('Asia/Tokyo')
+        .format('YYYYMMDD');
+    params.performance_end_date = moment(params.reservationFor.endDate)
+        .toDate();
+    params.performance_end_time = moment(params.reservationFor.endDate)
+        .tz('Asia/Tokyo')
+        .format('HHmm');
+    params.performance_start_date = moment(params.reservationFor.startDate)
+        .toDate();
+    params.performance_start_time = moment(params.reservationFor.startDate)
+        .tz('Asia/Tokyo')
+        .format('HHmm');
+    params.charge = (ticketType.priceSpecification !== undefined) ? ticketType.priceSpecification.price : 0;
+    params.payment_method = (paymentMethod !== undefined) ? paymentMethod : <any>'';
+    params.seat_code = (params.reservedTicket.ticketedSeat !== undefined) ? params.reservedTicket.ticketedSeat.seatNumber : '';
+    params.ticket_type = ticketType.identifier;
+    params.ticket_type_charge = (ticketType.priceSpecification !== undefined) ? ticketType.priceSpecification.price : 0;
+    params.ticket_type_name = <any>ticketType.name;
+    params.purchaser_email = (underName !== undefined && underName.email !== undefined) ? underName.email : '';
+    params.purchaser_first_name = (underName !== undefined && underName.givenName !== undefined) ? underName.givenName : '';
+    params.purchaser_last_name = (underName !== undefined && underName.familyName !== undefined) ? underName.familyName : '';
+    params.purchaser_tel = (underName !== undefined && underName.telephone !== undefined) ? underName.telephone : '';
+    params.purchaser_name = (underName !== undefined && underName.name !== undefined) ? underName.name : '';
+
+    return params;
 }
 
 /**
