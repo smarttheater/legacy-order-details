@@ -2,9 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * デフォルトルーター
- *
- * @function router
- * @ignore
  */
 const conf = require("config");
 const baseController = require("../controllers/base");

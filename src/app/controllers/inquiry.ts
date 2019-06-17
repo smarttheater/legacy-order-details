@@ -1,14 +1,12 @@
 /**
  * 予約照会コントローラー
- * @namespace controllers.inquiry
  */
-
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import * as conf from 'config';
 import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
 import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR } from 'http-status';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import * as numeral from 'numeral';
 
 import * as Text from '../../common/Const/Text';
@@ -20,11 +18,7 @@ const authClient = new tttsapi.auth.ClientCredentials({
     domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: <string>process.env.API_CLIENT_ID,
     clientSecret: <string>process.env.API_CLIENT_SECRET,
-    scopes: [
-        `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/orders.read-only`,
-        `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/performances.read-only`,
-        `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/transactions`
-    ],
+    scopes: [],
     state: ''
 });
 
@@ -79,10 +73,7 @@ export async function search(req: Request, res: Response): Promise<void> {
                 });
                 debug('order found.', order.orderNumber);
 
-                let reservations = order.acceptedOffers.map((o) => o.itemOffered);
-
-                // "予約"のデータのみセット(Extra分を削除)
-                reservations = reservations.filter((r) => r.status === tttsapi.factory.reservationStatusType.ReservationConfirmed);
+                const reservations = order.acceptedOffers.map((o) => o.itemOffered);
 
                 // 返品済であれば入力ミス
                 if (order.orderStatus === tttsapi.factory.orderStatus.OrderReturned) {
@@ -92,7 +83,8 @@ export async function search(req: Request, res: Response): Promise<void> {
                 // 結果をセッションに保管して結果画面へ遷移
                 (<Express.Session>req.session).inquiryResult = {
                     printToken: order.printToken,
-                    reservations: reservations
+                    reservations: reservations,
+                    order: order
                 };
                 res.redirect('/inquiry/search/result');
 
@@ -144,7 +136,9 @@ export async function result(req: Request, res: Response, next: NextFunction): P
         }
 
         // 予約ソート
-        const reservations = inquiryResult.reservations.sort((a, b) => (a.ticket_type < b.ticket_type) ? 0 : 1);
+        const reservations = inquiryResult.reservations.sort(
+            (a, b) => (a.reservedTicket.ticketType.identifier < b.reservedTicket.ticketType.identifier) ? 0 : 1
+        );
         if (!Array.isArray(reservations) || reservations.length === 0) {
             next(new Error(messageNotFound));
 
@@ -159,6 +153,7 @@ export async function result(req: Request, res: Response, next: NextFunction): P
         // 画面描画
         res.render('inquiry/result', {
             printToken: inquiryResult.printToken,
+            order: inquiryResult.order,
             moment: moment,
             reservations: reservations,
             ticketInfos: ticketInfos,
@@ -176,8 +171,9 @@ export async function result(req: Request, res: Response, next: NextFunction): P
  */
 // tslint:disable-next-line:max-func-body-length
 export async function cancel(req: Request, res: Response): Promise<void> {
-    // 予約取得
     let reservations: tttsapi.factory.reservation.event.IReservation[];
+    let order: tttsapi.factory.order.IOrder;
+
     try {
         const inquiryResult = (<Express.Session>req.session).inquiryResult;
         if (inquiryResult === undefined) {
@@ -185,6 +181,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         }
 
         reservations = inquiryResult.reservations;
+        order = inquiryResult.order;
     } catch (err) {
         res.status(INTERNAL_SERVER_ERROR).json({
             errors: [{
@@ -200,8 +197,8 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     try {
         // キャンセルリクエスト
         returnOrderTransaction = await returnOrderTransactionService.confirm({
-            performanceDay: reservations[0].performance_day,
-            paymentNo: reservations[0].payment_no,
+            performanceDay: moment(reservations[0].reservationFor.startDate).tz('Asia/Tokyo').format('YYYYMMDD'),
+            paymentNo: reservations[0].reservationNumber,
             cancellationFee: cancellationFee,
             forcibly: false,
             reason: tttsapi.factory.transaction.returnOrder.Reason.Customer
@@ -231,11 +228,11 @@ export async function cancel(req: Request, res: Response): Promise<void> {
                 email: conf.get<string>('email.from')
             },
             toRecipient: {
-                name: reservations[0].purchaser_name,
-                email: reservations[0].purchaser_email
+                name: order.customer.name,
+                email: order.customer.email
             },
             about: req.__('EmailTitleCan'),
-            text: getCancelMail(req, reservations, cancellationFee)
+            text: getCancelMail(req, order, reservations, cancellationFee)
         };
 
         await returnOrderTransactionService.sendEmailNotification({
@@ -273,7 +270,12 @@ function validate(req: Request): void {
 /**
  * キャンセルメール本文取得
  */
-function getCancelMail(req: Request, reservations: tttsapi.factory.reservation.event.IReservation[], fee: number): string {
+function getCancelMail(
+    req: Request,
+    order: tttsapi.factory.order.IOrder,
+    reservations: tttsapi.factory.reservation.event.IReservation[],
+    fee: number
+): string {
     const mail: string[] = [];
     const locale: string = (<Express.Session>req.session).locale;
 
@@ -283,8 +285,8 @@ function getCancelMail(req: Request, reservations: tttsapi.factory.reservation.e
 
     // 姓名編集: 日本語の時は"姓名"他は"名姓"
     const purchaserName = (locale === 'ja') ?
-        `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}` :
-        `${reservations[0].purchaser_first_name} ${reservations[0].purchaser_last_name}`;
+        `${order.customer.familyName} ${order.customer.givenName}` :
+        `${order.customer.givenName} ${order.customer.familyName}`;
     // XXXX XXXX 様
     mail.push(req.__('EmailDestinationName{{name}}', { name: purchaserName }));
     mail.push('');
@@ -292,7 +294,9 @@ function getCancelMail(req: Request, reservations: tttsapi.factory.reservation.e
     // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
     mail.push(req.__('EmailHead1').replace(
         '$theater_name$',
-        (locale === 'ja') ? reservations[0].theater_name.ja : reservations[0].theater_name.en
+        (locale === 'ja')
+            ? reservations[0].reservationFor.superEvent.location.name.ja
+            : reservations[0].reservationFor.superEvent.location.name.en
     ));
 
     // お客様がキャンセルされましたチケットの情報は下記の通りです。
@@ -300,12 +304,15 @@ function getCancelMail(req: Request, reservations: tttsapi.factory.reservation.e
     mail.push('');
 
     // 購入番号
-    mail.push(`${req.__('PaymentNo')} : ${reservations[0].payment_no}`);
+    mail.push(`${req.__('PaymentNo')} : ${reservations[0].reservationNumber}`);
 
     // ご来塔日時
-    const day: string = moment(reservations[0].performance_day, 'YYYYMMDD').format('YYYY/MM/DD');
-    // tslint:disable-next-line:no-magic-numbers
-    const time: string = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
+    const day: string = moment(reservations[0].reservationFor.startDate)
+        .tz('Asia/Tokyo')
+        .format('YYYY/MM/DD');
+    const time: string = moment(reservations[0].reservationFor.startDate)
+        .tz('Asia/Tokyo')
+        .format('HH:mm');
     mail.push(`${req.__('EmailReserveDate')} : ${day} ${time}`);
     // 券種、枚数
     mail.push(`${req.__('TicketType')} ${req.__('TicketCount')}`);
@@ -317,7 +324,7 @@ function getCancelMail(req: Request, reservations: tttsapi.factory.reservation.e
     });
 
     // 合計金額算出
-    const price = reservations.reduce((a, b) => a + b.charge, 0);
+    const price = order.price;
 
     mail.push('-------------------------------------');
     // 合計枚数

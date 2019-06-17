@@ -16,7 +16,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 const createDebug = require("debug");
 const http_status_1 = require("http-status");
-const moment = require("moment");
+const moment = require("moment-timezone");
 const _ = require("underscore");
 const debug = createDebug('ttts-authentication:controllers:checkIn');
 const authClient = new tttsapi.auth.ClientCredentials({
@@ -81,6 +81,8 @@ function getReservations(req, res) {
             const now = moment();
             // 予約を検索
             const searchReservationsResult = yield reservationService.search({
+                limit: 1,
+                typeOf: tttsapi.factory.chevre.reservationType.EventReservation,
                 status: tttsapi.factory.reservationStatusType.ReservationConfirmed,
                 performance: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
                 performanceStartThrough: now.toDate(),
@@ -92,7 +94,7 @@ function getReservations(req, res) {
             const reservationIdsByQrStr = {};
             reservations.forEach((reservation) => {
                 reservationsById[reservation.id] = reservation;
-                reservationIdsByQrStr[reservation.qr_str] = reservation.id;
+                reservationIdsByQrStr[reservation.id] = reservation.id;
             });
             res.json({
                 error: null,

@@ -26,7 +26,14 @@ body {
 moment.locale('ja');
 for (let reservation of reservations) {
     // ※決済手段が「無料招待」と「トップデッキのみ（手売り）」の予約はチケット価格が非表示
-    let isNoCharge = /^(Invitation|OTC)$/.test(reservation.payment_method);
+    let paymentMethod = '';
+    const paymentMethodProperty = reservation.underName.identifier.find(function (p) {
+        return p.name === 'paymentMethod';
+    });
+    if (paymentMethodProperty !== undefined) {
+        paymentMethod = paymentMethodProperty.value;
+    }
+    let isNoCharge = /^(Invitation|OTC)$/.test(paymentMethod);
 %>
 <div class="pcthermarlprintcontent">
 
@@ -39,21 +46,21 @@ for (let reservation of reservations) {
     <p class="pr-guide">QRコードを入場時にかざしてください</p>
 
     <p class="pr-qrcode">
-        <!-- <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>"> -->
-        <!-- <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&cht=qr&data=<%= reservation.qr_str %>"> -->
-        <span class="codeimg-barcode" data-qrcode=<%= reservation.qr_str %>></span>
+        <!-- <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.id %>"> -->
+        <!-- <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&cht=qr&data=<%= reservation.id %>"> -->
+        <span class="codeimg-barcode" data-qrcode=<%= reservation.id %>></span>
     </p>
 
     <div class="pr-paymentno">
         <h3>購入番号<br>-PAYMENT NUMBER-</h3>
-        <strong><%- reservation.payment_no %></strong>
+        <strong><%- reservation.reservationNumber %></strong>
     </div>
 
     <div class="pr-date">
         <h3>ツアー予約日時<br>-DATE-</h3>
         <p>
-            <%- moment(reservation.performance_day, 'YYYYMMDD').format('YYYY/MM/DD') %><br>
-            <%- moment(reservation.performance_start_time, 'HHmm').format('HH:mm') + '-' + moment(reservation.performance_end_time, 'HHmm').format('HH:mm') %>
+            <%- moment(reservation.reservationFor.startDate).format('YYYY/MM/DD') %><br>
+            <%- moment(reservation.reservationFor.startDate).format('HH:mm') + '-' + moment(reservation.reservationFor.endDate).format('HH:mm') %>
         </p>
     </div>
 
@@ -67,9 +74,9 @@ for (let reservation of reservations) {
     <div class="pr-ticket">
         <h3>券種・金額<br>-TICKET-</h3>
         <p>
-            <%- reservation.ticket_type_name.ja %><br>
-            <%- reservation.ticket_type_name.en %><br>
-            <%- ((!isNoCharge) ? ('￥' + reservation.ticket_type_charge + ' ') : '') + '(' + reservation.seat_code + ')' %>
+            <%- reservation.reservedTicket.ticketType.name.ja %><br>
+            <%- reservation.reservedTicket.ticketType.name.en %><br>
+            <%- ((!isNoCharge) ? ('￥' + reservation.reservedTicket.ticketType.priceSpecification.price + ' ') : '') + '(' + reservation.reservedTicket.ticketedSeat.seatNumber + ')' %>
         </p>
     </div>
 

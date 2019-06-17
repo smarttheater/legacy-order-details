@@ -27,7 +27,14 @@ body {
 moment.locale('ja');
 for (let reservation of reservations) {
     // ※決済手段が「無料招待」と「トップデッキのみ（手売り）」の予約はチケット価格が非表示
-    let isNoCharge = /^(Invitation|OTC)$/.test(reservation.payment_method);
+    let paymentMethod = '';
+    const paymentMethodProperty = reservation.underName.identifier.find(function (p) {
+        return p.name === 'paymentMethod';
+    });
+    if (paymentMethodProperty !== undefined) {
+        paymentMethod = paymentMethodProperty.value;
+    }
+    let isNoCharge = /^(Invitation|OTC)$/.test(paymentMethod);
 %>
 <div class="pcthermarl72mmprintcontent">
 
@@ -42,8 +49,8 @@ for (let reservation of reservations) {
         <div class="date">
             <p>
                 ツアー予約日時<br>-DATE-<br>
-                <%- moment(reservation.performance_day, 'YYYYMMDD').format('YYYY/MM/DD') %><br>
-                <%- moment(reservation.performance_start_time, 'HHmm').format('HH:mm') + '-' + moment(reservation.performance_end_time, 'HHmm').format('HH:mm') %>
+                <%- moment(reservation.reservationFor.startDate).format('YYYY/MM/DD') %><br>
+                <%- moment(reservation.reservationFor.startDate).format('HH:mm') + '-' + moment(reservation.reservationFor.endDate).format('HH:mm') %>
             </p>
         </div>
         <div class="tournumber">
@@ -56,21 +63,21 @@ for (let reservation of reservations) {
     </div>
 
     <div class="ticket">
-        <h2><%- reservation.ticket_type_name.ja.replace(/\(/g, '<br>(') %></h2>
+        <h2><%- reservation.reservedTicket.ticketType.name.ja.replace(/\(/g, '<br>(') %></h2>
         <p>
-            <%- reservation.ticket_type_name.en.replace(/\(/g, '<br>(') %><br>
-            <%- ((!isNoCharge) ? ('￥' + reservation.ticket_type_charge + ' ') : '') + '(' + reservation.seat_code + ')' %>
+            <%- reservation.reservedTicket.ticketType.name.en.replace(/\(/g, '<br>(') %><br>
+            <%- ((!isNoCharge) ? ('￥' + reservation.reservedTicket.ticketType.priceSpecification.price + ' ') : '') + '(' + reservation.reservedTicket.ticketedSeat.seatNumber + ')' %>
         </p>
     </div>
 
     <p class="qr">
-        <!-- <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>"> -->
-        <!-- <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&cht=qr&data=<%= reservation.qr_str %>"> -->
-        <span class="codeimg-barcode" data-qrcode=<%= reservation.qr_str %>></span>
+        <!-- <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.id %>"> -->
+        <!-- <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&cht=qr&data=<%= reservation.id %>"> -->
+        <span class="codeimg-barcode" data-qrcode=<%= reservation.id %>></span>
     </p>
 
     <p class="footer">
-        購入番号 -PAYMENT NUMBER- <%- reservation.payment_no %><br>
+        購入番号 -PAYMENT NUMBER- <%- reservation.reservationNumber %><br>
         <%- moment().add(9, 'hour').format('YYYY/MM/DD HH:mm:ss') %> (JST)
     </p>
 

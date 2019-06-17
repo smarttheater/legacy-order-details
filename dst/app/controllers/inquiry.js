@@ -1,8 +1,4 @@
 "use strict";
-/**
- * 予約照会コントローラー
- * @namespace controllers.inquiry
- */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -12,11 +8,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * 予約照会コントローラー
+ */
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 const conf = require("config");
 const createDebug = require("debug");
 const http_status_1 = require("http-status");
-const moment = require("moment");
+const moment = require("moment-timezone");
 const numeral = require("numeral");
 const Text = require("../../common/Const/Text");
 const ticket = require("../../common/Util/ticket");
@@ -25,11 +24,7 @@ const authClient = new tttsapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: process.env.API_CLIENT_ID,
     clientSecret: process.env.API_CLIENT_SECRET,
-    scopes: [
-        `${process.env.API_RESOURECE_SERVER_IDENTIFIER}/orders.read-only`,
-        `${process.env.API_RESOURECE_SERVER_IDENTIFIER}/performances.read-only`,
-        `${process.env.API_RESOURECE_SERVER_IDENTIFIER}/transactions`
-    ],
+    scopes: [],
     state: ''
 });
 const returnOrderTransactionService = new tttsapi.service.transaction.ReturnOrder({
@@ -75,9 +70,7 @@ function search(req, res) {
                         telephone: req.body.purchaserTel
                     });
                     debug('order found.', order.orderNumber);
-                    let reservations = order.acceptedOffers.map((o) => o.itemOffered);
-                    // "予約"のデータのみセット(Extra分を削除)
-                    reservations = reservations.filter((r) => r.status === tttsapi.factory.reservationStatusType.ReservationConfirmed);
+                    const reservations = order.acceptedOffers.map((o) => o.itemOffered);
                     // 返品済であれば入力ミス
                     if (order.orderStatus === tttsapi.factory.orderStatus.OrderReturned) {
                         throw new Error(req.__('MistakeInput'));
@@ -85,7 +78,8 @@ function search(req, res) {
                     // 結果をセッションに保管して結果画面へ遷移
                     req.session.inquiryResult = {
                         printToken: order.printToken,
-                        reservations: reservations
+                        reservations: reservations,
+                        order: order
                     };
                     res.redirect('/inquiry/search/result');
                     return;
@@ -135,7 +129,7 @@ function result(req, res, next) {
                 throw new Error(messageNotFound);
             }
             // 予約ソート
-            const reservations = inquiryResult.reservations.sort((a, b) => (a.ticket_type < b.ticket_type) ? 0 : 1);
+            const reservations = inquiryResult.reservations.sort((a, b) => (a.reservedTicket.ticketType.identifier < b.reservedTicket.ticketType.identifier) ? 0 : 1);
             if (!Array.isArray(reservations) || reservations.length === 0) {
                 next(new Error(messageNotFound));
                 return;
@@ -147,6 +141,7 @@ function result(req, res, next) {
             // 画面描画
             res.render('inquiry/result', {
                 printToken: inquiryResult.printToken,
+                order: inquiryResult.order,
                 moment: moment,
                 reservations: reservations,
                 ticketInfos: ticketInfos,
@@ -167,14 +162,15 @@ exports.result = result;
 // tslint:disable-next-line:max-func-body-length
 function cancel(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        // 予約取得
         let reservations;
+        let order;
         try {
             const inquiryResult = req.session.inquiryResult;
             if (inquiryResult === undefined) {
                 throw new Error(req.__('NotFound'));
             }
             reservations = inquiryResult.reservations;
+            order = inquiryResult.order;
         }
         catch (err) {
             res.status(http_status_1.INTERNAL_SERVER_ERROR).json({
@@ -189,8 +185,8 @@ function cancel(req, res) {
         try {
             // キャンセルリクエスト
             returnOrderTransaction = yield returnOrderTransactionService.confirm({
-                performanceDay: reservations[0].performance_day,
-                paymentNo: reservations[0].payment_no,
+                performanceDay: moment(reservations[0].reservationFor.startDate).tz('Asia/Tokyo').format('YYYYMMDD'),
+                paymentNo: reservations[0].reservationNumber,
                 cancellationFee: cancellationFee,
                 forcibly: false,
                 reason: tttsapi.factory.transaction.returnOrder.Reason.Customer
@@ -220,11 +216,11 @@ function cancel(req, res) {
                     email: conf.get('email.from')
                 },
                 toRecipient: {
-                    name: reservations[0].purchaser_name,
-                    email: reservations[0].purchaser_email
+                    name: order.customer.name,
+                    email: order.customer.email
                 },
                 about: req.__('EmailTitleCan'),
-                text: getCancelMail(req, reservations, cancellationFee)
+                text: getCancelMail(req, order, reservations, cancellationFee)
             };
             yield returnOrderTransactionService.sendEmailNotification({
                 transactionId: returnOrderTransaction.id,
@@ -257,7 +253,7 @@ function validate(req) {
 /**
  * キャンセルメール本文取得
  */
-function getCancelMail(req, reservations, fee) {
+function getCancelMail(req, order, reservations, fee) {
     const mail = [];
     const locale = req.session.locale;
     // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
@@ -265,22 +261,27 @@ function getCancelMail(req, reservations, fee) {
     mail.push('');
     // 姓名編集: 日本語の時は"姓名"他は"名姓"
     const purchaserName = (locale === 'ja') ?
-        `${reservations[0].purchaser_last_name} ${reservations[0].purchaser_first_name}` :
-        `${reservations[0].purchaser_first_name} ${reservations[0].purchaser_last_name}`;
+        `${order.customer.familyName} ${order.customer.givenName}` :
+        `${order.customer.givenName} ${order.customer.familyName}`;
     // XXXX XXXX 様
     mail.push(req.__('EmailDestinationName{{name}}', { name: purchaserName }));
     mail.push('');
     // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
-    mail.push(req.__('EmailHead1').replace('$theater_name$', (locale === 'ja') ? reservations[0].theater_name.ja : reservations[0].theater_name.en));
+    mail.push(req.__('EmailHead1').replace('$theater_name$', (locale === 'ja')
+        ? reservations[0].reservationFor.superEvent.location.name.ja
+        : reservations[0].reservationFor.superEvent.location.name.en));
     // お客様がキャンセルされましたチケットの情報は下記の通りです。
     mail.push(req.__('EmailHead2Can'));
     mail.push('');
     // 購入番号
-    mail.push(`${req.__('PaymentNo')} : ${reservations[0].payment_no}`);
+    mail.push(`${req.__('PaymentNo')} : ${reservations[0].reservationNumber}`);
     // ご来塔日時
-    const day = moment(reservations[0].performance_day, 'YYYYMMDD').format('YYYY/MM/DD');
-    // tslint:disable-next-line:no-magic-numbers
-    const time = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
+    const day = moment(reservations[0].reservationFor.startDate)
+        .tz('Asia/Tokyo')
+        .format('YYYY/MM/DD');
+    const time = moment(reservations[0].reservationFor.startDate)
+        .tz('Asia/Tokyo')
+        .format('HH:mm');
     mail.push(`${req.__('EmailReserveDate')} : ${day} ${time}`);
     // 券種、枚数
     mail.push(`${req.__('TicketType')} ${req.__('TicketCount')}`);
@@ -290,7 +291,7 @@ function getCancelMail(req, reservations, fee) {
         mail.push(ticketInfos[key].info);
     });
     // 合計金額算出
-    const price = reservations.reduce((a, b) => a + b.charge, 0);
+    const price = order.price;
     mail.push('-------------------------------------');
     // 合計枚数
     mail.push(req.__('EmailTotalTicketCount{{n}}', { n: reservations.length.toString() }));

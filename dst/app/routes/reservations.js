@@ -1,8 +1,4 @@
 "use strict";
-/**
- * 予約ルーター
- * @ignore
- */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -12,6 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * 予約ルーター
+ */
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 const createDebug = require("debug");
 const express_1 = require("express");
@@ -22,9 +21,7 @@ const authClient = new tttsapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: process.env.API_CLIENT_ID,
     clientSecret: process.env.API_CLIENT_SECRET,
-    scopes: [
-        `${process.env.API_RESOURECE_SERVER_IDENTIFIER}/reservations.read-only`
-    ],
+    scopes: [],
     state: ''
 });
 const reservationService = new tttsapi.service.Reservation({
@@ -48,18 +45,18 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(this, void 0, voi
             else {
                 debug('token verified.', decoded.object);
                 const ids = decoded.object;
-                let reservations = yield Promise.all(ids.map((id) => __awaiter(this, void 0, void 0, function* () { return reservationService.findById({ id: id }); })));
-                reservations = reservations.filter((r) => r.status === tttsapi.factory.reservationStatusType.ReservationConfirmed);
+                let reservations = yield Promise.all(ids.map((id) => __awaiter(this, void 0, void 0, function* () { return reservationService.findById({ id }); })));
+                reservations = reservations.filter((r) => r.reservationStatus === tttsapi.factory.reservationStatusType.ReservationConfirmed);
                 if (reservations.length === 0) {
                     next(new Error(req.__('NotFound')));
                     return;
                 }
                 // チケットコード順にソート
                 reservations.sort((a, b) => {
-                    if (a.ticket_type < b.ticket_type) {
+                    if (a.reservedTicket.ticketType.identifier < b.reservedTicket.ticketType.identifier) {
                         return -1;
                     }
-                    if (a.ticket_type > b.ticket_type) {
+                    if (a.reservedTicket.ticketType.identifier > b.reservedTicket.ticketType.identifier) {
                         return 1;
                     }
                     return 0;

@@ -37,7 +37,14 @@ if (momentLocale === 'zh-hans') {
 moment.locale(momentLocale);
 for (let reservation of reservations) {
     // ※決済手段が「無料招待」と「トップデッキのみ（手売り）」の予約はチケット価格が非表示
-    let isNoCharge = /^(Invitation|OTC)$/.test(reservation.payment_method);
+    let paymentMethod = '';
+    const paymentMethodProperty = reservation.underName.identifier.find(function (p) {
+        return p.name === 'paymentMethod';
+    });
+    if (paymentMethodProperty !== undefined) {
+        paymentMethod = paymentMethodProperty.value;
+    }
+    let isNoCharge = /^(Invitation|OTC)$/.test(paymentMethod);
 %>
 <div class="printcontent">
 
@@ -65,9 +72,9 @@ for (let reservation of reservations) {
                 <%- __('SpanContainedTicketQRInfo') %>
             </h2>
             <div class="wrapper-qrimg pr-bg">
-                <!-- <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>"> -->
-                <!-- <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&cht=qr&data=<%= reservation.qr_str %>"> -->
-                <span class="codeimg-barcode" data-qrcode=<%= reservation.qr_str %>></span>
+                <!-- <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.id %>"> -->
+                <!-- <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&cht=qr&data=<%= reservation.id %>"> -->
+                <span class="codeimg-barcode" data-qrcode=<%= reservation.id %>></span>
             </div>
         </div>
     </div>
@@ -81,22 +88,22 @@ for (let reservation of reservations) {
                     <td class="main-info">
                         <div class="pr-rsrvnum">
                         <h3><%- __('PaymentNo') %></h3>
-                            <strong><%- reservation.payment_no %></strong>
+                            <strong><%- reservation.reservationNumber %></strong>
                         </div>
 
                         <div class="pr-day">
                             <h3><%- __('PurchaseContentDay') %></h3>
-                            <strong><%- moment(reservation.performance_day, 'YYYYMMDD').format('LL (ddd)') %></strong>
+                            <strong><%- moment(reservation.reservationFor.startDate).format('LL (ddd)') %></strong>
                         </div>
 
                         <div class="pr-time">
                             <h3><%- __('PurchaseContentTime') %></h3>
-                            <strong><%- moment(reservation.performance_start_time, 'HHmm').format('HH:mm') %> - <%- moment(reservation.performance_end_time, 'HHmm').format('HH:mm') %> (JST)</strong>
+                            <strong><%- moment(reservation.reservationFor.startDate).format('HH:mm') %> - <%- moment(reservation.reservationFor.endDate).format('HH:mm') %> (JST)</strong>
                         </div>
 
                         <div class="pr-entrytime">
                             <h3><%- __('PurchaseEntryTime') %></h3>
-                            <strong><%- moment(reservation.performance_start_time, 'HHmm').format('HH:mm') %> - <%- moment(reservation.performance_end_time, 'HHmm').add(5, 'minute').format('HH:mm') %> (JST)</strong>
+                            <strong><%- moment(reservation.reservationFor.startDate).format('HH:mm') %> - <%- moment(reservation.reservationFor.endDate).add(5, 'minute').format('HH:mm') %> (JST)</strong>
                         </div>
 
                         <div class="pr-tournumber">
@@ -106,7 +113,7 @@ for (let reservation of reservations) {
 
                         <div class="pr-ticket">
                             <h3><%- __('TicketType') %></h3>
-                            <strong><span class="ticketname"><%- reservation.ticket_type_name[locale] %></span> / <%- ((!isNoCharge) ? '<span class="is-ja">&yen;</span>' + reservation.ticket_type_charge + '<span class="is-not-ja"> JPY</span>&nbsp;' : '') %>(<%- reservation.seat_code %>)</strong>
+                            <strong><span class="ticketname"><%- reservation.reservedTicket.ticketType.name[locale] %></span> / <%- ((!isNoCharge) ? '<span class="is-ja">&yen;</span>' + reservation.reservedTicket.ticketType.priceSpecification.price + '<span class="is-not-ja"> JPY</span>&nbsp;' : '') %>(<%- reservation.reservedTicket.ticketedSeat.seatNumber %>)</strong>
                         </div>
 
                         <div class="pr-term">
