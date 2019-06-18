@@ -15,6 +15,7 @@ const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 const createDebug = require("debug");
 const express_1 = require("express");
 const jwt = require("jsonwebtoken");
+const reservation_1 = require("../../common/Util/reservation");
 const reservationsRouter = express_1.Router();
 const debug = createDebug('ttts-authentication:routes:reservations');
 const authClient = new tttsapi.auth.ClientCredentials({
@@ -60,7 +61,8 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(this, void 0, voi
                         return 1;
                     }
                     return 0;
-                });
+                })
+                    .map(reservation_1.chevreReservation2ttts);
                 const output = req.query.output;
                 switch (output) {
                     // サーマル印刷 (72mm幅プレプリント厚紙)

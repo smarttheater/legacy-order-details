@@ -28,7 +28,7 @@
                             const start = moment(reservations[0].reservationFor.startDate).tz('Asia/Tokyo').format('HH:mm');
                             const end = moment(reservations[0].reservationFor.endDate).tz('Asia/Tokyo').format('HH:mm');
                         %>
-                        <%- day.format('LL(ddd) ') %> <%- start %>～<%- end %>
+                        <%- day.tz('Asia/Tokyo').format('LL(ddd) ') %> <%- start %>～<%- end %>
                         <hr>
 
                         <h4><%- __('TourNumber') %></h4>

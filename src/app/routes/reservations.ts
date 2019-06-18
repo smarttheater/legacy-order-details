@@ -6,6 +6,8 @@ import * as createDebug from 'debug';
 import { Router } from 'express';
 import * as jwt from 'jsonwebtoken';
 
+import { chevreReservation2ttts } from '../../common/Util/reservation';
+
 const reservationsRouter = Router();
 
 const debug = createDebug('ttts-authentication:routes:reservations');
@@ -65,7 +67,8 @@ reservationsRouter.get(
                         }
 
                         return 0;
-                    });
+                    })
+                        .map(chevreReservation2ttts);
 
                     const output = req.query.output;
                     switch (output) {

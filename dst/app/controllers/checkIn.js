@@ -17,6 +17,7 @@ const createDebug = require("debug");
 const http_status_1 = require("http-status");
 const moment = require("moment-timezone");
 const _ = require("underscore");
+const reservation_1 = require("../../common/Util/reservation");
 const debug = createDebug('ttts-authentication:controllers:checkIn');
 const authClient = new tttsapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
@@ -87,7 +88,7 @@ function getReservations(req, res) {
                 performanceStartThrough: now.toDate(),
                 performanceEndFrom: now.toDate()
             });
-            const reservations = searchReservationsResult.data.map(chevreReservation2ttts);
+            const reservations = searchReservationsResult.data.map(reservation_1.chevreReservation2ttts);
             debug(reservations.length, 'reservations found.');
             const reservationsById = {};
             const reservationIdsByQrStr = {};
@@ -126,7 +127,7 @@ function getReservation(req, res) {
                 res.status(http_status_1.NOT_FOUND).json(null);
             }
             else {
-                res.json(chevreReservation2ttts(reservation));
+                res.json(reservation_1.chevreReservation2ttts(reservation));
             }
         }
         catch (error) {
@@ -142,45 +143,6 @@ function getReservation(req, res) {
     });
 }
 exports.getReservation = getReservation;
-function chevreReservation2ttts(params) {
-    const ticketType = params.reservedTicket.ticketType;
-    const underName = params.underName;
-    let paymentMethod;
-    if (underName !== undefined && Array.isArray(underName.identifier)) {
-        const paymentMethodProperty = underName.identifier.find((p) => p.name === 'paymentMethod');
-        if (paymentMethodProperty !== undefined) {
-            paymentMethod = paymentMethodProperty.value;
-        }
-    }
-    params.qr_str = params.id;
-    params.payment_no = params.reservationNumber;
-    params.performance = params.reservationFor.id;
-    params.performance_day = moment(params.reservationFor.startDate)
-        .tz('Asia/Tokyo')
-        .format('YYYYMMDD');
-    params.performance_end_date = moment(params.reservationFor.endDate)
-        .toDate();
-    params.performance_end_time = moment(params.reservationFor.endDate)
-        .tz('Asia/Tokyo')
-        .format('HHmm');
-    params.performance_start_date = moment(params.reservationFor.startDate)
-        .toDate();
-    params.performance_start_time = moment(params.reservationFor.startDate)
-        .tz('Asia/Tokyo')
-        .format('HHmm');
-    params.charge = (ticketType.priceSpecification !== undefined) ? ticketType.priceSpecification.price : 0;
-    params.payment_method = (paymentMethod !== undefined) ? paymentMethod : '';
-    params.seat_code = (params.reservedTicket.ticketedSeat !== undefined) ? params.reservedTicket.ticketedSeat.seatNumber : '';
-    params.ticket_type = ticketType.identifier;
-    params.ticket_type_charge = (ticketType.priceSpecification !== undefined) ? ticketType.priceSpecification.price : 0;
-    params.ticket_type_name = ticketType.name;
-    params.purchaser_email = (underName !== undefined && underName.email !== undefined) ? underName.email : '';
-    params.purchaser_first_name = (underName !== undefined && underName.givenName !== undefined) ? underName.givenName : '';
-    params.purchaser_last_name = (underName !== undefined && underName.familyName !== undefined) ? underName.familyName : '';
-    params.purchaser_tel = (underName !== undefined && underName.telephone !== undefined) ? underName.telephone : '';
-    params.purchaser_name = (underName !== undefined && underName.name !== undefined) ? underName.name : '';
-    return params;
-}
 /**
  * チェックイン作成
  */

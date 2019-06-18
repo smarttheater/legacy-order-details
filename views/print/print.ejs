@@ -93,17 +93,17 @@ for (let reservation of reservations) {
 
                         <div class="pr-day">
                             <h3><%- __('PurchaseContentDay') %></h3>
-                            <strong><%- moment(reservation.reservationFor.startDate).format('LL (ddd)') %></strong>
+                            <strong><%- moment(reservation.reservationFor.startDate).tz('Asia/Tokyo').format('LL (ddd)') %></strong>
                         </div>
 
                         <div class="pr-time">
                             <h3><%- __('PurchaseContentTime') %></h3>
-                            <strong><%- moment(reservation.reservationFor.startDate).format('HH:mm') %> - <%- moment(reservation.reservationFor.endDate).format('HH:mm') %> (JST)</strong>
+                            <strong><%- moment(reservation.reservationFor.startDate).tz('Asia/Tokyo').format('HH:mm') %> - <%- moment(reservation.reservationFor.endDate).tz('Asia/Tokyo').format('HH:mm') %> (JST)</strong>
                         </div>
 
                         <div class="pr-entrytime">
                             <h3><%- __('PurchaseEntryTime') %></h3>
-                            <strong><%- moment(reservation.reservationFor.startDate).format('HH:mm') %> - <%- moment(reservation.reservationFor.endDate).add(5, 'minute').format('HH:mm') %> (JST)</strong>
+                            <strong><%- moment(reservation.reservationFor.startDate).tz('Asia/Tokyo').format('HH:mm') %> - <%- moment(reservation.reservationFor.endDate).tz('Asia/Tokyo').add(5, 'minute').format('HH:mm') %> (JST)</strong>
                         </div>
 
                         <div class="pr-tournumber">

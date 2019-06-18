@@ -49,8 +49,8 @@ for (let reservation of reservations) {
         <div class="date">
             <p>
                 ツアー予約日時<br>-DATE-<br>
-                <%- moment(reservation.reservationFor.startDate).format('YYYY/MM/DD') %><br>
-                <%- moment(reservation.reservationFor.startDate).format('HH:mm') + '-' + moment(reservation.reservationFor.endDate).format('HH:mm') %>
+                <%- moment(reservation.reservationFor.startDate).tz('Asia/Tokyo').format('YYYY/MM/DD') %><br>
+                <%- moment(reservation.reservationFor.startDate).tz('Asia/Tokyo').format('HH:mm') + '-' + moment(reservation.reservationFor.endDate).tz('Asia/Tokyo').format('HH:mm') %>
             </p>
         </div>
         <div class="tournumber">
@@ -78,7 +78,7 @@ for (let reservation of reservations) {
 
     <p class="footer">
         購入番号 -PAYMENT NUMBER- <%- reservation.reservationNumber %><br>
-        <%- moment().add(9, 'hour').format('YYYY/MM/DD HH:mm:ss') %> (JST)
+        <%- moment().tz('Asia/Tokyo').format('YYYY/MM/DD HH:mm:ss') %> (JST)
     </p>
 
 </div>
