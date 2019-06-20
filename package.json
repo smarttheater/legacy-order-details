@@ -18,7 +18,7 @@
   ],
   "dependencies": {
     "@motionpicture/express-middleware": "0.0.0",
-    "@motionpicture/ttts-api-nodejs-client": "1.0.0-alpha.1",
+    "@motionpicture/ttts-api-nodejs-client": "1.0.0-alpha.3",
     "axios": "0.18.0",
     "body-parser": "^1.18.2",
     "config": "^1.29.0",
@@ -35,6 +35,7 @@
     "i18n": "^0.8.3",
     "jsonwebtoken": "^8.1.0",
     "moment": "^2.20.1",
+    "moment-timezone": "^0.5.25",
     "numeral": "^2.0.6",
     "redis": "^2.8.0",
     "request": "^2.83.0",
@@ -55,6 +56,7 @@
     "@types/i18n": "^0.5.20",
     "@types/jsonwebtoken": "^7.2.5",
     "@types/mocha": "^2.2.46",
+    "@types/moment-timezone": "^0.5.12",
     "@types/numeral": "0.0.20",
     "@types/redis": "^0.12.36",
     "@types/request": "^2.0.9",
@@ -141,5 +143,5 @@
       ]
     ]
   },
-  "version": "2.0.7"
+  "version": "2.0.8"
 }

@@ -1,7 +1,5 @@
 /**
  * チケット照会ルーター
- *
- * @ignore
  */
 import { Router } from 'express';
 import * as inquiryController from '../controllers/inquiry';

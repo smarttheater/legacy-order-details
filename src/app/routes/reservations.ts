@@ -1,12 +1,12 @@
 /**
  * 予約ルーター
- * @ignore
  */
-
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import * as createDebug from 'debug';
 import { Router } from 'express';
 import * as jwt from 'jsonwebtoken';
+
+import { chevreReservation2ttts } from '../../common/Util/reservation';
 
 const reservationsRouter = Router();
 
@@ -16,9 +16,7 @@ const authClient = new tttsapi.auth.ClientCredentials({
     domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: <string>process.env.API_CLIENT_ID,
     clientSecret: <string>process.env.API_CLIENT_SECRET,
-    scopes: [
-        `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/reservations.read-only`
-    ],
+    scopes: [],
     state: ''
 });
 
@@ -48,8 +46,10 @@ reservationsRouter.get(
                     debug('token verified.', decoded.object);
                     const ids = <string[]>decoded.object;
 
-                    let reservations = await Promise.all(ids.map(async (id) => reservationService.findById({ id: id })));
-                    reservations = reservations.filter((r) => r.status === tttsapi.factory.reservationStatusType.ReservationConfirmed);
+                    let reservations = await Promise.all(ids.map(async (id) => reservationService.findById({ id })));
+                    reservations = reservations.filter(
+                        (r) => r.reservationStatus === tttsapi.factory.reservationStatusType.ReservationConfirmed
+                    );
 
                     if (reservations.length === 0) {
                         next(new Error(req.__('NotFound')));
@@ -59,15 +59,16 @@ reservationsRouter.get(
 
                     // チケットコード順にソート
                     reservations.sort((a, b) => {
-                        if (a.ticket_type < b.ticket_type) {
+                        if (a.reservedTicket.ticketType.identifier < b.reservedTicket.ticketType.identifier) {
                             return -1;
                         }
-                        if (a.ticket_type > b.ticket_type) {
+                        if (a.reservedTicket.ticketType.identifier > b.reservedTicket.ticketType.identifier) {
                             return 1;
                         }
 
                         return 0;
-                    });
+                    })
+                        .map(chevreReservation2ttts);
 
                     const output = req.query.output;
                     switch (output) {

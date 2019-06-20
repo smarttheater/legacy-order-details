@@ -1,9 +1,4 @@
 "use strict";
-/**
- * 入場コントローラー
- * 上映当日入場画面から使う機能はここにあります。
- * @namespace controllers.checkIn
- */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -13,11 +8,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * 入場コントローラー
+ * 上映当日入場画面から使う機能はここにあります。
+ */
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 const createDebug = require("debug");
 const http_status_1 = require("http-status");
-const moment = require("moment");
+const moment = require("moment-timezone");
 const _ = require("underscore");
+const reservation_1 = require("../../common/Util/reservation");
 const debug = createDebug('ttts-authentication:controllers:checkIn');
 const authClient = new tttsapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
@@ -81,18 +81,20 @@ function getReservations(req, res) {
             const now = moment();
             // 予約を検索
             const searchReservationsResult = yield reservationService.search({
+                limit: 100,
+                typeOf: tttsapi.factory.chevre.reservationType.EventReservation,
                 status: tttsapi.factory.reservationStatusType.ReservationConfirmed,
                 performance: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
                 performanceStartThrough: now.toDate(),
                 performanceEndFrom: now.toDate()
             });
-            const reservations = searchReservationsResult.data;
+            const reservations = searchReservationsResult.data.map(reservation_1.chevreReservation2ttts);
             debug(reservations.length, 'reservations found.');
             const reservationsById = {};
             const reservationIdsByQrStr = {};
             reservations.forEach((reservation) => {
                 reservationsById[reservation.id] = reservation;
-                reservationIdsByQrStr[reservation.qr_str] = reservation.id;
+                reservationIdsByQrStr[reservation.id] = reservation.id;
             });
             res.json({
                 error: null,
@@ -121,11 +123,11 @@ function getReservation(req, res) {
         }
         try {
             const reservation = yield getReservationByQR(req.params.qr);
-            if (reservation.status !== tttsapi.factory.reservationStatusType.ReservationConfirmed) {
+            if (reservation.reservationStatus !== tttsapi.factory.reservationStatusType.ReservationConfirmed) {
                 res.status(http_status_1.NOT_FOUND).json(null);
             }
             else {
-                res.json(reservation);
+                res.json(reservation_1.chevreReservation2ttts(reservation));
             }
         }
         catch (error) {

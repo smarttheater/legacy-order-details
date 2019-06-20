@@ -1,15 +1,15 @@
 /**
  * 入場コントローラー
  * 上映当日入場画面から使う機能はここにあります。
- * @namespace controllers.checkIn
  */
-
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
 import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, NO_CONTENT, NOT_FOUND } from 'http-status';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import * as _ from 'underscore';
+
+import { chevreReservation2ttts } from '../../common/Util/reservation';
 
 const debug = createDebug('ttts-authentication:controllers:checkIn');
 
@@ -70,12 +70,14 @@ export async function getReservations(req: Request, res: Response): Promise<void
 
         // 予約を検索
         const searchReservationsResult = await reservationService.search({
+            limit: 100,
+            typeOf: tttsapi.factory.chevre.reservationType.EventReservation,
             status: tttsapi.factory.reservationStatusType.ReservationConfirmed,
             performance: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
             performanceStartThrough: now.toDate(),
             performanceEndFrom: now.toDate()
         });
-        const reservations = searchReservationsResult.data;
+        const reservations = searchReservationsResult.data.map(chevreReservation2ttts);
         debug(reservations.length, 'reservations found.');
 
         const reservationsById: {
@@ -86,7 +88,7 @@ export async function getReservations(req: Request, res: Response): Promise<void
         } = {};
         reservations.forEach((reservation) => {
             reservationsById[reservation.id] = reservation;
-            reservationIdsByQrStr[reservation.qr_str] = reservation.id;
+            reservationIdsByQrStr[reservation.id] = reservation.id;
         });
 
         res.json({
@@ -114,10 +116,10 @@ export async function getReservation(req: Request, res: Response): Promise<void>
 
     try {
         const reservation = await getReservationByQR(req.params.qr);
-        if (reservation.status !== tttsapi.factory.reservationStatusType.ReservationConfirmed) {
+        if (reservation.reservationStatus !== tttsapi.factory.reservationStatusType.ReservationConfirmed) {
             res.status(NOT_FOUND).json(null);
         } else {
-            res.json(reservation);
+            res.json(chevreReservation2ttts(reservation));
         }
     } catch (error) {
         if (error.code === NOT_FOUND) {

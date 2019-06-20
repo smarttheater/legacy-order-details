@@ -46,6 +46,7 @@ declare global {
             inquiryResult?: {
                 printToken: string;
                 reservations: tttsapi.factory.reservation.event.IReservation[];
+                order: tttsapi.factory.order.IOrder;
             };
         }
     }

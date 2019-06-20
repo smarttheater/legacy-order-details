@@ -6,7 +6,7 @@
  */
 import * as conf from 'config';
 import { NextFunction, Request, Response } from 'express';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 
 /**
  * 言語設定

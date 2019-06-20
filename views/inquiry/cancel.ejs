@@ -1,4 +1,4 @@
-<div class="modal modal-cancel fade" id="modal_cancelreservation" tabindex="-1" data-paymentNo="<%- reservations[0].payment_no %>">
+<div class="modal modal-cancel fade" id="modal_cancelreservation" tabindex="-1" data-paymentNo="<%- reservations[0].reservationNumber %>">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -12,7 +12,7 @@
                     <h3><%- __('PurchaseContent') %></h3>
                     <div>
                         <h4><%- __('PaymentNo') %></h4>
-                        <%- reservations[0].payment_no %>
+                        <%- reservations[0].reservationNumber %>
                         <hr>
 
                         <h4><%- __('PurchaseContentDate') %></h4>
@@ -24,11 +24,11 @@
                                 momentLocale = 'zh-tw';
                             }
                             moment.locale(momentLocale);
-                            const day = moment(reservations[0].performance_day, 'YYYYMMDD');
-                            const start = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
-                            const end = `${reservations[0].performance_end_time.substr(0, 2)}:${reservations[0].performance_end_time.substr(2, 2)}`;
+                            const day = moment(reservations[0].reservationFor.startDate);
+                            const start = moment(reservations[0].reservationFor.startDate).tz('Asia/Tokyo').format('HH:mm');
+                            const end = moment(reservations[0].reservationFor.endDate).tz('Asia/Tokyo').format('HH:mm');
                         %>
-                        <%- day.format('LL(ddd) ') %> <%- start %>～<%- end %>
+                        <%- day.tz('Asia/Tokyo').format('LL(ddd) ') %> <%- start %>～<%- end %>
                         <hr>
 
                         <h4><%- __('TourNumber') %></h4>
@@ -44,15 +44,15 @@
                     <h3><%- __('Profile') %></h3>
                     <div>
                         <h4><%- __('FullName') %></h4>
-                        <%- reservations[0].purchaser_last_name %>　<%- reservations[0].purchaser_first_name %>
+                        <%= order.customer.familyName %>　<%= order.customer.givenName %>
                         <hr>
 
                         <h4><%- __('Email') %></h4>
-                        <%- reservations[0].purchaser_email %>
+                        <%= order.customer.email %>
                         <hr>
 
                         <h4><%- __('Tel') %></h4>
-                        <%- reservations[0].purchaser_tel %>
+                        <%= order.customer.telephone %>
                     </div>
 
                     <h3><%- __('CancellationFee') %></h3>
@@ -90,7 +90,7 @@
                 <h2 class="modal-title"><%- __('CancelComplete') %></h2>
             </div>
 			<div class="modal-body">
-                <h3><%- __('PaymentNo') %>: <%- reservations[0].payment_no %></h3>
+                <h3><%- __('PaymentNo') %>: <%- reservations[0].reservationNumber %></h3>
                 <p class="cancelcomplete"><%- __('CancelCompleteMessage') %></p>
 			</div>
 			<div class="modal-footer">

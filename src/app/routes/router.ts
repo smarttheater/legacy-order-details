@@ -1,8 +1,5 @@
 /**
  * デフォルトルーター
- *
- * @function router
- * @ignore
  */
 import * as conf from 'config';
 import { Application, Request, Response } from 'express';

@@ -6,17 +6,19 @@ const numeral = require("numeral");
  */
 function getTicketInfos(reservations) {
     // 券種ごとに合計枚数算出
-    const keyName = 'ticket_type';
     const ticketInfos = {};
     for (const reservation of reservations) {
         // チケットタイプセット
-        const dataValue = reservation[keyName];
+        const ticketType = reservation.reservedTicket.ticketType;
+        const dataValue = ticketType.identifier;
+        const price = (ticketType.priceSpecification !== undefined) ? ticketType.priceSpecification.price : 0;
         // チケットタイプごとにチケット情報セット
         if (!ticketInfos.hasOwnProperty(dataValue)) {
             ticketInfos[dataValue] = {
-                ticket_type_name: reservation.ticket_type_name,
-                charge: `\\${numeral(reservation.charge).format('0,0')}`,
-                count: 1
+                ticket_type_name: ticketType.name,
+                charge: `\\${numeral(price).format('0,0')}`,
+                count: 1,
+                info: ''
             };
         }
         else {

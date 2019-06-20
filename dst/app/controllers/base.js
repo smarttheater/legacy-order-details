@@ -7,7 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * あらゆるルーティングで実行されるメソッドは、このクラスがベースとなるので、メソッド共通の処理はここで実装するとよい
  */
 const conf = require("config");
-const moment = require("moment");
+const moment = require("moment-timezone");
 /**
  * 言語設定
  */

@@ -8,7 +8,8 @@
     moment.locale(momentLocale);
 
     // キャンセル期限 ＝ ツアー3日前23:59まで
-    const moment_cancelDeadline = moment(`${reservations[0].performance_day}235959`, 'YYYYMMDDHHmmss').subtract(3, 'day');
+    const moment_cancelDeadline = moment(`${moment(reservations[0].reservationFor.startDate).tz('Asia/Tokyo').format('YYYY-MM-DD')}T23:59:59+09:00`)
+        .add(-3, 'days');
     const isCancellable = moment().isBefore(moment_cancelDeadline);
 %>
 <%- contentFor('pageId') %>
@@ -35,18 +36,18 @@ page-inquiry page-result page-complete page-<%- locale %>
         <tr class="tr-number">
             <th><%- __('PaymentNo') %></th>
             <td>
-                <span class="rsrvno"><%- reservations[0].payment_no %></span>
+                <span class="rsrvno"><%- reservations[0].reservationNumber %></span>
             </td>
         </tr>
         <tr class="tr-date">
             <th><%- __('PurchaseContentDate') %></th>
             <%
-                const day = moment(reservations[0].performance_day, 'YYYYMMDD');
-                const start = `${reservations[0].performance_start_time.substr(0, 2)}:${reservations[0].performance_start_time.substr(2, 2)}`;
-                const end = `${reservations[0].performance_end_time.substr(0, 2)}:${reservations[0].performance_end_time.substr(2, 2)}`;
+                const day = moment(reservations[0].reservationFor.startDate);
+                const start = moment(reservations[0].reservationFor.startDate).tz('Asia/Tokyo').format('HH:mm');
+                const end = moment(reservations[0].reservationFor.endDate).tz('Asia/Tokyo').format('HH:mm');
             %>
             <td>
-                <%- day.format('LL(ddd) ') %>
+                <%- day.tz('Asia/Tokyo').format('LL(ddd) ') %>
                 <%- start %>～<%- end %>
             </td>
         </tr>
@@ -64,15 +65,15 @@ page-inquiry page-result page-complete page-<%- locale %>
                 <div class="wrapper-qrcodes">
                     <div>
                         <p>
-                            <!-- <img class="codeimg-barcode" src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.qr_str %>" alt=""> -->
-                            <!-- <img class="codeimg-barcode" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&cht=qr&data=<%= reservation.qr_str %>" alt=""> -->
-                            <span class="codeimg-barcode" data-qrcode=<%= reservation.qr_str %>></span>
+                            <!-- <img class="codeimg-barcode" src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.id %>" alt=""> -->
+                            <!-- <img class="codeimg-barcode" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&cht=qr&data=<%= reservation.id %>" alt=""> -->
+                            <span class="codeimg-barcode" data-qrcode=<%= reservation.id %>></span>
                         </p>
                         <p>
-                            <%- reservation.ticket_type_name[locale] || reservation.ticket_type_name.en %> <%- __('{{price}} yen', { price: reservation.ticket_type_charge } ) %><br>
-                            <%- `${__('EmailReserveDate')}: ${moment(`${reservations[0].performance_day}${reservations[0].performance_start_time}`, 'YYYYMMDDHHmm').format('LLL')}` %><br>
+                            <%- reservation.reservedTicket.ticketType.name[locale] || reservation.reservedTicket.ticketType.name.en %> <%- __('{{price}} yen', { price: reservation.reservedTicket.ticketType.priceSpecification.price } ) %><br>
+                            <%- `${__('EmailReserveDate')}: ${moment(reservations[0].reservationFor.startDate).tz('Asia/Tokyo').format('LLL')}` %><br>
                             <%- `${__('TourNumber')}: ${reservation.performance_ttts_extension.tour_number}` %><br>
-                            <%- reservation.seat_code %><br>
+                            <%- reservation.reservedTicket.ticketedSeat.seatNumber %><br>
                         </p>
                     </div>
                 </div>
@@ -82,7 +83,7 @@ page-inquiry page-result page-complete page-<%- locale %>
         <tr class="tr-price">
             <th><%- __('TotalPrice') %></th>
             <td>
-                <span class="price"><%- __('{{price}} yen', { price: reservations.reduce((a,b)=>a+b.charge,0) } ) %></span>
+                <span class="price"><%- __('{{price}} yen', { price: order.price } ) %></span>
             </td>
         </tr>
     </tbody>
