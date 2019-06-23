@@ -83,10 +83,8 @@ function getReservations(req, res) {
             const searchReservationsResult = yield reservationService.search({
                 limit: 100,
                 typeOf: tttsapi.factory.chevre.reservationType.EventReservation,
-                status: tttsapi.factory.reservationStatusType.ReservationConfirmed,
-                performance: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
-                performanceStartThrough: now.toDate(),
-                performanceEndFrom: now.toDate()
+                reservationStatuses: [tttsapi.factory.reservationStatusType.ReservationConfirmed],
+                reservationFor: Object.assign({ id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined, startThrough: now.add(1, 'second').toDate() }, { endFrom: now.toDate() })
             });
             const reservations = searchReservationsResult.data.map(reservation_1.chevreReservation2ttts);
             debug(reservations.length, 'reservations found.');

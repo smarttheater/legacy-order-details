@@ -30,7 +30,7 @@ function chevreReservation2ttts(params) {
     params.charge = (ticketType.priceSpecification !== undefined) ? ticketType.priceSpecification.price : 0;
     params.payment_method = (paymentMethod !== undefined) ? paymentMethod : '';
     params.seat_code = (params.reservedTicket.ticketedSeat !== undefined) ? params.reservedTicket.ticketedSeat.seatNumber : '';
-    params.ticket_type = ticketType.identifier;
+    params.ticket_type = ticketType.id;
     params.ticket_type_charge = (ticketType.priceSpecification !== undefined) ? ticketType.priceSpecification.price : 0;
     params.ticket_type_name = ticketType.name;
     params.purchaser_email = (underName !== undefined && underName.email !== undefined) ? underName.email : '';
