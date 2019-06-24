@@ -18,7 +18,7 @@
   ],
   "dependencies": {
     "@motionpicture/express-middleware": "0.0.0",
-    "@motionpicture/ttts-api-nodejs-client": "1.0.0-alpha.3",
+    "@motionpicture/ttts-api-nodejs-client": "1.0.0-alpha.8",
     "axios": "0.18.0",
     "body-parser": "^1.18.2",
     "config": "^1.29.0",
@@ -143,5 +143,5 @@
       ]
     ]
   },
-  "version": "2.0.8"
+  "version": "2.0.9"
 }

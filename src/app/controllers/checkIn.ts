@@ -72,10 +72,12 @@ export async function getReservations(req: Request, res: Response): Promise<void
         const searchReservationsResult = await reservationService.search({
             limit: 100,
             typeOf: tttsapi.factory.chevre.reservationType.EventReservation,
-            status: tttsapi.factory.reservationStatusType.ReservationConfirmed,
-            performance: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
-            performanceStartThrough: now.toDate(),
-            performanceEndFrom: now.toDate()
+            reservationStatuses: [tttsapi.factory.reservationStatusType.ReservationConfirmed],
+            reservationFor: {
+                id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
+                startThrough: now.add(1, 'second').toDate(),
+                ...{ endFrom: now.toDate() }
+            }
         });
         const reservations = searchReservationsResult.data.map(chevreReservation2ttts);
         debug(reservations.length, 'reservations found.');
