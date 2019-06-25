@@ -34,6 +34,15 @@ for (let reservation of reservations) {
         paymentMethod = paymentMethodProperty.value;
     }
     let isNoCharge = /^(Invitation|OTC)$/.test(paymentMethod);
+
+    const performance = reservation.reservationFor;
+    let tourNumber = '';
+    if (Array.isArray(performance.additionalProperty)) {
+        const tourNumberProperty = performance.additionalProperty.find((p)=>p.name==='tourNumber');
+        if (tourNumberProperty !== undefined) {
+            tourNumber = tourNumberProperty.value;
+        }    
+    }
 %>
 <div class="pcthermarlprintcontent">
 
@@ -67,7 +76,7 @@ for (let reservation of reservations) {
     <div class="pr-tournumber">
         <h3>ツアーナンバー<br>-TOUR NUMBER-</h3>
         <p>
-            <%- reservation.performance_ttts_extension.tour_number %><br>
+            <%- tourNumber %><br>
         </p>
     </div>
 
