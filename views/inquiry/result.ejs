@@ -12,6 +12,16 @@
         .add(-3, 'days');
     const isCancellable = moment().isBefore(moment_cancelDeadline);
 %>
+<%
+const performance = reservations[0].reservationFor;
+let tourNumber = '';
+if (Array.isArray(performance.additionalProperty)) {
+    const tourNumberProperty = performance.additionalProperty.find((p)=>p.name==='tourNumber');
+    if (tourNumberProperty !== undefined) {
+        tourNumber = tourNumberProperty.value;
+    }    
+}
+%>
 <%- contentFor('pageId') %>
 page_inquiry_result
 <%- contentFor('pageClassName') %>
@@ -54,7 +64,7 @@ page-inquiry page-result page-complete page-<%- locale %>
         <tr class="tr-tourno">
             <th><%- __('TourNumber') %></th>
             <td>
-                <%- reservations[0].performance_ttts_extension.tour_number %>
+                <%- tourNumber %>
             </td>
         </tr>
         <tr class="tr-qr">
@@ -72,7 +82,7 @@ page-inquiry page-result page-complete page-<%- locale %>
                         <p>
                             <%- reservation.reservedTicket.ticketType.name[locale] || reservation.reservedTicket.ticketType.name.en %> <%- __('{{price}} yen', { price: reservation.reservedTicket.ticketType.priceSpecification.price } ) %><br>
                             <%- `${__('EmailReserveDate')}: ${moment(reservations[0].reservationFor.startDate).tz('Asia/Tokyo').format('LLL')}` %><br>
-                            <%- `${__('TourNumber')}: ${reservation.performance_ttts_extension.tour_number}` %><br>
+                            <%- `${__('TourNumber')}: ${tourNumber}` %><br>
                             <%- reservation.reservedTicket.ticketedSeat.seatNumber %><br>
                         </p>
                     </div>

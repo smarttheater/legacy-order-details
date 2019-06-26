@@ -1,3 +1,13 @@
+<%
+const performance = reservations[0].reservationFor;
+let tourNumber = '';
+if (Array.isArray(performance.additionalProperty)) {
+    const tourNumberProperty = performance.additionalProperty.find((p)=>p.name==='tourNumber');
+    if (tourNumberProperty !== undefined) {
+        tourNumber = tourNumberProperty.value;
+    }    
+}
+%>
 <div class="modal modal-cancel fade" id="modal_cancelreservation" tabindex="-1" data-paymentNo="<%- reservations[0].reservationNumber %>">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -32,7 +42,7 @@
                         <hr>
 
                         <h4><%- __('TourNumber') %></h4>
-                        <%- reservations[0].performance_ttts_extension.tour_number %>
+                        <%- tourNumber %>
                         <hr>
 
                         <h4><%- __('TicketTypeLeaf') %></h4>

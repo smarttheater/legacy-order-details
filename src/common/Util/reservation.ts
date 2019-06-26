@@ -15,9 +15,9 @@ export function chevreReservation2ttts(
         }
     }
 
-    params.qr_str = params.id;
-    params.payment_no = params.reservationNumber;
-    params.performance = params.reservationFor.id;
+    (<any>params).qr_str = params.id;
+    (<any>params).payment_no = params.reservationNumber;
+    (<any>params).performance = params.reservationFor.id;
     (<any>params).performance_day = moment(params.reservationFor.startDate)
         .tz('Asia/Tokyo')
         .format('YYYYMMDD');
@@ -31,17 +31,17 @@ export function chevreReservation2ttts(
     (<any>params).performance_start_time = moment(params.reservationFor.startDate)
         .tz('Asia/Tokyo')
         .format('HHmm');
-    params.charge = (ticketType.priceSpecification !== undefined) ? ticketType.priceSpecification.price : 0;
-    params.payment_method = (paymentMethod !== undefined) ? paymentMethod : <any>'';
-    params.seat_code = (params.reservedTicket.ticketedSeat !== undefined) ? params.reservedTicket.ticketedSeat.seatNumber : '';
+    (<any>params).charge = (ticketType.priceSpecification !== undefined) ? ticketType.priceSpecification.price : 0;
+    (<any>params).payment_method = (paymentMethod !== undefined) ? paymentMethod : <any>'';
+    (<any>params).seat_code = (params.reservedTicket.ticketedSeat !== undefined) ? params.reservedTicket.ticketedSeat.seatNumber : '';
     (<any>params).ticket_type = ticketType.id;
     (<any>params).ticket_type_charge = (ticketType.priceSpecification !== undefined) ? ticketType.priceSpecification.price : 0;
     (<any>params).ticket_type_name = <any>ticketType.name;
-    params.purchaser_email = (underName !== undefined && underName.email !== undefined) ? underName.email : '';
-    params.purchaser_first_name = (underName !== undefined && underName.givenName !== undefined) ? underName.givenName : '';
-    params.purchaser_last_name = (underName !== undefined && underName.familyName !== undefined) ? underName.familyName : '';
-    params.purchaser_tel = (underName !== undefined && underName.telephone !== undefined) ? underName.telephone : '';
-    params.purchaser_name = (underName !== undefined && underName.name !== undefined) ? underName.name : '';
+    (<any>params).purchaser_email = (underName !== undefined && underName.email !== undefined) ? underName.email : '';
+    (<any>params).purchaser_first_name = (underName !== undefined && underName.givenName !== undefined) ? underName.givenName : '';
+    (<any>params).purchaser_last_name = (underName !== undefined && underName.familyName !== undefined) ? underName.familyName : '';
+    (<any>params).purchaser_tel = (underName !== undefined && underName.telephone !== undefined) ? underName.telephone : '';
+    (<any>params).purchaser_name = (underName !== undefined && underName.name !== undefined) ? underName.name : '';
 
     return params;
 }
