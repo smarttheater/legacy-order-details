@@ -1,6 +1,7 @@
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import * as moment from 'moment-timezone';
 
+// tslint:disable-next-line:cyclomatic-complexity
 export function chevreReservation2ttts(
     params: tttsapi.factory.reservation.event.IReservation
 ): tttsapi.factory.reservation.event.IReservation {
@@ -15,8 +16,16 @@ export function chevreReservation2ttts(
         }
     }
 
+    let paymentNo: string = params.reservationNumber;
+    if (underName !== undefined && Array.isArray(underName.identifier)) {
+        const paymentNoProperty = underName.identifier.find((p) => p.name === 'paymentNo');
+        if (paymentNoProperty !== undefined) {
+            paymentNo = paymentNoProperty.value;
+        }
+    }
+
     (<any>params).qr_str = params.id;
-    (<any>params).payment_no = params.reservationNumber;
+    (<any>params).payment_no = paymentNo;
     (<any>params).performance = params.reservationFor.id;
     (<any>params).performance_day = moment(params.reservationFor.startDate)
         .tz('Asia/Tokyo')

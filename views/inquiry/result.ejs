@@ -46,7 +46,7 @@ page-inquiry page-result page-complete page-<%- locale %>
         <tr class="tr-number">
             <th><%- __('PaymentNo') %></th>
             <td>
-                <span class="rsrvno"><%- reservations[0].reservationNumber %></span>
+                <span class="rsrvno"><%- order.confirmationNumber.slice(-6) %></span>
             </td>
         </tr>
         <tr class="tr-date">

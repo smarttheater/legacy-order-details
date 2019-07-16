@@ -54,6 +54,16 @@ for (let reservation of reservations) {
             tourNumber = tourNumberProperty.value;
         }    
     }
+
+    let paymentNo = reservation.reservationNumber;
+    if (reservation.underName !== undefined && Array.isArray(reservation.underName.identifier)) {
+        const paymentNoProperty = reservation.underName.identifier.find(function (p) {
+            return p.name === 'paymentNo';
+        });
+        if (paymentNoProperty !== undefined) {
+            paymentNo = paymentNoProperty.value;
+        }
+    }
 %>
 <div class="printcontent">
 
@@ -97,7 +107,7 @@ for (let reservation of reservations) {
                     <td class="main-info">
                         <div class="pr-rsrvnum">
                         <h3><%- __('PaymentNo') %></h3>
-                            <strong><%- reservation.reservationNumber %></strong>
+                            <strong><%- paymentNo %></strong>
                         </div>
 
                         <div class="pr-day">

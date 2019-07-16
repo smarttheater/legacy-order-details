@@ -7,8 +7,18 @@ if (Array.isArray(performance.additionalProperty)) {
         tourNumber = tourNumberProperty.value;
     }    
 }
+
+let paymentNo = reservations[0].reservationNumber;
+if (reservations[0].underName !== undefined && Array.isArray(reservations[0].underName.identifier)) {
+    const paymentNoProperty = reservations[0].underName.identifier.find(function (p) {
+        return p.name === 'paymentNo';
+    });
+    if (paymentNoProperty !== undefined) {
+        paymentNo = paymentNoProperty.value;
+    }
+}
 %>
-<div class="modal modal-cancel fade" id="modal_cancelreservation" tabindex="-1" data-paymentNo="<%- reservations[0].reservationNumber %>">
+<div class="modal modal-cancel fade" id="modal_cancelreservation" tabindex="-1" data-paymentNo="<%- paymentNo %>">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -22,7 +32,7 @@ if (Array.isArray(performance.additionalProperty)) {
                     <h3><%- __('PurchaseContent') %></h3>
                     <div>
                         <h4><%- __('PaymentNo') %></h4>
-                        <%- reservations[0].reservationNumber %>
+                        <%- paymentNo %>
                         <hr>
 
                         <h4><%- __('PurchaseContentDate') %></h4>
@@ -100,7 +110,7 @@ if (Array.isArray(performance.additionalProperty)) {
                 <h2 class="modal-title"><%- __('CancelComplete') %></h2>
             </div>
 			<div class="modal-body">
-                <h3><%- __('PaymentNo') %>: <%- reservations[0].reservationNumber %></h3>
+                <h3><%- __('PaymentNo') %>: <%- paymentNo %></h3>
                 <p class="cancelcomplete"><%- __('CancelCompleteMessage') %></p>
 			</div>
 			<div class="modal-footer">
