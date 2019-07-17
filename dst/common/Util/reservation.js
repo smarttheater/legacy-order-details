@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const moment = require("moment-timezone");
+// tslint:disable-next-line:cyclomatic-complexity
 function chevreReservation2ttts(params) {
     const ticketType = params.reservedTicket.ticketType;
     const underName = params.underName;
@@ -11,8 +12,15 @@ function chevreReservation2ttts(params) {
             paymentMethod = paymentMethodProperty.value;
         }
     }
+    let paymentNo = params.reservationNumber;
+    if (underName !== undefined && Array.isArray(underName.identifier)) {
+        const paymentNoProperty = underName.identifier.find((p) => p.name === 'paymentNo');
+        if (paymentNoProperty !== undefined) {
+            paymentNo = paymentNoProperty.value;
+        }
+    }
     params.qr_str = params.id;
-    params.payment_no = params.reservationNumber;
+    params.payment_no = paymentNo;
     params.performance = params.reservationFor.id;
     params.performance_day = moment(params.reservationFor.startDate)
         .tz('Asia/Tokyo')

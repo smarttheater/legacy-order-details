@@ -186,7 +186,8 @@ function cancel(req, res) {
             // キャンセルリクエスト
             returnOrderTransaction = yield returnOrderTransactionService.confirm({
                 performanceDay: moment(reservations[0].reservationFor.startDate).tz('Asia/Tokyo').format('YYYYMMDD'),
-                paymentNo: reservations[0].reservationNumber,
+                // tslint:disable-next-line:no-magic-numbers
+                paymentNo: order.confirmationNumber.slice(-6),
                 cancellationFee: cancellationFee,
                 forcibly: false,
                 reason: tttsapi.factory.transaction.returnOrder.Reason.Customer
@@ -274,7 +275,8 @@ function getCancelMail(req, order, reservations, fee) {
     mail.push(req.__('EmailHead2Can'));
     mail.push('');
     // 購入番号
-    mail.push(`${req.__('PaymentNo')} : ${reservations[0].reservationNumber}`);
+    // tslint:disable-next-line:no-magic-numbers
+    mail.push(`${req.__('PaymentNo')} : ${order.confirmationNumber.slice(-6)}`);
     // ご来塔日時
     const day = moment(reservations[0].reservationFor.startDate)
         .tz('Asia/Tokyo')
