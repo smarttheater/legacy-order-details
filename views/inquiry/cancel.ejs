@@ -8,25 +8,17 @@ if (Array.isArray(performance.additionalProperty)) {
     }    
 }
 
-let paymentNo = reservations[0].reservationNumber;
-if (reservations[0].underName !== undefined && Array.isArray(reservations[0].underName.identifier)) {
-    const paymentNoProperty = reservations[0].underName.identifier.find(function (p) {
-        return p.name === 'paymentNo';
-    });
-    if (paymentNoProperty !== undefined) {
-        paymentNo = paymentNoProperty.value;
-    }
-}
+const paymentNo = order.confirmationNumber.slice(-6);
 %>
 <div class="modal modal-cancel fade" id="modal_cancelreservation" tabindex="-1" data-paymentNo="<%- paymentNo %>">
-	<div class="modal-dialog">
-		<div class="modal-content">
-			<div class="modal-header">
-				<p class="btn-close" data-dismiss="modal"><span>×</span></p>
-				<h2 class="modal-title"><%- __('TicketCancel') %></h2>
-				<p class="guidetext guidetext-cancelingnotice"><%- __('SpanContainedCancelingTicketMessage') %></p>
-			</div>
-			<div class="modal-body">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <p class="btn-close" data-dismiss="modal"><span>×</span></p>
+                <h2 class="modal-title"><%- __('TicketCancel') %></h2>
+                <p class="guidetext guidetext-cancelingnotice"><%- __('SpanContainedCancelingTicketMessage') %></p>
+            </div>
+            <div class="modal-body">
                 <form>
                     <input type="hidden" name="">
                     <h3><%- __('PurchaseContent') %></h3>
@@ -57,7 +49,7 @@ if (reservations[0].underName !== undefined && Array.isArray(reservations[0].und
 
                         <h4><%- __('TicketTypeLeaf') %></h4>
                         <% Object.keys(ticketInfos).forEach(function(key) { %>
-                            <p><%- ticketInfos[key].info %></p>
+                        <p><%- ticketInfos[key].info %></p>
                         <% }); %>
                     </div>
 
@@ -87,35 +79,35 @@ if (reservations[0].underName !== undefined && Array.isArray(reservations[0].und
                     <h3><%- __('TicketCancellationCautionTitle') %></h3>
                     <p><%- __('TicketCancellationCaution') %></p>
                 </div>
-			</div>
+            </div>
 
-			<div class="modal-footer">
+            <div class="modal-footer">
                 <p id="error_cancel"></p>
-				<p id="btn_execcancel" class="btn btn-red">
+                <p id="btn_execcancel" class="btn btn-red">
                     <span>
                         <span class="hide-processing"><%- __('ExecCancel') %></span>
                         <span class="show-processing"><%- __('Processing') %></span>
                     </span>
                 </p>
-				<p class="btn btn-close" data-dismiss="modal"><span><%- __('Close') %></span></p>
-			</div>
-		</div>
-	</div>
+                <p class="btn btn-close" data-dismiss="modal"><span><%- __('Close') %></span></p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="modal fade" id="modal_cancelcompleted" tabindex="-1">
-	<div class="modal-dialog">
-		<div class="modal-content">
+    <div class="modal-dialog">
+        <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title"><%- __('CancelComplete') %></h2>
             </div>
-			<div class="modal-body">
+            <div class="modal-body">
                 <h3><%- __('PaymentNo') %>: <%- paymentNo %></h3>
                 <p class="cancelcomplete"><%- __('CancelCompleteMessage') %></p>
-			</div>
-			<div class="modal-footer">
-				<a href="/inquiry/search" class="btn-back"><%- __('BackToInquiry') %></a>
-			</div>
-		</div>
-	</div>
+            </div>
+            <div class="modal-footer">
+                <a href="/inquiry/search" class="btn-back"><%- __('BackToInquiry') %></a>
+            </div>
+        </div>
+    </div>
 </div>
