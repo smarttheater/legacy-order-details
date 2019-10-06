@@ -73,8 +73,6 @@ export async function search(req: Request, res: Response): Promise<void> {
                 });
                 debug('order found.', order.orderNumber);
 
-                const reservations = order.acceptedOffers.map((o) => o.itemOffered);
-
                 // 返品済であれば入力ミス
                 if (order.orderStatus === tttsapi.factory.orderStatus.OrderReturned) {
                     throw new Error(req.__('MistakeInput'));
@@ -83,7 +81,6 @@ export async function search(req: Request, res: Response): Promise<void> {
                 // 結果をセッションに保管して結果画面へ遷移
                 (<Express.Session>req.session).inquiryResult = {
                     printToken: order.printToken,
-                    reservations: reservations,
                     order: order
                 };
                 res.redirect('/inquiry/search/result');
@@ -135,18 +132,20 @@ export async function result(req: Request, res: Response, next: NextFunction): P
             throw new Error(messageNotFound);
         }
 
-        // 予約ソート
-        const reservations = inquiryResult.reservations.sort(
-            (a, b) => (a.reservedTicket.ticketType.identifier < b.reservedTicket.ticketType.identifier) ? 0 : 1
-        );
-        if (!Array.isArray(reservations) || reservations.length === 0) {
-            next(new Error(messageNotFound));
+        const reservations = inquiryResult.order.acceptedOffers.map((o) => {
+            const unitPrice = ticket.getUnitPriceByAcceptedOffer(o);
 
-            return;
-        }
+            return {
+                ...<tttsapi.factory.order.IReservation>o.itemOffered,
+                unitPrice: unitPrice
+            };
+        })
+            .sort(
+                (a, b) => (a.reservedTicket.ticketType.identifier < b.reservedTicket.ticketType.identifier) ? 0 : 1
+            );
 
         // 券種ごとに合計枚数算出
-        const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
+        const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(inquiryResult.order));
         // キャンセル料は1予約あたり1000円固定
         const cancellationFee: string = numeral(CANCEL_CHARGE).format('0,0');
 
@@ -171,7 +170,6 @@ export async function result(req: Request, res: Response, next: NextFunction): P
  */
 // tslint:disable-next-line:max-func-body-length
 export async function cancel(req: Request, res: Response): Promise<void> {
-    let reservations: tttsapi.factory.reservation.event.IReservation[];
     let order: tttsapi.factory.order.IOrder;
 
     try {
@@ -180,7 +178,6 @@ export async function cancel(req: Request, res: Response): Promise<void> {
             throw new Error(req.__('NotFound'));
         }
 
-        reservations = inquiryResult.reservations;
         order = inquiryResult.order;
     } catch (err) {
         res.status(INTERNAL_SERVER_ERROR).json({
@@ -197,7 +194,9 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     try {
         // キャンセルリクエスト
         returnOrderTransaction = await returnOrderTransactionService.confirm({
-            performanceDay: moment(reservations[0].reservationFor.startDate).tz('Asia/Tokyo').format('YYYYMMDD'),
+            performanceDay: moment((<tttsapi.factory.order.IReservation>order.acceptedOffers[0].itemOffered).reservationFor.startDate)
+                .tz('Asia/Tokyo')
+                .format('YYYYMMDD'),
             // tslint:disable-next-line:no-magic-numbers
             paymentNo: order.confirmationNumber.slice(-6),
             cancellationFee: cancellationFee,
@@ -224,16 +223,17 @@ export async function cancel(req: Request, res: Response): Promise<void> {
 
     try {
         const emailAttributes: tttsapi.factory.creativeWork.message.email.IAttributes = {
+            typeOf: tttsapi.factory.creativeWorkType.EmailMessage,
             sender: {
                 name: conf.get<string>('email.fromname'),
                 email: conf.get<string>('email.from')
             },
             toRecipient: {
-                name: order.customer.name,
-                email: order.customer.email
+                name: <string>order.customer.name,
+                email: <string>order.customer.email
             },
             about: req.__('EmailTitleCan'),
-            text: getCancelMail(req, order, reservations, cancellationFee)
+            text: getCancelMail(req, order, cancellationFee)
         };
 
         await returnOrderTransactionService.sendEmailNotification({
@@ -274,9 +274,9 @@ function validate(req: Request): void {
 function getCancelMail(
     req: Request,
     order: tttsapi.factory.order.IOrder,
-    reservations: tttsapi.factory.reservation.event.IReservation[],
     fee: number
 ): string {
+    const reservations = order.acceptedOffers.map((o) => <tttsapi.factory.order.IReservation>o.itemOffered);
     const mail: string[] = [];
     const locale: string = (<Express.Session>req.session).locale;
 
@@ -320,7 +320,7 @@ function getCancelMail(
     mail.push(`${req.__('TicketType')} ${req.__('TicketCount')}`);
 
     // 券種ごとに合計枚数算出
-    const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
+    const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(order));
     Object.keys(ticketInfos).forEach((key: string) => {
         mail.push(ticketInfos[key].info);
     });
@@ -330,7 +330,7 @@ function getCancelMail(
 
     mail.push('-------------------------------------');
     // 合計枚数
-    mail.push(req.__('EmailTotalTicketCount{{n}}', { n: reservations.length.toString() }));
+    mail.push(req.__('EmailTotalTicketCount{{n}}', { n: order.acceptedOffers.length.toString() }));
     // 合計金額
     mail.push(`${req.__('TotalPrice')} ${req.__('{{price}} yen', { price: numeral(price).format('0,0') })}`);
     // キャンセル料

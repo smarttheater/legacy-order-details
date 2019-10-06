@@ -48,7 +48,7 @@ reservationsRouter.get(
 
                     let reservations = await Promise.all(ids.map(async (id) => reservationService.findById({ id })));
                     reservations = reservations.filter(
-                        (r) => r.reservationStatus === tttsapi.factory.reservationStatusType.ReservationConfirmed
+                        (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
                     );
 
                     if (reservations.length === 0) {

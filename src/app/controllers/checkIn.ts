@@ -72,7 +72,7 @@ export async function getReservations(req: Request, res: Response): Promise<void
         const searchReservationsResult = await reservationService.search({
             limit: 100,
             typeOf: tttsapi.factory.chevre.reservationType.EventReservation,
-            reservationStatuses: [tttsapi.factory.reservationStatusType.ReservationConfirmed],
+            reservationStatuses: [tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed],
             reservationFor: {
                 id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
                 startThrough: now.add(1, 'second').toDate(),
@@ -118,7 +118,7 @@ export async function getReservation(req: Request, res: Response): Promise<void>
 
     try {
         const reservation = await getReservationByQR(req.params.qr);
-        if (reservation.reservationStatus !== tttsapi.factory.reservationStatusType.ReservationConfirmed) {
+        if (reservation.reservationStatus !== tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed) {
             res.status(NOT_FOUND).json(null);
         } else {
             res.json(chevreReservation2ttts(reservation));

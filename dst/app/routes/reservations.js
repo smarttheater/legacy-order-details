@@ -47,7 +47,7 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(this, void 0, voi
                 debug('token verified.', decoded.object);
                 const ids = decoded.object;
                 let reservations = yield Promise.all(ids.map((id) => __awaiter(this, void 0, void 0, function* () { return reservationService.findById({ id }); })));
-                reservations = reservations.filter((r) => r.reservationStatus === tttsapi.factory.reservationStatusType.ReservationConfirmed);
+                reservations = reservations.filter((r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed);
                 if (reservations.length === 0) {
                     next(new Error(req.__('NotFound')));
                     return;

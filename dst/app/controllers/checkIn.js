@@ -83,7 +83,7 @@ function getReservations(req, res) {
             const searchReservationsResult = yield reservationService.search({
                 limit: 100,
                 typeOf: tttsapi.factory.chevre.reservationType.EventReservation,
-                reservationStatuses: [tttsapi.factory.reservationStatusType.ReservationConfirmed],
+                reservationStatuses: [tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed],
                 reservationFor: Object.assign({ id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined, startThrough: now.add(1, 'second').toDate() }, { endFrom: now.toDate() })
             });
             const reservations = searchReservationsResult.data.map(reservation_1.chevreReservation2ttts);
@@ -121,7 +121,7 @@ function getReservation(req, res) {
         }
         try {
             const reservation = yield getReservationByQR(req.params.qr);
-            if (reservation.reservationStatus !== tttsapi.factory.reservationStatusType.ReservationConfirmed) {
+            if (reservation.reservationStatus !== tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed) {
                 res.status(http_status_1.NOT_FOUND).json(null);
             }
             else {
