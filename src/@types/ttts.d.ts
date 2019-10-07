@@ -45,7 +45,7 @@ declare global {
              */
             inquiryResult?: {
                 printToken: string;
-                reservations: tttsapi.factory.reservation.event.IReservation[];
+                // reservations: tttsapi.factory.order.IReservation[];
                 order: tttsapi.factory.order.IOrder;
             };
         }

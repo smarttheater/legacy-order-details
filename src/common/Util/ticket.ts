@@ -14,14 +14,35 @@ export interface ITicketInfo {
 /**
  * 券種ごとに合計枚数算出
  */
-export function getTicketInfos(reservations: tttsapi.factory.reservation.event.IReservation[]): any {
+export function getTicketInfos(order: tttsapi.factory.order.IOrder): any {
+    const acceptedOffers = order.acceptedOffers;
+
+    // チケットコード順にソート
+    acceptedOffers.sort((a, b) => {
+        if ((<tttsapi.factory.order.IReservation>a.itemOffered).reservedTicket.ticketType.identifier
+            < (<tttsapi.factory.order.IReservation>b.itemOffered).reservedTicket.ticketType.identifier
+        ) {
+            return -1;
+        }
+        if ((<tttsapi.factory.order.IReservation>a.itemOffered).reservedTicket.ticketType.identifier
+            > (<tttsapi.factory.order.IReservation>b.itemOffered).reservedTicket.ticketType.identifier
+        ) {
+            return 1;
+        }
+
+        return 0;
+    });
+
     // 券種ごとに合計枚数算出
     const ticketInfos: ITicketInfo = {};
-    for (const reservation of reservations) {
-        // チケットタイプセット
+
+    for (const acceptedOffer of acceptedOffers) {
+        const reservation = <tttsapi.factory.order.IReservation>acceptedOffer.itemOffered;
         const ticketType = reservation.reservedTicket.ticketType;
+        const price = getUnitPriceByAcceptedOffer(acceptedOffer);
+
+        // チケットタイプセット
         const dataValue = ticketType.identifier;
-        const price = (ticketType.priceSpecification !== undefined) ? ticketType.priceSpecification.price : 0;
 
         // チケットタイプごとにチケット情報セット
         if (!ticketInfos.hasOwnProperty(dataValue)) {
@@ -50,4 +71,24 @@ export function editTicketInfos(req: Request, ticketInfos: ITicketInfo): ITicket
     });
 
     return ticketInfos;
+}
+
+export type ICompoundPriceSpecification = tttsapi.factory.chevre.compoundPriceSpecification.IPriceSpecification<any>;
+
+export function getUnitPriceByAcceptedOffer(offer: tttsapi.factory.order.IAcceptedOffer<any>) {
+    let unitPrice: number = 0;
+
+    if (offer.priceSpecification !== undefined) {
+        const priceSpecification = <ICompoundPriceSpecification>offer.priceSpecification;
+        if (Array.isArray(priceSpecification.priceComponent)) {
+            const unitPriceSpec = priceSpecification.priceComponent.find(
+                (c) => c.typeOf === tttsapi.factory.chevre.priceSpecificationType.UnitPriceSpecification
+            );
+            if (unitPriceSpec !== undefined && unitPriceSpec.price !== undefined && Number.isInteger(unitPriceSpec.price)) {
+                unitPrice = unitPriceSpec.price;
+            }
+        }
+    }
+
+    return unitPrice;
 }

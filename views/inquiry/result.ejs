@@ -80,7 +80,8 @@ page-inquiry page-result page-complete page-<%- locale %>
                             <span class="codeimg-barcode" data-qrcode=<%= reservation.id %>></span>
                         </p>
                         <p>
-                            <%- reservation.reservedTicket.ticketType.name[locale] || reservation.reservedTicket.ticketType.name.en %> <%- __('{{price}} yen', { price: reservation.reservedTicket.ticketType.priceSpecification.price } ) %><br>
+                            <%- reservation.reservedTicket.ticketType.name[locale] || reservation.reservedTicket.ticketType.name.en %>
+                            <%- __('{{price}} yen', { price: reservation.unitPrice } ) %><br>
                             <%- `${__('EmailReserveDate')}: ${moment(reservations[0].reservationFor.startDate).tz('Asia/Tokyo').format('LLL')}` %><br>
                             <%- `${__('TourNumber')}: ${tourNumber}` %><br>
                             <%- reservation.reservedTicket.ticketedSeat.seatNumber %><br>
@@ -100,18 +101,20 @@ page-inquiry page-result page-complete page-<%- locale %>
 </table>
 
 <div>
-    <a class="btn btn-blue btn-print visible-pc" target="_blank" href='/reservations/print?token=<%= printToken %>'><span><%- __('PrintTicket') %></span></a>
+    <a class="btn btn-blue btn-print visible-pc" target="_blank"
+        href='/reservations/print?token=<%= printToken %>'><span><%- __('PrintTicket') %></span></a>
     <br>
     <p class="btn btn-cancel <%- (!isCancellable) ? 'btn-disabled' : '' %>"><span><%- __('CancelTicket') %></span></p>
     <% if (!isCancellable) { %>
-        <p class="notice-canceldeadline"><%- __('EmailNotice2') %></p>
+    <p class="notice-canceldeadline"><%- __('EmailNotice2') %></p>
     <% } %>
 </div>
 
 <div class="enteringguide">
     <h3><%- __('HowToEnter') %></h3>
     <p><%- __('AboutEntryDescription') %></p>
-    <a class="btn btn-blue btn-entering" href="/aboutenter" target="_blank"><span><%- __('AboutHowToEnter') %></span></a>
+    <a class="btn btn-blue btn-entering" href="/aboutenter"
+        target="_blank"><span><%- __('AboutHowToEnter') %></span></a>
 </div>
 
 <div>

@@ -70,7 +70,6 @@ function search(req, res) {
                         telephone: req.body.purchaserTel
                     });
                     debug('order found.', order.orderNumber);
-                    const reservations = order.acceptedOffers.map((o) => o.itemOffered);
                     // 返品済であれば入力ミス
                     if (order.orderStatus === tttsapi.factory.orderStatus.OrderReturned) {
                         throw new Error(req.__('MistakeInput'));
@@ -78,7 +77,6 @@ function search(req, res) {
                     // 結果をセッションに保管して結果画面へ遷移
                     req.session.inquiryResult = {
                         printToken: order.printToken,
-                        reservations: reservations,
                         order: order
                     };
                     res.redirect('/inquiry/search/result');
@@ -128,14 +126,13 @@ function result(req, res, next) {
             if (inquiryResult === undefined) {
                 throw new Error(messageNotFound);
             }
-            // 予約ソート
-            const reservations = inquiryResult.reservations.sort((a, b) => (a.reservedTicket.ticketType.identifier < b.reservedTicket.ticketType.identifier) ? 0 : 1);
-            if (!Array.isArray(reservations) || reservations.length === 0) {
-                next(new Error(messageNotFound));
-                return;
-            }
+            const reservations = inquiryResult.order.acceptedOffers.map((o) => {
+                const unitPrice = ticket.getUnitPriceByAcceptedOffer(o);
+                return Object.assign({}, o.itemOffered, { unitPrice: unitPrice });
+            })
+                .sort((a, b) => (a.reservedTicket.ticketType.identifier < b.reservedTicket.ticketType.identifier) ? 0 : 1);
             // 券種ごとに合計枚数算出
-            const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
+            const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(inquiryResult.order));
             // キャンセル料は1予約あたり1000円固定
             const cancellationFee = numeral(CANCEL_CHARGE).format('0,0');
             // 画面描画
@@ -162,14 +159,12 @@ exports.result = result;
 // tslint:disable-next-line:max-func-body-length
 function cancel(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        let reservations;
         let order;
         try {
             const inquiryResult = req.session.inquiryResult;
             if (inquiryResult === undefined) {
                 throw new Error(req.__('NotFound'));
             }
-            reservations = inquiryResult.reservations;
             order = inquiryResult.order;
         }
         catch (err) {
@@ -185,7 +180,9 @@ function cancel(req, res) {
         try {
             // キャンセルリクエスト
             returnOrderTransaction = yield returnOrderTransactionService.confirm({
-                performanceDay: moment(reservations[0].reservationFor.startDate).tz('Asia/Tokyo').format('YYYYMMDD'),
+                performanceDay: moment(order.acceptedOffers[0].itemOffered.reservationFor.startDate)
+                    .tz('Asia/Tokyo')
+                    .format('YYYYMMDD'),
                 // tslint:disable-next-line:no-magic-numbers
                 paymentNo: order.confirmationNumber.slice(-6),
                 cancellationFee: cancellationFee,
@@ -212,6 +209,7 @@ function cancel(req, res) {
         }
         try {
             const emailAttributes = {
+                typeOf: tttsapi.factory.creativeWorkType.EmailMessage,
                 sender: {
                     name: conf.get('email.fromname'),
                     email: conf.get('email.from')
@@ -221,7 +219,7 @@ function cancel(req, res) {
                     email: order.customer.email
                 },
                 about: req.__('EmailTitleCan'),
-                text: getCancelMail(req, order, reservations, cancellationFee)
+                text: getCancelMail(req, order, cancellationFee)
             };
             yield returnOrderTransactionService.sendEmailNotification({
                 transactionId: returnOrderTransaction.id,
@@ -254,7 +252,8 @@ function validate(req) {
 /**
  * キャンセルメール本文取得
  */
-function getCancelMail(req, order, reservations, fee) {
+function getCancelMail(req, order, fee) {
+    const reservations = order.acceptedOffers.map((o) => o.itemOffered);
     const mail = [];
     const locale = req.session.locale;
     // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
@@ -288,7 +287,7 @@ function getCancelMail(req, order, reservations, fee) {
     // 券種、枚数
     mail.push(`${req.__('TicketType')} ${req.__('TicketCount')}`);
     // 券種ごとに合計枚数算出
-    const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(reservations));
+    const ticketInfos = ticket.editTicketInfos(req, ticket.getTicketInfos(order));
     Object.keys(ticketInfos).forEach((key) => {
         mail.push(ticketInfos[key].info);
     });
@@ -296,7 +295,7 @@ function getCancelMail(req, order, reservations, fee) {
     const price = order.price;
     mail.push('-------------------------------------');
     // 合計枚数
-    mail.push(req.__('EmailTotalTicketCount{{n}}', { n: reservations.length.toString() }));
+    mail.push(req.__('EmailTotalTicketCount{{n}}', { n: order.acceptedOffers.length.toString() }));
     // 合計金額
     mail.push(`${req.__('TotalPrice')} ${req.__('{{price}} yen', { price: numeral(price).format('0,0') })}`);
     // キャンセル料
