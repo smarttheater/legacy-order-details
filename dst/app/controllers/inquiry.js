@@ -186,7 +186,6 @@ function cancel(req, res) {
                 // tslint:disable-next-line:no-magic-numbers
                 paymentNo: order.confirmationNumber.slice(-6),
                 cancellationFee: cancellationFee,
-                forcibly: false,
                 reason: tttsapi.factory.transaction.returnOrder.Reason.Customer
             });
         }
