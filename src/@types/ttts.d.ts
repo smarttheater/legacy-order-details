@@ -1,10 +1,9 @@
 /**
  * アプリケーション固有の型定義
  * セッションの中身など
- * @ignore
  */
+import * as cinerinoapi from '@cinerino/api-nodejs-client';
 
-import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import CheckinAdminUser from '../app/models/user/checkinAdmin';
 
 declare global {
@@ -46,7 +45,7 @@ declare global {
             inquiryResult?: {
                 printToken: string;
                 // reservations: tttsapi.factory.order.IReservation[];
-                order: tttsapi.factory.order.IOrder;
+                order: cinerinoapi.factory.order.IOrder;
             };
         }
     }
