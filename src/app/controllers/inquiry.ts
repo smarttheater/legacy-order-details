@@ -1,7 +1,7 @@
 /**
  * 予約照会コントローラー
  */
-import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
+import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import * as conf from 'config';
 import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
@@ -14,7 +14,7 @@ import * as ticket from '../../common/Util/ticket';
 
 const debug = createDebug('ttts-authentication:controllers.inquiry');
 
-const authClient = new tttsapi.auth.ClientCredentials({
+const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: <string>process.env.API_CLIENT_ID,
     clientSecret: <string>process.env.API_CLIENT_SECRET,
@@ -22,13 +22,13 @@ const authClient = new tttsapi.auth.ClientCredentials({
     state: ''
 });
 
-const returnOrderTransactionService = new tttsapi.service.transaction.ReturnOrder({
-    endpoint: <string>process.env.API_ENDPOINT,
+const returnOrderTransactionService = new cinerinoapi.service.transaction.ReturnOrder4ttts({
+    endpoint: <string>process.env.CINERINO_API_ENDPOINT,
     auth: authClient
 });
 
-const orderService = new tttsapi.service.Order({
-    endpoint: <string>process.env.API_ENDPOINT,
+const orderService = new cinerinoapi.service.Order({
+    endpoint: <string>process.env.CINERINO_API_ENDPOINT,
     auth: authClient
 });
 
@@ -74,7 +74,7 @@ export async function search(req: Request, res: Response): Promise<void> {
                 debug('order found.', order.orderNumber);
 
                 // 返品済であれば入力ミス
-                if (order.orderStatus === tttsapi.factory.orderStatus.OrderReturned) {
+                if (order.orderStatus === cinerinoapi.factory.orderStatus.OrderReturned) {
                     throw new Error(req.__('MistakeInput'));
                 }
 
@@ -88,7 +88,7 @@ export async function search(req: Request, res: Response): Promise<void> {
                 return;
             } catch (error) {
                 // tslint:disable-next-line:prefer-conditional-expression
-                if (!(error instanceof tttsapi.factory.errors.NotFound)) {
+                if (!(error instanceof cinerinoapi.factory.errors.NotFound)) {
                     message = req.__('MistakeInput');
                 } else {
                     message = error.message;
@@ -136,7 +136,7 @@ export async function result(req: Request, res: Response, next: NextFunction): P
             const unitPrice = ticket.getUnitPriceByAcceptedOffer(o);
 
             return {
-                ...<tttsapi.factory.order.IReservation>o.itemOffered,
+                ...<cinerinoapi.factory.order.IReservation>o.itemOffered,
                 unitPrice: unitPrice
             };
         })
@@ -170,7 +170,7 @@ export async function result(req: Request, res: Response, next: NextFunction): P
  */
 // tslint:disable-next-line:max-func-body-length
 export async function cancel(req: Request, res: Response): Promise<void> {
-    let order: tttsapi.factory.order.IOrder;
+    let order: cinerinoapi.factory.order.IOrder;
 
     try {
         const inquiryResult = (<Express.Session>req.session).inquiryResult;
@@ -194,17 +194,19 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     try {
         // キャンセルリクエスト
         returnOrderTransaction = await returnOrderTransactionService.confirm({
-            performanceDay: moment((<tttsapi.factory.order.IReservation>order.acceptedOffers[0].itemOffered).reservationFor.startDate)
-                .tz('Asia/Tokyo')
-                .format('YYYYMMDD'),
+            performanceDay:
+                moment((<cinerinoapi.factory.order.IReservation>order.acceptedOffers[0].itemOffered).reservationFor.startDate)
+                    .tz('Asia/Tokyo')
+                    .format('YYYYMMDD'),
             // tslint:disable-next-line:no-magic-numbers
             paymentNo: order.confirmationNumber.slice(-6),
             cancellationFee: cancellationFee,
-            forcibly: false,
-            reason: tttsapi.factory.transaction.returnOrder.Reason.Customer
+            reason: cinerinoapi.factory.transaction.returnOrder.Reason.Customer,
+            informOrderUrl: `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`,
+            informReservationUrl: `${process.env.API_ENDPOINT}/webhooks/onReservationCancelled`
         });
     } catch (err) {
-        if (err instanceof tttsapi.factory.errors.Argument) {
+        if (err instanceof cinerinoapi.factory.errors.Argument) {
             res.status(BAD_REQUEST).json({
                 errors: [{
                     message: err.message
@@ -222,8 +224,8 @@ export async function cancel(req: Request, res: Response): Promise<void> {
     }
 
     try {
-        const emailAttributes: tttsapi.factory.creativeWork.message.email.IAttributes = {
-            typeOf: tttsapi.factory.creativeWorkType.EmailMessage,
+        const emailAttributes: cinerinoapi.factory.creativeWork.message.email.IAttributes = {
+            typeOf: cinerinoapi.factory.creativeWorkType.EmailMessage,
             sender: {
                 name: conf.get<string>('email.fromname'),
                 email: conf.get<string>('email.from')
@@ -273,10 +275,10 @@ function validate(req: Request): void {
  */
 function getCancelMail(
     req: Request,
-    order: tttsapi.factory.order.IOrder,
+    order: cinerinoapi.factory.order.IOrder,
     fee: number
 ): string {
-    const reservations = order.acceptedOffers.map((o) => <tttsapi.factory.order.IReservation>o.itemOffered);
+    const reservations = order.acceptedOffers.map((o) => <cinerinoapi.factory.order.IReservation>o.itemOffered);
     const mail: string[] = [];
     const locale: string = (<Express.Session>req.session).locale;
 

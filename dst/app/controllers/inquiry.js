@@ -11,7 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * 予約照会コントローラー
  */
-const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
+const cinerinoapi = require("@cinerino/api-nodejs-client");
 const conf = require("config");
 const createDebug = require("debug");
 const http_status_1 = require("http-status");
@@ -20,19 +20,19 @@ const numeral = require("numeral");
 const Text = require("../../common/Const/Text");
 const ticket = require("../../common/Util/ticket");
 const debug = createDebug('ttts-authentication:controllers.inquiry');
-const authClient = new tttsapi.auth.ClientCredentials({
+const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: process.env.API_CLIENT_ID,
     clientSecret: process.env.API_CLIENT_SECRET,
     scopes: [],
     state: ''
 });
-const returnOrderTransactionService = new tttsapi.service.transaction.ReturnOrder({
-    endpoint: process.env.API_ENDPOINT,
+const returnOrderTransactionService = new cinerinoapi.service.transaction.ReturnOrder4ttts({
+    endpoint: process.env.CINERINO_API_ENDPOINT,
     auth: authClient
 });
-const orderService = new tttsapi.service.Order({
-    endpoint: process.env.API_ENDPOINT,
+const orderService = new cinerinoapi.service.Order({
+    endpoint: process.env.CINERINO_API_ENDPOINT,
     auth: authClient
 });
 // キャンセル料(1予約あたり1000円固定)
@@ -71,7 +71,7 @@ function search(req, res) {
                     });
                     debug('order found.', order.orderNumber);
                     // 返品済であれば入力ミス
-                    if (order.orderStatus === tttsapi.factory.orderStatus.OrderReturned) {
+                    if (order.orderStatus === cinerinoapi.factory.orderStatus.OrderReturned) {
                         throw new Error(req.__('MistakeInput'));
                     }
                     // 結果をセッションに保管して結果画面へ遷移
@@ -84,7 +84,7 @@ function search(req, res) {
                 }
                 catch (error) {
                     // tslint:disable-next-line:prefer-conditional-expression
-                    if (!(error instanceof tttsapi.factory.errors.NotFound)) {
+                    if (!(error instanceof cinerinoapi.factory.errors.NotFound)) {
                         message = req.__('MistakeInput');
                     }
                     else {
@@ -186,12 +186,13 @@ function cancel(req, res) {
                 // tslint:disable-next-line:no-magic-numbers
                 paymentNo: order.confirmationNumber.slice(-6),
                 cancellationFee: cancellationFee,
-                forcibly: false,
-                reason: tttsapi.factory.transaction.returnOrder.Reason.Customer
+                reason: cinerinoapi.factory.transaction.returnOrder.Reason.Customer,
+                informOrderUrl: `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`,
+                informReservationUrl: `${process.env.API_ENDPOINT}/webhooks/onReservationCancelled`
             });
         }
         catch (err) {
-            if (err instanceof tttsapi.factory.errors.Argument) {
+            if (err instanceof cinerinoapi.factory.errors.Argument) {
                 res.status(http_status_1.BAD_REQUEST).json({
                     errors: [{
                             message: err.message
@@ -209,7 +210,7 @@ function cancel(req, res) {
         }
         try {
             const emailAttributes = {
-                typeOf: tttsapi.factory.creativeWorkType.EmailMessage,
+                typeOf: cinerinoapi.factory.creativeWorkType.EmailMessage,
                 sender: {
                     name: conf.get('email.fromname'),
                     email: conf.get('email.from')
