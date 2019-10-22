@@ -179,17 +179,17 @@ function cancel(req, res) {
         let returnOrderTransaction;
         try {
             // キャンセルリクエスト
-            returnOrderTransaction = yield returnOrderTransactionService.confirm({
-                performanceDay: moment(order.acceptedOffers[0].itemOffered.reservationFor.startDate)
+            returnOrderTransaction = yield returnOrderTransactionService.confirm(Object.assign({ performanceDay: moment(order.acceptedOffers[0].itemOffered.reservationFor.startDate)
                     .tz('Asia/Tokyo')
-                    .format('YYYYMMDD'),
+                    .format('YYYYMMDD'), 
                 // tslint:disable-next-line:no-magic-numbers
-                paymentNo: order.confirmationNumber.slice(-6),
-                cancellationFee: cancellationFee,
-                reason: cinerinoapi.factory.transaction.returnOrder.Reason.Customer,
-                informOrderUrl: `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`,
-                informReservationUrl: `${process.env.API_ENDPOINT}/webhooks/onReservationCancelled`
-            });
+                paymentNo: order.confirmationNumber.slice(-6), cancellationFee: cancellationFee, reason: cinerinoapi.factory.transaction.returnOrder.Reason.Customer, informOrderUrl: `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`, informReservationUrl: `${process.env.API_ENDPOINT}/webhooks/onReservationCancelled` }, {
+                agent: {
+                    identifier: [
+                        { name: 'cancellationFee', value: cancellationFee.toString() }
+                    ]
+                }
+            }));
         }
         catch (err) {
             if (err instanceof cinerinoapi.factory.errors.Argument) {
