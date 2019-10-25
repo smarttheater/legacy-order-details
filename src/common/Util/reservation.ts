@@ -1,3 +1,4 @@
+import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import * as moment from 'moment-timezone';
 
@@ -8,11 +9,11 @@ export function chevreReservation2ttts(
     const ticketType = params.reservedTicket.ticketType;
     const underName = params.underName;
 
-    let paymentMethod: tttsapi.factory.paymentMethodType | undefined;
+    let paymentMethod: cinerinoapi.factory.paymentMethodType | undefined;
     if (underName !== undefined && Array.isArray(underName.identifier)) {
         const paymentMethodProperty = underName.identifier.find((p) => p.name === 'paymentMethod');
         if (paymentMethodProperty !== undefined) {
-            paymentMethod = <tttsapi.factory.paymentMethodType>paymentMethodProperty.value;
+            paymentMethod = <cinerinoapi.factory.paymentMethodType>paymentMethodProperty.value;
         }
     }
 
