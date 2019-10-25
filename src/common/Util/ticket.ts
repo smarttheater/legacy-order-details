@@ -1,3 +1,4 @@
+import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import { Request } from 'express';
 import * as numeral from 'numeral';
@@ -14,18 +15,18 @@ export interface ITicketInfo {
 /**
  * 券種ごとに合計枚数算出
  */
-export function getTicketInfos(order: tttsapi.factory.order.IOrder): any {
+export function getTicketInfos(order: cinerinoapi.factory.order.IOrder): any {
     const acceptedOffers = order.acceptedOffers;
 
     // チケットコード順にソート
     acceptedOffers.sort((a, b) => {
-        if ((<tttsapi.factory.order.IReservation>a.itemOffered).reservedTicket.ticketType.identifier
-            < (<tttsapi.factory.order.IReservation>b.itemOffered).reservedTicket.ticketType.identifier
+        if ((<cinerinoapi.factory.order.IReservation>a.itemOffered).reservedTicket.ticketType.identifier
+            < (<cinerinoapi.factory.order.IReservation>b.itemOffered).reservedTicket.ticketType.identifier
         ) {
             return -1;
         }
-        if ((<tttsapi.factory.order.IReservation>a.itemOffered).reservedTicket.ticketType.identifier
-            > (<tttsapi.factory.order.IReservation>b.itemOffered).reservedTicket.ticketType.identifier
+        if ((<cinerinoapi.factory.order.IReservation>a.itemOffered).reservedTicket.ticketType.identifier
+            > (<cinerinoapi.factory.order.IReservation>b.itemOffered).reservedTicket.ticketType.identifier
         ) {
             return 1;
         }
@@ -37,7 +38,7 @@ export function getTicketInfos(order: tttsapi.factory.order.IOrder): any {
     const ticketInfos: ITicketInfo = {};
 
     for (const acceptedOffer of acceptedOffers) {
-        const reservation = <tttsapi.factory.order.IReservation>acceptedOffer.itemOffered;
+        const reservation = <cinerinoapi.factory.order.IReservation>acceptedOffer.itemOffered;
         const ticketType = reservation.reservedTicket.ticketType;
         const price = getUnitPriceByAcceptedOffer(acceptedOffer);
 
@@ -73,9 +74,9 @@ export function editTicketInfos(req: Request, ticketInfos: ITicketInfo): ITicket
     return ticketInfos;
 }
 
-export type ICompoundPriceSpecification = tttsapi.factory.chevre.compoundPriceSpecification.IPriceSpecification<any>;
+export type ICompoundPriceSpecification = cinerinoapi.factory.chevre.compoundPriceSpecification.IPriceSpecification<any>;
 
-export function getUnitPriceByAcceptedOffer(offer: tttsapi.factory.order.IAcceptedOffer<any>) {
+export function getUnitPriceByAcceptedOffer(offer: cinerinoapi.factory.order.IAcceptedOffer<any>) {
     let unitPrice: number = 0;
 
     if (offer.priceSpecification !== undefined) {

@@ -19,7 +19,7 @@
   "dependencies": {
     "@cinerino/api-nodejs-client": "2.0.0-alpha.30",
     "@motionpicture/express-middleware": "0.0.0",
-    "@motionpicture/ttts-api-nodejs-client": "4.0.0-alpha.0",
+    "@motionpicture/ttts-api-nodejs-client": "^4.2.0",
     "axios": "0.18.0",
     "body-parser": "^1.18.2",
     "config": "^1.29.0",
@@ -144,5 +144,5 @@
       ]
     ]
   },
-  "version": "2.6.0"
+  "version": "2.7.0"
 }
