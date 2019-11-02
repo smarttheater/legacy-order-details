@@ -203,7 +203,6 @@ export async function cancel(req: Request, res: Response): Promise<void> {
             cancellationFee: cancellationFee,
             reason: cinerinoapi.factory.transaction.returnOrder.Reason.Customer,
             informOrderUrl: `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`,
-            informReservationUrl: `${process.env.API_ENDPOINT}/webhooks/onReservationCancelled`,
             ...{
                 agent: {
                     identifier: [

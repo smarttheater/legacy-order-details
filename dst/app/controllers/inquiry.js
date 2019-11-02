@@ -183,7 +183,7 @@ function cancel(req, res) {
                     .tz('Asia/Tokyo')
                     .format('YYYYMMDD'), 
                 // tslint:disable-next-line:no-magic-numbers
-                paymentNo: order.confirmationNumber.slice(-6), cancellationFee: cancellationFee, reason: cinerinoapi.factory.transaction.returnOrder.Reason.Customer, informOrderUrl: `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`, informReservationUrl: `${process.env.API_ENDPOINT}/webhooks/onReservationCancelled` }, {
+                paymentNo: order.confirmationNumber.slice(-6), cancellationFee: cancellationFee, reason: cinerinoapi.factory.transaction.returnOrder.Reason.Customer, informOrderUrl: `${process.env.API_ENDPOINT}/webhooks/onReturnOrder` }, {
                 agent: {
                     identifier: [
                         { name: 'cancellationFee', value: cancellationFee.toString() }
