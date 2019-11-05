@@ -66,7 +66,7 @@ export async function search(req: Request, res: Response): Promise<void> {
             try {
                 // 注文照会
                 debug('inquiring...', req.body.paymentNo);
-                const order = await orderService.findByOrderInquiryKey({
+                const order = await orderService.findByOrderInquiryKey4ttts({
                     performanceDay: performanceDay,
                     paymentNo: req.body.paymentNo,
                     telephone: req.body.purchaserTel
@@ -189,27 +189,34 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         return;
     }
 
-    const cancellationFee = CANCEL_CHARGE;
     let returnOrderTransaction: { id: string };
+
     try {
-        // キャンセルリクエスト
+        // 注文返品取引開始
         returnOrderTransaction = await returnOrderTransactionService.confirm({
-            performanceDay:
-                moment((<cinerinoapi.factory.order.IReservation>order.acceptedOffers[0].itemOffered).reservationFor.startDate)
-                    .tz('Asia/Tokyo')
-                    .format('YYYYMMDD'),
-            // tslint:disable-next-line:no-magic-numbers
-            paymentNo: order.confirmationNumber.slice(-6),
-            cancellationFee: cancellationFee,
-            reason: cinerinoapi.factory.transaction.returnOrder.Reason.Customer,
-            informOrderUrl: `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`,
-            ...{
-                agent: {
-                    identifier: [
-                        { name: 'cancellationFee', value: cancellationFee.toString() }
-                    ]
+            agent: {
+                identifier: [
+                    { name: 'cancellationFee', value: CANCEL_CHARGE.toString() }
+                ]
+            },
+            expires: moment()
+                .add(1, 'minute')
+                .toDate(),
+            object: {
+                order: {
+                    orderNumber: order.orderNumber,
+                    customer: {
+                        telephone: order.customer.telephone
+                    }
                 }
-            }
+            },
+            // performanceDay:
+            //     moment((<cinerinoapi.factory.order.IReservation>order.acceptedOffers[0].itemOffered).reservationFor.startDate)
+            //         .tz('Asia/Tokyo')
+            //         .format('YYYYMMDD'),
+            // // tslint:disable-next-line:no-magic-numbers
+            // paymentNo: order.confirmationNumber.slice(-6),
+            informOrderUrl: `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`
         });
     } catch (err) {
         if (err instanceof cinerinoapi.factory.errors.Argument) {
@@ -241,7 +248,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
                 email: <string>order.customer.email
             },
             about: req.__('EmailTitleCan'),
-            text: getCancelMail(req, order, cancellationFee)
+            text: getCancelMail(req, order, CANCEL_CHARGE)
         };
 
         await returnOrderTransactionService.sendEmailNotification({
