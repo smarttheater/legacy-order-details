@@ -189,6 +189,38 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         return;
     }
 
+    // クレジットカード返金アクション
+    const informOrderUrl = `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`;
+    // const refundCreditCardActionsParams: cinerinoapi.factory.transaction.returnOrder.IRefundCreditCardParams[] =
+    //     await Promise.all(order.paymentMethods
+    //         .filter((p) => p.typeOf === cinerinoapi.factory.paymentMethodType.CreditCard)
+    //         .map(async (p) => {
+    //             return {
+    //                 object: {
+    //                     object: [{
+    //                         paymentMethod: {
+    //                             paymentMethodId: p.paymentMethodId
+    //                         }
+    //                     }]
+    //                 },
+    //                 potentialActions: {
+    //                     sendEmailMessage: {
+    //                         // 返金メールは管理者へ
+    //                         object: {
+    //                             toRecipient: {
+    //                                 email: <string>process.env.DEVELOPER_EMAIL
+    //                             }
+    //                         }
+    //                     },
+    //                     // クレジットカード返金後に注文通知
+    //                     informOrder: [
+    //                         { recipient: { url: informOrderUrl } }
+    //                     ]
+    //                 }
+    //             };
+    //         })
+    //     );
+
     let returnOrderTransaction: { id: string };
 
     try {
@@ -210,13 +242,17 @@ export async function cancel(req: Request, res: Response): Promise<void> {
                     }
                 }
             },
-            // performanceDay:
-            //     moment((<cinerinoapi.factory.order.IReservation>order.acceptedOffers[0].itemOffered).reservationFor.startDate)
-            //         .tz('Asia/Tokyo')
-            //         .format('YYYYMMDD'),
-            // // tslint:disable-next-line:no-magic-numbers
-            // paymentNo: order.confirmationNumber.slice(-6),
-            informOrderUrl: `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`
+            informOrderUrl: informOrderUrl
+            // potentialActions: {
+            //     returnOrder: {
+            //         potentialActions: {
+            //             /**
+            //              * クレジットカード返金アクションについてカスタマイズする場合に指定
+            //              */
+            //             refundCreditCard: refundCreditCardActionsParams
+            //         }
+            //     }
+            // }
         });
     } catch (err) {
         if (err instanceof cinerinoapi.factory.errors.Argument) {
