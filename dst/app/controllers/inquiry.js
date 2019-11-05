@@ -27,7 +27,7 @@ const authClient = new cinerinoapi.auth.ClientCredentials({
     scopes: [],
     state: ''
 });
-const returnOrderTransactionService = new cinerinoapi.service.transaction.ReturnOrder4ttts({
+const returnOrderTransactionService = new cinerinoapi.service.transaction.ReturnOrder({
     endpoint: process.env.CINERINO_API_ENDPOINT,
     auth: authClient
 });
@@ -175,43 +175,56 @@ function cancel(req, res) {
             });
             return;
         }
-        // クレジットカード返金アクション
+        // 返品メール作成
+        const emailAttributes = {
+            typeOf: cinerinoapi.factory.creativeWorkType.EmailMessage,
+            sender: {
+                name: conf.get('email.fromname'),
+                email: conf.get('email.from')
+            },
+            toRecipient: {
+                name: order.customer.name,
+                email: order.customer.email
+            },
+            about: req.__('EmailTitleCan'),
+            text: getCancelMail(req, order, CANCEL_CHARGE)
+        };
         const informOrderUrl = `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`;
-        // const refundCreditCardActionsParams: cinerinoapi.factory.transaction.returnOrder.IRefundCreditCardParams[] =
-        //     await Promise.all(order.paymentMethods
-        //         .filter((p) => p.typeOf === cinerinoapi.factory.paymentMethodType.CreditCard)
-        //         .map(async (p) => {
-        //             return {
-        //                 object: {
-        //                     object: [{
-        //                         paymentMethod: {
-        //                             paymentMethodId: p.paymentMethodId
-        //                         }
-        //                     }]
-        //                 },
-        //                 potentialActions: {
-        //                     sendEmailMessage: {
-        //                         // 返金メールは管理者へ
-        //                         object: {
-        //                             toRecipient: {
-        //                                 email: <string>process.env.DEVELOPER_EMAIL
-        //                             }
-        //                         }
-        //                     },
-        //                     // クレジットカード返金後に注文通知
-        //                     informOrder: [
-        //                         { recipient: { url: informOrderUrl } }
-        //                     ]
-        //                 }
-        //             };
-        //         })
-        //     );
+        // クレジットカード返金アクション
+        const refundCreditCardActionsParams = yield Promise.all(order.paymentMethods
+            .filter((p) => p.typeOf === cinerinoapi.factory.paymentMethodType.CreditCard)
+            .map((p) => __awaiter(this, void 0, void 0, function* () {
+            return {
+                object: {
+                    object: [{
+                            paymentMethod: {
+                                paymentMethodId: p.paymentMethodId
+                            }
+                        }]
+                },
+                potentialActions: {
+                    sendEmailMessage: {
+                        object: {
+                            toRecipient: {
+                                // 返金メールは管理者へ
+                                email: process.env.DEVELOPER_EMAIL
+                            }
+                        }
+                    },
+                    // クレジットカード返金後に注文通知
+                    informOrder: [
+                        { recipient: { url: informOrderUrl } }
+                    ]
+                }
+            };
+        })));
         let returnOrderTransaction;
         try {
             // 注文返品取引開始
-            returnOrderTransaction = yield returnOrderTransactionService.confirm({
+            returnOrderTransaction = yield returnOrderTransactionService.start({
                 agent: {
                     identifier: [
+                        // レポート側で使用
                         { name: 'cancellationFee', value: CANCEL_CHARGE.toString() }
                     ]
                 },
@@ -225,18 +238,23 @@ function cancel(req, res) {
                             telephone: order.customer.telephone
                         }
                     }
-                },
-                informOrderUrl: informOrderUrl
-                // potentialActions: {
-                //     returnOrder: {
-                //         potentialActions: {
-                //             /**
-                //              * クレジットカード返金アクションについてカスタマイズする場合に指定
-                //              */
-                //             refundCreditCard: refundCreditCardActionsParams
-                //         }
-                //     }
-                // }
+                }
+            });
+            yield returnOrderTransactionService.confirm({
+                id: returnOrderTransaction.id,
+                potentialActions: {
+                    returnOrder: {
+                        potentialActions: Object.assign({ 
+                            /**
+                             * クレジットカード返金アクションについてカスタマイズする場合に指定
+                             */
+                            refundCreditCard: refundCreditCardActionsParams }, {
+                            sendEmailMessage: [{
+                                    object: emailAttributes
+                                }]
+                        })
+                    }
+                }
             });
         }
         catch (err) {
@@ -256,33 +274,20 @@ function cancel(req, res) {
             }
             return;
         }
-        try {
-            const emailAttributes = {
-                typeOf: cinerinoapi.factory.creativeWorkType.EmailMessage,
-                sender: {
-                    name: conf.get('email.fromname'),
-                    email: conf.get('email.from')
-                },
-                toRecipient: {
-                    name: order.customer.name,
-                    email: order.customer.email
-                },
-                about: req.__('EmailTitleCan'),
-                text: getCancelMail(req, order, CANCEL_CHARGE)
-            };
-            yield returnOrderTransactionService.sendEmailNotification({
-                transactionId: returnOrderTransaction.id,
-                emailMessageAttributes: emailAttributes
-            });
-            debug('email sent.');
-        }
-        catch (err) {
-            // no op
-            // メール送信に失敗しても、返品処理は走るので、成功
-        }
+        // try {
+        //     await returnOrderTransactionService.sendEmailNotification4ttts({
+        //         transactionId: returnOrderTransaction.id,
+        //         emailMessageAttributes: emailAttributes
+        //     });
+        //     debug('email sent.');
+        // } catch (err) {
+        //     // no op
+        //     // メール送信に失敗しても、返品処理は走るので、成功
+        // }
         // セッションから照会結果を削除
         delete req.session.inquiryResult;
-        res.status(http_status_1.CREATED).json(returnOrderTransaction);
+        res.status(http_status_1.CREATED)
+            .json(returnOrderTransaction);
     });
 }
 exports.cancel = cancel;
