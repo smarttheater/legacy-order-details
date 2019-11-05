@@ -64,7 +64,7 @@ function search(req, res) {
                 try {
                     // 注文照会
                     debug('inquiring...', req.body.paymentNo);
-                    const order = yield orderService.findByOrderInquiryKey({
+                    const order = yield orderService.findByOrderInquiryKey4ttts({
                         performanceDay: performanceDay,
                         paymentNo: req.body.paymentNo,
                         telephone: req.body.purchaserTel
@@ -175,21 +175,69 @@ function cancel(req, res) {
             });
             return;
         }
-        const cancellationFee = CANCEL_CHARGE;
+        // クレジットカード返金アクション
+        const informOrderUrl = `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`;
+        // const refundCreditCardActionsParams: cinerinoapi.factory.transaction.returnOrder.IRefundCreditCardParams[] =
+        //     await Promise.all(order.paymentMethods
+        //         .filter((p) => p.typeOf === cinerinoapi.factory.paymentMethodType.CreditCard)
+        //         .map(async (p) => {
+        //             return {
+        //                 object: {
+        //                     object: [{
+        //                         paymentMethod: {
+        //                             paymentMethodId: p.paymentMethodId
+        //                         }
+        //                     }]
+        //                 },
+        //                 potentialActions: {
+        //                     sendEmailMessage: {
+        //                         // 返金メールは管理者へ
+        //                         object: {
+        //                             toRecipient: {
+        //                                 email: <string>process.env.DEVELOPER_EMAIL
+        //                             }
+        //                         }
+        //                     },
+        //                     // クレジットカード返金後に注文通知
+        //                     informOrder: [
+        //                         { recipient: { url: informOrderUrl } }
+        //                     ]
+        //                 }
+        //             };
+        //         })
+        //     );
         let returnOrderTransaction;
         try {
-            // キャンセルリクエスト
-            returnOrderTransaction = yield returnOrderTransactionService.confirm(Object.assign({ performanceDay: moment(order.acceptedOffers[0].itemOffered.reservationFor.startDate)
-                    .tz('Asia/Tokyo')
-                    .format('YYYYMMDD'), 
-                // tslint:disable-next-line:no-magic-numbers
-                paymentNo: order.confirmationNumber.slice(-6), cancellationFee: cancellationFee, reason: cinerinoapi.factory.transaction.returnOrder.Reason.Customer, informOrderUrl: `${process.env.API_ENDPOINT}/webhooks/onReturnOrder` }, {
+            // 注文返品取引開始
+            returnOrderTransaction = yield returnOrderTransactionService.confirm({
                 agent: {
                     identifier: [
-                        { name: 'cancellationFee', value: cancellationFee.toString() }
+                        { name: 'cancellationFee', value: CANCEL_CHARGE.toString() }
                     ]
-                }
-            }));
+                },
+                expires: moment()
+                    .add(1, 'minute')
+                    .toDate(),
+                object: {
+                    order: {
+                        orderNumber: order.orderNumber,
+                        customer: {
+                            telephone: order.customer.telephone
+                        }
+                    }
+                },
+                informOrderUrl: informOrderUrl
+                // potentialActions: {
+                //     returnOrder: {
+                //         potentialActions: {
+                //             /**
+                //              * クレジットカード返金アクションについてカスタマイズする場合に指定
+                //              */
+                //             refundCreditCard: refundCreditCardActionsParams
+                //         }
+                //     }
+                // }
+            });
         }
         catch (err) {
             if (err instanceof cinerinoapi.factory.errors.Argument) {
@@ -220,7 +268,7 @@ function cancel(req, res) {
                     email: order.customer.email
                 },
                 about: req.__('EmailTitleCan'),
-                text: getCancelMail(req, order, cancellationFee)
+                text: getCancelMail(req, order, CANCEL_CHARGE)
             };
             yield returnOrderTransactionService.sendEmailNotification({
                 transactionId: returnOrderTransaction.id,
