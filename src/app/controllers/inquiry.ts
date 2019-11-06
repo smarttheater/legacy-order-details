@@ -3,16 +3,14 @@
  */
 import * as cinerinoapi from '@cinerino/api-nodejs-client';
 import * as conf from 'config';
-import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
 import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR } from 'http-status';
+import * as jwt from 'jsonwebtoken';
 import * as moment from 'moment-timezone';
 import * as numeral from 'numeral';
 
 import * as Text from '../../common/Const/Text';
 import * as ticket from '../../common/Util/ticket';
-
-const debug = createDebug('ttts-authentication:controllers.inquiry');
 
 const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
@@ -22,7 +20,7 @@ const authClient = new cinerinoapi.auth.ClientCredentials({
     state: ''
 });
 
-const returnOrderTransactionService = new cinerinoapi.service.transaction.ReturnOrder4ttts({
+const returnOrderTransactionService = new cinerinoapi.service.transaction.ReturnOrder({
     endpoint: <string>process.env.CINERINO_API_ENDPOINT,
     auth: authClient
 });
@@ -57,7 +55,7 @@ export async function search(req: Request, res: Response): Promise<void> {
         validate(req);
         const validatorResult = await req.getValidationResult();
         errors = validatorResult.mapped();
-        debug('validatorResult:', validatorResult);
+
         // 日付編集
         let performanceDay = req.body.day;
         performanceDay = performanceDay.replace(/\-/g, '').replace(/\//g, '');
@@ -65,22 +63,34 @@ export async function search(req: Request, res: Response): Promise<void> {
         if (validatorResult.isEmpty()) {
             try {
                 // 注文照会
-                debug('inquiring...', req.body.paymentNo);
-                const order = await orderService.findByOrderInquiryKey4ttts({
-                    performanceDay: performanceDay,
-                    paymentNo: req.body.paymentNo,
-                    telephone: req.body.purchaserTel
+                const order = await orderService.findByConfirmationNumber({
+                    confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
+                    customer: { telephone: req.body.purchaserTel }
+                    // performanceDay: performanceDay,
+                    // paymentNo: req.body.paymentNo,
+                    // telephone: req.body.purchaserTel
                 });
-                debug('order found.', order.orderNumber);
+                // const order = await orderService.findByOrderInquiryKey4ttts({
+                //     confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
+                //     customer: { telephone: req.body.purchaserTel }
+                //     // performanceDay: performanceDay,
+                //     // paymentNo: req.body.paymentNo,
+                //     // telephone: req.body.purchaserTel
+                // });
 
                 // 返品済であれば入力ミス
                 if (order.orderStatus === cinerinoapi.factory.orderStatus.OrderReturned) {
                     throw new Error(req.__('MistakeInput'));
                 }
 
+                // 印刷トークン生成
+                const reservationIds = order.acceptedOffers.map((o) => (<cinerinoapi.factory.order.IReservation>o.itemOffered).id);
+                const printToken = await createPrintToken(reservationIds);
+
                 // 結果をセッションに保管して結果画面へ遷移
                 (<Express.Session>req.session).inquiryResult = {
-                    printToken: order.printToken,
+                    // printToken: order.printToken,
+                    printToken: printToken,
                     order: order
                 };
                 res.redirect('/inquiry/search/result');
@@ -113,6 +123,34 @@ export async function search(req: Request, res: Response): Promise<void> {
         },
         reserveMaxDate: reserveMaxDate,
         layout: 'layouts/inquiry/layout'
+    });
+}
+
+/**
+ * 印刷トークンインターフェース
+ */
+export type IPrintToken = string;
+/**
+ * 印刷トークン対象(予約IDリスト)インターフェース
+ */
+export type IPrintObject = string[];
+
+/**
+ * 予約印刷トークンを発行する
+ */
+async function createPrintToken(object: IPrintObject): Promise<IPrintToken> {
+    return new Promise<IPrintToken>((resolve, reject) => {
+        const payload = {
+            object: object
+        };
+
+        jwt.sign(payload, <string>process.env.TTTS_TOKEN_SECRET, (jwtErr, token) => {
+            if (jwtErr instanceof Error) {
+                reject(jwtErr);
+            } else {
+                resolve(token);
+            }
+        });
     });
 }
 
@@ -189,45 +227,62 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         return;
     }
 
-    // クレジットカード返金アクション
+    // 返品メール作成
+    const emailAttributes: cinerinoapi.factory.creativeWork.message.email.IAttributes = {
+        typeOf: cinerinoapi.factory.creativeWorkType.EmailMessage,
+        sender: {
+            name: conf.get<string>('email.fromname'),
+            email: conf.get<string>('email.from')
+        },
+        toRecipient: {
+            name: <string>order.customer.name,
+            email: <string>order.customer.email
+        },
+        about: req.__('EmailTitleCan'),
+        text: getCancelMail(req, order, CANCEL_CHARGE)
+    };
+
     const informOrderUrl = `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`;
-    // const refundCreditCardActionsParams: cinerinoapi.factory.transaction.returnOrder.IRefundCreditCardParams[] =
-    //     await Promise.all(order.paymentMethods
-    //         .filter((p) => p.typeOf === cinerinoapi.factory.paymentMethodType.CreditCard)
-    //         .map(async (p) => {
-    //             return {
-    //                 object: {
-    //                     object: [{
-    //                         paymentMethod: {
-    //                             paymentMethodId: p.paymentMethodId
-    //                         }
-    //                     }]
-    //                 },
-    //                 potentialActions: {
-    //                     sendEmailMessage: {
-    //                         // 返金メールは管理者へ
-    //                         object: {
-    //                             toRecipient: {
-    //                                 email: <string>process.env.DEVELOPER_EMAIL
-    //                             }
-    //                         }
-    //                     },
-    //                     // クレジットカード返金後に注文通知
-    //                     informOrder: [
-    //                         { recipient: { url: informOrderUrl } }
-    //                     ]
-    //                 }
-    //             };
-    //         })
-    //     );
+
+    // クレジットカード返金アクション
+    const refundCreditCardActionsParams: cinerinoapi.factory.transaction.returnOrder.IRefundCreditCardParams[] =
+        await Promise.all(order.paymentMethods
+            .filter((p) => p.typeOf === cinerinoapi.factory.paymentMethodType.CreditCard)
+            .map(async (p) => {
+                return {
+                    object: {
+                        object: [{
+                            paymentMethod: {
+                                paymentMethodId: p.paymentMethodId
+                            }
+                        }]
+                    },
+                    potentialActions: {
+                        sendEmailMessage: {
+                            object: {
+                                toRecipient: {
+                                    // 返金メールは管理者へ
+                                    email: <string>process.env.DEVELOPER_EMAIL
+                                }
+                            }
+                        },
+                        // クレジットカード返金後に注文通知
+                        informOrder: [
+                            { recipient: { url: informOrderUrl } }
+                        ]
+                    }
+                };
+            })
+        );
 
     let returnOrderTransaction: { id: string };
 
     try {
         // 注文返品取引開始
-        returnOrderTransaction = await returnOrderTransactionService.confirm({
+        returnOrderTransaction = await returnOrderTransactionService.start({
             agent: {
                 identifier: [
+                    // レポート側で使用
                     { name: 'cancellationFee', value: CANCEL_CHARGE.toString() }
                 ]
             },
@@ -241,18 +296,26 @@ export async function cancel(req: Request, res: Response): Promise<void> {
                         telephone: order.customer.telephone
                     }
                 }
-            },
-            informOrderUrl: informOrderUrl
-            // potentialActions: {
-            //     returnOrder: {
-            //         potentialActions: {
-            //             /**
-            //              * クレジットカード返金アクションについてカスタマイズする場合に指定
-            //              */
-            //             refundCreditCard: refundCreditCardActionsParams
-            //         }
-            //     }
-            // }
+            }
+        });
+
+        await returnOrderTransactionService.confirm({
+            id: returnOrderTransaction.id,
+            potentialActions: {
+                returnOrder: {
+                    potentialActions: {
+                        /**
+                         * クレジットカード返金アクションについてカスタマイズする場合に指定
+                         */
+                        refundCreditCard: refundCreditCardActionsParams,
+                        ...{
+                            sendEmailMessage: [{
+                                object: emailAttributes
+                            }]
+                        }
+                    }
+                }
+            }
         });
     } catch (err) {
         if (err instanceof cinerinoapi.factory.errors.Argument) {
@@ -272,35 +335,22 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         return;
     }
 
-    try {
-        const emailAttributes: cinerinoapi.factory.creativeWork.message.email.IAttributes = {
-            typeOf: cinerinoapi.factory.creativeWorkType.EmailMessage,
-            sender: {
-                name: conf.get<string>('email.fromname'),
-                email: conf.get<string>('email.from')
-            },
-            toRecipient: {
-                name: <string>order.customer.name,
-                email: <string>order.customer.email
-            },
-            about: req.__('EmailTitleCan'),
-            text: getCancelMail(req, order, CANCEL_CHARGE)
-        };
-
-        await returnOrderTransactionService.sendEmailNotification({
-            transactionId: returnOrderTransaction.id,
-            emailMessageAttributes: emailAttributes
-        });
-        debug('email sent.');
-    } catch (err) {
-        // no op
-        // メール送信に失敗しても、返品処理は走るので、成功
-    }
+    // try {
+    //     await returnOrderTransactionService.sendEmailNotification4ttts({
+    //         transactionId: returnOrderTransaction.id,
+    //         emailMessageAttributes: emailAttributes
+    //     });
+    //     debug('email sent.');
+    // } catch (err) {
+    //     // no op
+    //     // メール送信に失敗しても、返品処理は走るので、成功
+    // }
 
     // セッションから照会結果を削除
     delete (<Express.Session>req.session).inquiryResult;
 
-    res.status(CREATED).json(returnOrderTransaction);
+    res.status(CREATED)
+        .json(returnOrderTransaction);
 }
 
 /**
