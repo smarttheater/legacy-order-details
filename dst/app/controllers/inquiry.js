@@ -13,14 +13,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const cinerinoapi = require("@cinerino/api-nodejs-client");
 const conf = require("config");
-const createDebug = require("debug");
 const http_status_1 = require("http-status");
 const jwt = require("jsonwebtoken");
 const moment = require("moment-timezone");
 const numeral = require("numeral");
 const Text = require("../../common/Const/Text");
 const ticket = require("../../common/Util/ticket");
-const debug = createDebug('ttts-authentication:controllers.inquiry');
 const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: process.env.API_CLIENT_ID,
@@ -57,20 +55,26 @@ function search(req, res) {
             validate(req);
             const validatorResult = yield req.getValidationResult();
             errors = validatorResult.mapped();
-            debug('validatorResult:', validatorResult);
             // 日付編集
             let performanceDay = req.body.day;
             performanceDay = performanceDay.replace(/\-/g, '').replace(/\//g, '');
             if (validatorResult.isEmpty()) {
                 try {
                     // 注文照会
-                    const order = yield orderService.findByOrderInquiryKey4ttts({
+                    const order = yield orderService.findByConfirmationNumber({
                         confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
                         customer: { telephone: req.body.purchaserTel }
                         // performanceDay: performanceDay,
                         // paymentNo: req.body.paymentNo,
                         // telephone: req.body.purchaserTel
                     });
+                    // const order = await orderService.findByOrderInquiryKey4ttts({
+                    //     confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
+                    //     customer: { telephone: req.body.purchaserTel }
+                    //     // performanceDay: performanceDay,
+                    //     // paymentNo: req.body.paymentNo,
+                    //     // telephone: req.body.purchaserTel
+                    // });
                     // 返品済であれば入力ミス
                     if (order.orderStatus === cinerinoapi.factory.orderStatus.OrderReturned) {
                         throw new Error(req.__('MistakeInput'));
@@ -88,7 +92,6 @@ function search(req, res) {
                     return;
                 }
                 catch (error) {
-                    debug(error);
                     // tslint:disable-next-line:prefer-conditional-expression
                     if (!(error instanceof cinerinoapi.factory.errors.NotFound)) {
                         message = req.__('MistakeInput');
