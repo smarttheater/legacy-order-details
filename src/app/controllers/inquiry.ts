@@ -6,6 +6,7 @@ import * as conf from 'config';
 import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
 import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR } from 'http-status';
+import * as jwt from 'jsonwebtoken';
 import * as moment from 'moment-timezone';
 import * as numeral from 'numeral';
 
@@ -65,28 +66,34 @@ export async function search(req: Request, res: Response): Promise<void> {
         if (validatorResult.isEmpty()) {
             try {
                 // 注文照会
-                debug('inquiring...', req.body.paymentNo);
                 const order = await orderService.findByOrderInquiryKey4ttts({
-                    performanceDay: performanceDay,
-                    paymentNo: req.body.paymentNo,
-                    telephone: req.body.purchaserTel
+                    confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
+                    customer: { telephone: req.body.purchaserTel }
+                    // performanceDay: performanceDay,
+                    // paymentNo: req.body.paymentNo,
+                    // telephone: req.body.purchaserTel
                 });
-                debug('order found.', order.orderNumber);
 
                 // 返品済であれば入力ミス
                 if (order.orderStatus === cinerinoapi.factory.orderStatus.OrderReturned) {
                     throw new Error(req.__('MistakeInput'));
                 }
 
+                // 印刷トークン生成
+                const reservationIds = order.acceptedOffers.map((o) => (<cinerinoapi.factory.order.IReservation>o.itemOffered).id);
+                const printToken = await createPrintToken(reservationIds);
+
                 // 結果をセッションに保管して結果画面へ遷移
                 (<Express.Session>req.session).inquiryResult = {
-                    printToken: order.printToken,
+                    // printToken: order.printToken,
+                    printToken: printToken,
                     order: order
                 };
                 res.redirect('/inquiry/search/result');
 
                 return;
             } catch (error) {
+                debug(error);
                 // tslint:disable-next-line:prefer-conditional-expression
                 if (!(error instanceof cinerinoapi.factory.errors.NotFound)) {
                     message = req.__('MistakeInput');
@@ -113,6 +120,34 @@ export async function search(req: Request, res: Response): Promise<void> {
         },
         reserveMaxDate: reserveMaxDate,
         layout: 'layouts/inquiry/layout'
+    });
+}
+
+/**
+ * 印刷トークンインターフェース
+ */
+export type IPrintToken = string;
+/**
+ * 印刷トークン対象(予約IDリスト)インターフェース
+ */
+export type IPrintObject = string[];
+
+/**
+ * 予約印刷トークンを発行する
+ */
+async function createPrintToken(object: IPrintObject): Promise<IPrintToken> {
+    return new Promise<IPrintToken>((resolve, reject) => {
+        const payload = {
+            object: object
+        };
+
+        jwt.sign(payload, <string>process.env.TTTS_TOKEN_SECRET, (jwtErr, token) => {
+            if (jwtErr instanceof Error) {
+                reject(jwtErr);
+            } else {
+                resolve(token);
+            }
+        });
     });
 }
 

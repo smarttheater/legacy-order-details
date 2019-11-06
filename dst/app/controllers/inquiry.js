@@ -15,6 +15,7 @@ const cinerinoapi = require("@cinerino/api-nodejs-client");
 const conf = require("config");
 const createDebug = require("debug");
 const http_status_1 = require("http-status");
+const jwt = require("jsonwebtoken");
 const moment = require("moment-timezone");
 const numeral = require("numeral");
 const Text = require("../../common/Const/Text");
@@ -63,26 +64,31 @@ function search(req, res) {
             if (validatorResult.isEmpty()) {
                 try {
                     // 注文照会
-                    debug('inquiring...', req.body.paymentNo);
                     const order = yield orderService.findByOrderInquiryKey4ttts({
-                        performanceDay: performanceDay,
-                        paymentNo: req.body.paymentNo,
-                        telephone: req.body.purchaserTel
+                        confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
+                        customer: { telephone: req.body.purchaserTel }
+                        // performanceDay: performanceDay,
+                        // paymentNo: req.body.paymentNo,
+                        // telephone: req.body.purchaserTel
                     });
-                    debug('order found.', order.orderNumber);
                     // 返品済であれば入力ミス
                     if (order.orderStatus === cinerinoapi.factory.orderStatus.OrderReturned) {
                         throw new Error(req.__('MistakeInput'));
                     }
+                    // 印刷トークン生成
+                    const reservationIds = order.acceptedOffers.map((o) => o.itemOffered.id);
+                    const printToken = yield createPrintToken(reservationIds);
                     // 結果をセッションに保管して結果画面へ遷移
                     req.session.inquiryResult = {
-                        printToken: order.printToken,
+                        // printToken: order.printToken,
+                        printToken: printToken,
                         order: order
                     };
                     res.redirect('/inquiry/search/result');
                     return;
                 }
                 catch (error) {
+                    debug(error);
                     // tslint:disable-next-line:prefer-conditional-expression
                     if (!(error instanceof cinerinoapi.factory.errors.NotFound)) {
                         message = req.__('MistakeInput');
@@ -112,6 +118,26 @@ function search(req, res) {
     });
 }
 exports.search = search;
+/**
+ * 予約印刷トークンを発行する
+ */
+function createPrintToken(object) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve, reject) => {
+            const payload = {
+                object: object
+            };
+            jwt.sign(payload, process.env.TTTS_TOKEN_SECRET, (jwtErr, token) => {
+                if (jwtErr instanceof Error) {
+                    reject(jwtErr);
+                }
+                else {
+                    resolve(token);
+                }
+            });
+        });
+    });
+}
 /**
  * 予約照会結果画面(getのみ)
  */
