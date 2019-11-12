@@ -60,6 +60,8 @@ function search(req, res) {
             performanceDay = performanceDay.replace(/\-/g, '').replace(/\//g, '');
             if (validatorResult.isEmpty()) {
                 try {
+                    const confirmationNumber = `${performanceDay}${req.body.paymentNo}`;
+                    const confirmationPass = String(req.body.purchaserTel);
                     // 注文照会
                     // const order = await orderService.findByConfirmationNumber({
                     //     confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
@@ -69,9 +71,9 @@ function search(req, res) {
                     const searchOrdersResult = yield orderService.search({
                         limit: 1,
                         identifier: {
-                            $in: [
-                                { name: 'confirmationNumber', value: `${performanceDay}${req.body.paymentNo}` },
-                                { name: 'confirmationPass', value: String(req.body.purchaserTel) }
+                            $all: [
+                                { name: 'confirmationNumber', value: confirmationNumber },
+                                { name: 'confirmationPass', value: confirmationPass }
                             ]
                         }
                     });
@@ -88,7 +90,6 @@ function search(req, res) {
                     const printToken = yield createPrintToken(reservationIds);
                     // 結果をセッションに保管して結果画面へ遷移
                     req.session.inquiryResult = {
-                        // printToken: order.printToken,
                         printToken: printToken,
                         order: order
                     };
@@ -307,16 +308,6 @@ function cancel(req, res) {
             }
             return;
         }
-        // try {
-        //     await returnOrderTransactionService.sendEmailNotification4ttts({
-        //         transactionId: returnOrderTransaction.id,
-        //         emailMessageAttributes: emailAttributes
-        //     });
-        //     debug('email sent.');
-        // } catch (err) {
-        //     // no op
-        //     // メール送信に失敗しても、返品処理は走るので、成功
-        // }
         // セッションから照会結果を削除
         delete req.session.inquiryResult;
         res.status(http_status_1.CREATED)

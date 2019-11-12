@@ -62,6 +62,8 @@ export async function search(req: Request, res: Response): Promise<void> {
 
         if (validatorResult.isEmpty()) {
             try {
+                const confirmationNumber = `${performanceDay}${req.body.paymentNo}`;
+                const confirmationPass = String(req.body.purchaserTel);
                 // 注文照会
                 // const order = await orderService.findByConfirmationNumber({
                 //     confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
@@ -72,9 +74,9 @@ export async function search(req: Request, res: Response): Promise<void> {
                 const searchOrdersResult = await orderService.search({
                     limit: 1,
                     identifier: {
-                        $in: [
-                            { name: 'confirmationNumber', value: `${performanceDay}${req.body.paymentNo}` },
-                            { name: 'confirmationPass', value: String(req.body.purchaserTel) }
+                        $all: [
+                            { name: 'confirmationNumber', value: confirmationNumber },
+                            { name: 'confirmationPass', value: confirmationPass }
                         ]
                     }
                 });
@@ -95,7 +97,6 @@ export async function search(req: Request, res: Response): Promise<void> {
 
                 // 結果をセッションに保管して結果画面へ遷移
                 (<Express.Session>req.session).inquiryResult = {
-                    // printToken: order.printToken,
                     printToken: printToken,
                     order: order
                 };
@@ -340,17 +341,6 @@ export async function cancel(req: Request, res: Response): Promise<void> {
 
         return;
     }
-
-    // try {
-    //     await returnOrderTransactionService.sendEmailNotification4ttts({
-    //         transactionId: returnOrderTransaction.id,
-    //         emailMessageAttributes: emailAttributes
-    //     });
-    //     debug('email sent.');
-    // } catch (err) {
-    //     // no op
-    //     // メール送信に失敗しても、返品処理は走るので、成功
-    // }
 
     // セッションから照会結果を削除
     delete (<Express.Session>req.session).inquiryResult;
