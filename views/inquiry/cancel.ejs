@@ -8,7 +8,14 @@ if (Array.isArray(performance.additionalProperty)) {
     }    
 }
 
-const paymentNo = order.confirmationNumber.slice(-6);
+let confirmationNumber = '';
+if (Array.isArray(order.identifier)) {
+    const confirmationNumberProperty = order.identifier.find((p)=>p.name==='confirmationNumber');
+    if (confirmationNumberProperty !== undefined) {
+        confirmationNumber = confirmationNumberProperty.value;
+    }    
+}
+const paymentNo = confirmationNumber.slice(-6);
 %>
 <div class="modal modal-cancel fade" id="modal_cancelreservation" tabindex="-1" data-paymentNo="<%- paymentNo %>">
     <div class="modal-dialog">
