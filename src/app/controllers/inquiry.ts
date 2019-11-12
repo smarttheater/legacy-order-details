@@ -63,20 +63,26 @@ export async function search(req: Request, res: Response): Promise<void> {
         if (validatorResult.isEmpty()) {
             try {
                 // 注文照会
-                const order = await orderService.findByConfirmationNumber({
-                    confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
-                    customer: { telephone: req.body.purchaserTel }
-                    // performanceDay: performanceDay,
-                    // paymentNo: req.body.paymentNo,
-                    // telephone: req.body.purchaserTel
-                });
-                // const order = await orderService.findByOrderInquiryKey4ttts({
+                // const order = await orderService.findByConfirmationNumber({
                 //     confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
                 //     customer: { telephone: req.body.purchaserTel }
-                //     // performanceDay: performanceDay,
-                //     // paymentNo: req.body.paymentNo,
-                //     // telephone: req.body.purchaserTel
                 // });
+
+                // 注文検索
+                const searchOrdersResult = await orderService.search({
+                    limit: 1,
+                    identifier: {
+                        $in: [
+                            { name: 'confirmationNumber', value: `${performanceDay}${req.body.paymentNo}` },
+                            { name: 'confirmationPass', value: String(req.body.purchaserTel) }
+                        ]
+                    }
+                });
+
+                const order = searchOrdersResult.data.shift();
+                if (order === undefined) {
+                    throw new Error(req.__('MistakeInput'));
+                }
 
                 // 返品済であれば入力ミス
                 if (order.orderStatus === cinerinoapi.factory.orderStatus.OrderReturned) {
