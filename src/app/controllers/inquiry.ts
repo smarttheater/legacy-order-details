@@ -62,21 +62,29 @@ export async function search(req: Request, res: Response): Promise<void> {
 
         if (validatorResult.isEmpty()) {
             try {
+                const confirmationNumber = `${performanceDay}${req.body.paymentNo}`;
+                const confirmationPass = String(req.body.purchaserTel);
                 // 注文照会
-                const order = await orderService.findByConfirmationNumber({
-                    confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
-                    customer: { telephone: req.body.purchaserTel }
-                    // performanceDay: performanceDay,
-                    // paymentNo: req.body.paymentNo,
-                    // telephone: req.body.purchaserTel
-                });
-                // const order = await orderService.findByOrderInquiryKey4ttts({
+                // const order = await orderService.findByConfirmationNumber({
                 //     confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
                 //     customer: { telephone: req.body.purchaserTel }
-                //     // performanceDay: performanceDay,
-                //     // paymentNo: req.body.paymentNo,
-                //     // telephone: req.body.purchaserTel
                 // });
+
+                // 注文検索
+                const searchOrdersResult = await orderService.search({
+                    limit: 1,
+                    identifier: {
+                        $all: [
+                            { name: 'confirmationNumber', value: confirmationNumber },
+                            { name: 'confirmationPass', value: confirmationPass }
+                        ]
+                    }
+                });
+
+                const order = searchOrdersResult.data.shift();
+                if (order === undefined) {
+                    throw new Error(req.__('MistakeInput'));
+                }
 
                 // 返品済であれば入力ミス
                 if (order.orderStatus === cinerinoapi.factory.orderStatus.OrderReturned) {
@@ -89,7 +97,6 @@ export async function search(req: Request, res: Response): Promise<void> {
 
                 // 結果をセッションに保管して結果画面へ遷移
                 (<Express.Session>req.session).inquiryResult = {
-                    // printToken: order.printToken,
                     printToken: printToken,
                     order: order
                 };
@@ -335,17 +342,6 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         return;
     }
 
-    // try {
-    //     await returnOrderTransactionService.sendEmailNotification4ttts({
-    //         transactionId: returnOrderTransaction.id,
-    //         emailMessageAttributes: emailAttributes
-    //     });
-    //     debug('email sent.');
-    // } catch (err) {
-    //     // no op
-    //     // メール送信に失敗しても、返品処理は走るので、成功
-    // }
-
     // セッションから照会結果を削除
     delete (<Express.Session>req.session).inquiryResult;
 
@@ -372,6 +368,7 @@ function validate(req: Request): void {
 /**
  * キャンセルメール本文取得
  */
+// tslint:disable-next-line:max-func-body-length
 function getCancelMail(
     req: Request,
     order: cinerinoapi.factory.order.IOrder,
@@ -380,6 +377,14 @@ function getCancelMail(
     const reservations = order.acceptedOffers.map((o) => <cinerinoapi.factory.order.IReservation>o.itemOffered);
     const mail: string[] = [];
     const locale: string = (<Express.Session>req.session).locale;
+
+    let confirmationNumber = '';
+    if (Array.isArray(order.identifier)) {
+        const confirmationNumberProperty = order.identifier.find((p) => p.name === 'confirmationNumber');
+        if (confirmationNumberProperty !== undefined) {
+            confirmationNumber = confirmationNumberProperty.value;
+        }
+    }
 
     // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
     mail.push(req.__('EmailTitleCan'));
@@ -407,7 +412,7 @@ function getCancelMail(
 
     // 購入番号
     // tslint:disable-next-line:no-magic-numbers
-    mail.push(`${req.__('PaymentNo')} : ${order.confirmationNumber.slice(-6)}`);
+    mail.push(`${req.__('PaymentNo')} : ${confirmationNumber.slice(-6)}`);
 
     // ご来塔日時
     const day: string = moment(reservations[0].reservationFor.startDate)

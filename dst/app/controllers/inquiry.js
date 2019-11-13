@@ -60,21 +60,27 @@ function search(req, res) {
             performanceDay = performanceDay.replace(/\-/g, '').replace(/\//g, '');
             if (validatorResult.isEmpty()) {
                 try {
+                    const confirmationNumber = `${performanceDay}${req.body.paymentNo}`;
+                    const confirmationPass = String(req.body.purchaserTel);
                     // 注文照会
-                    const order = yield orderService.findByConfirmationNumber({
-                        confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
-                        customer: { telephone: req.body.purchaserTel }
-                        // performanceDay: performanceDay,
-                        // paymentNo: req.body.paymentNo,
-                        // telephone: req.body.purchaserTel
-                    });
-                    // const order = await orderService.findByOrderInquiryKey4ttts({
+                    // const order = await orderService.findByConfirmationNumber({
                     //     confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
                     //     customer: { telephone: req.body.purchaserTel }
-                    //     // performanceDay: performanceDay,
-                    //     // paymentNo: req.body.paymentNo,
-                    //     // telephone: req.body.purchaserTel
                     // });
+                    // 注文検索
+                    const searchOrdersResult = yield orderService.search({
+                        limit: 1,
+                        identifier: {
+                            $all: [
+                                { name: 'confirmationNumber', value: confirmationNumber },
+                                { name: 'confirmationPass', value: confirmationPass }
+                            ]
+                        }
+                    });
+                    const order = searchOrdersResult.data.shift();
+                    if (order === undefined) {
+                        throw new Error(req.__('MistakeInput'));
+                    }
                     // 返品済であれば入力ミス
                     if (order.orderStatus === cinerinoapi.factory.orderStatus.OrderReturned) {
                         throw new Error(req.__('MistakeInput'));
@@ -84,7 +90,6 @@ function search(req, res) {
                     const printToken = yield createPrintToken(reservationIds);
                     // 結果をセッションに保管して結果画面へ遷移
                     req.session.inquiryResult = {
-                        // printToken: order.printToken,
                         printToken: printToken,
                         order: order
                     };
@@ -303,16 +308,6 @@ function cancel(req, res) {
             }
             return;
         }
-        // try {
-        //     await returnOrderTransactionService.sendEmailNotification4ttts({
-        //         transactionId: returnOrderTransaction.id,
-        //         emailMessageAttributes: emailAttributes
-        //     });
-        //     debug('email sent.');
-        // } catch (err) {
-        //     // no op
-        //     // メール送信に失敗しても、返品処理は走るので、成功
-        // }
         // セッションから照会結果を削除
         delete req.session.inquiryResult;
         res.status(http_status_1.CREATED)
@@ -335,10 +330,18 @@ function validate(req) {
 /**
  * キャンセルメール本文取得
  */
+// tslint:disable-next-line:max-func-body-length
 function getCancelMail(req, order, fee) {
     const reservations = order.acceptedOffers.map((o) => o.itemOffered);
     const mail = [];
     const locale = req.session.locale;
+    let confirmationNumber = '';
+    if (Array.isArray(order.identifier)) {
+        const confirmationNumberProperty = order.identifier.find((p) => p.name === 'confirmationNumber');
+        if (confirmationNumberProperty !== undefined) {
+            confirmationNumber = confirmationNumberProperty.value;
+        }
+    }
     // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
     mail.push(req.__('EmailTitleCan'));
     mail.push('');
@@ -358,7 +361,7 @@ function getCancelMail(req, order, fee) {
     mail.push('');
     // 購入番号
     // tslint:disable-next-line:no-magic-numbers
-    mail.push(`${req.__('PaymentNo')} : ${order.confirmationNumber.slice(-6)}`);
+    mail.push(`${req.__('PaymentNo')} : ${confirmationNumber.slice(-6)}`);
     // ご来塔日時
     const day = moment(reservations[0].reservationFor.startDate)
         .tz('Asia/Tokyo')
