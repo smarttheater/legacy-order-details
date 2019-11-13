@@ -330,10 +330,18 @@ function validate(req) {
 /**
  * キャンセルメール本文取得
  */
+// tslint:disable-next-line:max-func-body-length
 function getCancelMail(req, order, fee) {
     const reservations = order.acceptedOffers.map((o) => o.itemOffered);
     const mail = [];
     const locale = req.session.locale;
+    let confirmationNumber = '';
+    if (Array.isArray(order.identifier)) {
+        const confirmationNumberProperty = order.identifier.find((p) => p.name === 'confirmationNumber');
+        if (confirmationNumberProperty !== undefined) {
+            confirmationNumber = confirmationNumberProperty.value;
+        }
+    }
     // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
     mail.push(req.__('EmailTitleCan'));
     mail.push('');
@@ -353,7 +361,7 @@ function getCancelMail(req, order, fee) {
     mail.push('');
     // 購入番号
     // tslint:disable-next-line:no-magic-numbers
-    mail.push(`${req.__('PaymentNo')} : ${order.confirmationNumber.slice(-6)}`);
+    mail.push(`${req.__('PaymentNo')} : ${confirmationNumber.slice(-6)}`);
     // ご来塔日時
     const day = moment(reservations[0].reservationFor.startDate)
         .tz('Asia/Tokyo')

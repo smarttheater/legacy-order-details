@@ -368,6 +368,7 @@ function validate(req: Request): void {
 /**
  * キャンセルメール本文取得
  */
+// tslint:disable-next-line:max-func-body-length
 function getCancelMail(
     req: Request,
     order: cinerinoapi.factory.order.IOrder,
@@ -376,6 +377,14 @@ function getCancelMail(
     const reservations = order.acceptedOffers.map((o) => <cinerinoapi.factory.order.IReservation>o.itemOffered);
     const mail: string[] = [];
     const locale: string = (<Express.Session>req.session).locale;
+
+    let confirmationNumber = '';
+    if (Array.isArray(order.identifier)) {
+        const confirmationNumberProperty = order.identifier.find((p) => p.name === 'confirmationNumber');
+        if (confirmationNumberProperty !== undefined) {
+            confirmationNumber = confirmationNumberProperty.value;
+        }
+    }
 
     // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
     mail.push(req.__('EmailTitleCan'));
@@ -403,7 +412,7 @@ function getCancelMail(
 
     // 購入番号
     // tslint:disable-next-line:no-magic-numbers
-    mail.push(`${req.__('PaymentNo')} : ${order.confirmationNumber.slice(-6)}`);
+    mail.push(`${req.__('PaymentNo')} : ${confirmationNumber.slice(-6)}`);
 
     // ご来塔日時
     const day: string = moment(reservations[0].reservationFor.startDate)
