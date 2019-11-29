@@ -17,10 +17,7 @@ const authClient = new tttsapi.auth.ClientCredentials({
     domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: <string>process.env.API_CLIENT_ID,
     clientSecret: <string>process.env.API_CLIENT_SECRET,
-    scopes: [
-        `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/reservations.read-only`,
-        `${<string>process.env.API_RESOURECE_SERVER_IDENTIFIER}/reservations.checkins`
-    ],
+    scopes: [],
     state: ''
 });
 

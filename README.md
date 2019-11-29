@@ -62,7 +62,6 @@ npm run css
 | `API_CLIENT_ID`                     | true     |                       |         |
 | `API_CLIENT_SECRET`                 | true     |                       |         |
 | `API_AUTHORIZE_SERVER_DOMAIN`       | true     |                       |         |
-| `API_RESOURECE_SERVER_IDENTIFIER`   | true     |                       |         |
 | `ADMIN_API_AUTHORIZE_SERVER_DOMAIN` | true     |                       |         |
 | `ADMIN_API_CLIENT_ID`               | true     |                       |         |
 | `ADMIN_API_CLIENT_SECRET`           | true     |                       |         |
