@@ -25,6 +25,8 @@ exports.default = session({
         })
     }),
     cookie: {
+        // httpOnly: false,
+        // secure: false,
         maxAge: COOKIE_MAX_AGE
     }
 });
