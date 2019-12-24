@@ -19,17 +19,6 @@ const moment = require("moment-timezone");
 const _ = require("underscore");
 const reservation_1 = require("../../common/Util/reservation");
 const debug = createDebug('ttts-authentication:controllers:checkIn');
-const authClient = new tttsapi.auth.ClientCredentials({
-    domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
-    clientId: process.env.API_CLIENT_ID,
-    clientSecret: process.env.API_CLIENT_SECRET,
-    scopes: [],
-    state: ''
-});
-const reservationService = new tttsapi.service.Reservation({
-    endpoint: process.env.API_ENDPOINT,
-    auth: authClient
-});
 /**
  * QRコード認証画面
  * @desc Rコードを読み取って結果を表示するための画面
@@ -76,7 +65,14 @@ function getReservations(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const now = moment();
+            if (req.checkinAdminUser === undefined) {
+                throw new Error('checkinAdminUser not defined.');
+            }
             // 予約を検索
+            const reservationService = new tttsapi.service.Reservation({
+                endpoint: process.env.API_ENDPOINT,
+                auth: req.checkinAdminUser.authClient
+            });
             const searchReservationsResult = yield reservationService.search({
                 limit: 100,
                 typeOf: tttsapi.factory.chevre.reservationType.EventReservation,
@@ -117,7 +113,11 @@ function getReservation(req, res) {
             throw new Error('checkinAdminUser not authenticated.');
         }
         try {
-            const reservation = yield getReservationByQR(req.params.qr);
+            const reservationService = new tttsapi.service.Reservation({
+                endpoint: process.env.API_ENDPOINT,
+                auth: req.checkinAdminUser.authClient
+            });
+            const reservation = yield reservationService.findById({ id: req.params.qr });
             if (reservation.reservationStatus !== tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed) {
                 res.status(http_status_1.NOT_FOUND).json(null);
             }
@@ -163,6 +163,10 @@ function addCheckIn(req, res) {
                 why: '',
                 how: req.body.how
             };
+            const reservationService = new tttsapi.service.Reservation({
+                endpoint: process.env.API_ENDPOINT,
+                auth: req.checkinAdminUser.authClient
+            });
             yield reservationService.addCheckin({
                 reservationId: req.params.qr,
                 checkin: checkin
@@ -197,6 +201,10 @@ function removeCheckIn(req, res) {
                 });
                 return;
             }
+            const reservationService = new tttsapi.service.Reservation({
+                endpoint: process.env.API_ENDPOINT,
+                auth: req.checkinAdminUser.authClient
+            });
             yield reservationService.cancelCheckin({
                 reservationId: req.params.qr,
                 when: moment(req.body.when).toDate()
@@ -212,11 +220,3 @@ function removeCheckIn(req, res) {
     });
 }
 exports.removeCheckIn = removeCheckIn;
-/**
- * 文字列から予約情報取得
- */
-function getReservationByQR(qr) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return reservationService.findById({ id: qr });
-    });
-}
