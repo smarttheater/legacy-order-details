@@ -67,8 +67,8 @@ function search(req, res) {
                     //     confirmationNumber: Number(`${performanceDay}${req.body.paymentNo}`),
                     //     customer: { telephone: req.body.purchaserTel }
                     // });
-                    // 注文検索
-                    const searchOrdersResult = yield orderService.search({
+                    // 識別子で注文検索
+                    const searchOrdersResult = yield orderService.findByIdentifier({
                         limit: 1,
                         identifier: {
                             $all: [
