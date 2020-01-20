@@ -70,8 +70,8 @@ export async function search(req: Request, res: Response): Promise<void> {
                 //     customer: { telephone: req.body.purchaserTel }
                 // });
 
-                // 注文検索
-                const searchOrdersResult = await orderService.search({
+                // 識別子で注文検索
+                const searchOrdersResult = await orderService.findByIdentifier({
                     limit: 1,
                     identifier: {
                         $all: [
