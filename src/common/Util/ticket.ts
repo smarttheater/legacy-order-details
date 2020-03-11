@@ -83,7 +83,7 @@ export function getUnitPriceByAcceptedOffer(offer: cinerinoapi.factory.order.IAc
         const priceSpecification = <ICompoundPriceSpecification>offer.priceSpecification;
         if (Array.isArray(priceSpecification.priceComponent)) {
             const unitPriceSpec = priceSpecification.priceComponent.find(
-                (c) => c.typeOf === tttsapi.factory.chevre.priceSpecificationType.UnitPriceSpecification
+                (c) => c.typeOf === cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification
             );
             if (unitPriceSpec !== undefined && unitPriceSpec.price !== undefined && Number.isInteger(unitPriceSpec.price)) {
                 unitPrice = unitPriceSpec.price;

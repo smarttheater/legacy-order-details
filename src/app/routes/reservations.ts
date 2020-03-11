@@ -3,7 +3,7 @@
  */
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import * as createDebug from 'debug';
-import { Router } from 'express';
+import { Request, Response, Router } from 'express';
 import * as jwt from 'jsonwebtoken';
 
 import { chevreReservation2ttts } from '../../common/Util/reservation';
@@ -57,51 +57,96 @@ reservationsRouter.get(
                         return;
                     }
 
-                    // チケットコード順にソート
-                    reservations.sort((a, b) => {
-                        if (a.reservedTicket.ticketType.identifier < b.reservedTicket.ticketType.identifier) {
-                            return -1;
-                        }
-                        if (a.reservedTicket.ticketType.identifier > b.reservedTicket.ticketType.identifier) {
-                            return 1;
-                        }
-
-                        return 0;
-                    })
-                        .map(chevreReservation2ttts);
-
-                    const output = req.query.output;
-                    switch (output) {
-                        // サーマル印刷 (72mm幅プレプリント厚紙)
-                        case 'thermal':
-                            res.render('print/thermal', {
-                                layout: false,
-                                reservations: reservations
-                            });
-
-                            break;
-
-                        // サーマル印刷 (58mm幅普通紙)
-                        case 'thermal_normal':
-                            res.render('print/print_pcthermal', {
-                                layout: false,
-                                reservations: reservations
-                            });
-
-                            break;
-
-                        // デフォルトはA4印刷
-                        default:
-                            res.render('print/print', {
-                                layout: false,
-                                reservations: reservations
-                            });
-                    }
+                    renderPrintFormat(req, res)({ reservations });
                 }
             });
         } catch (error) {
             next(new Error(req.__('UnexpectedError')));
         }
-    });
+    }
+);
+
+/**
+ * 注文番号からチケット印刷(A4)
+ * output:thermal→PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
+ */
+reservationsRouter.get(
+    '/printByOrderNumber',
+    async (req, res, next) => {
+        try {
+            const orderNumber = req.query.orderNumber;
+            if (typeof orderNumber !== 'string' || orderNumber.length === 0) {
+                throw new Error('Order Number required');
+            }
+
+            // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
+            (<any>req.session).locale = req.params.locale;
+
+            const searchResult = await reservationService.findByOrderNumber({
+                orderNumber: orderNumber
+            });
+            let reservations = searchResult.data;
+
+            reservations = reservations.filter(
+                (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
+            );
+
+            if (reservations.length === 0) {
+                next(new Error(req.__('NotFound')));
+
+                return;
+            }
+
+            renderPrintFormat(req, res)({ reservations });
+        } catch (error) {
+            next(new Error(error.message));
+        }
+    }
+);
+
+function renderPrintFormat(req: Request, res: Response) {
+    return (params: { reservations: tttsapi.factory.reservation.event.IReservation[] }) => {
+        // チケットコード順にソート
+        const reservations = params.reservations.sort((a, b) => {
+            if (a.reservedTicket.ticketType.identifier < b.reservedTicket.ticketType.identifier) {
+                return -1;
+            }
+            if (a.reservedTicket.ticketType.identifier > b.reservedTicket.ticketType.identifier) {
+                return 1;
+            }
+
+            return 0;
+        })
+            .map(chevreReservation2ttts);
+
+        const output = req.query.output;
+        switch (output) {
+            // サーマル印刷 (72mm幅プレプリント厚紙)
+            case 'thermal':
+                res.render('print/thermal', {
+                    layout: false,
+                    reservations: reservations
+                });
+
+                break;
+
+            // サーマル印刷 (58mm幅普通紙)
+            case 'thermal_normal':
+                res.render('print/print_pcthermal', {
+                    layout: false,
+                    reservations: reservations
+                });
+
+                break;
+
+            // デフォルトはA4印刷
+            default:
+                res.render('print/print', {
+                    layout: false,
+                    reservations: reservations
+                });
+        }
+    };
+}
 
 export default reservationsRouter;
