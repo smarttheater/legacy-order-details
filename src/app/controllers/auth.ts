@@ -1,15 +1,25 @@
 /**
- * 入場認証コントローラー
- * @namespace controllers.auth
+ * 認証コントローラー
  */
-
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
+import * as jwt from 'jsonwebtoken';
 import * as request from 'request-promise-native';
 import * as _ from 'underscore';
 
 import * as Message from '../../common/Const/Message';
+
+export interface IProfile {
+    sub: string;
+    iss: string;
+    'cognito:groups': string[];
+    'cognito:username': string;
+    given_name: string;
+    phone_number: string;
+    family_name: string;
+    email: string;
+}
 
 const debug = createDebug('ttts-authentication:controllers:auth');
 const checkInHome: string = '/checkin/confirm';
@@ -80,18 +90,20 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
                             access_token: cognitoCredentials.accessToken,
                             token_type: cognitoCredentials.tokenType
                         });
-                        const adminService = new tttsapi.service.Admin({
-                            endpoint: <string>process.env.API_ENDPOINT,
-                            auth: authClient
-                        });
-                        const cognitoUser = await adminService.getProfile();
-                        const groups = await adminService.getGroups();
-                        debug('groups:', groups);
+                        await authClient.refreshAccessToken();
+                        const profile = <IProfile>jwt.decode((<any>authClient.credentials).id_token);
+                        const group = (Array.isArray(profile['cognito:groups']) && profile['cognito:groups'].length > 0)
+                            ? { name: profile['cognito:groups'][0], description: '' }
+                            : { name: '', description: '' };
 
                         // ログイン
                         (<Express.Session>req.session).checkinAdminUser = {
-                            ...cognitoUser,
-                            group: groups[0]
+                            username: profile['cognito:username'],
+                            familyName: profile.family_name,
+                            givenName: profile.given_name,
+                            email: profile.email,
+                            telephone: profile.phone_number,
+                            group: group
                         };
 
                         // 入場確認へ

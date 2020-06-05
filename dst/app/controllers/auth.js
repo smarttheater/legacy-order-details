@@ -1,8 +1,4 @@
 "use strict";
-/**
- * 入場認証コントローラー
- * @namespace controllers.auth
- */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -12,8 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * 認証コントローラー
+ */
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 const createDebug = require("debug");
+const jwt = require("jsonwebtoken");
 const request = require("request-promise-native");
 const _ = require("underscore");
 const Message = require("../../common/Const/Message");
@@ -79,15 +79,20 @@ function login(req, res, next) {
                                 access_token: cognitoCredentials.accessToken,
                                 token_type: cognitoCredentials.tokenType
                             });
-                            const adminService = new tttsapi.service.Admin({
-                                endpoint: process.env.API_ENDPOINT,
-                                auth: authClient
-                            });
-                            const cognitoUser = yield adminService.getProfile();
-                            const groups = yield adminService.getGroups();
-                            debug('groups:', groups);
+                            yield authClient.refreshAccessToken();
+                            const profile = jwt.decode(authClient.credentials.id_token);
+                            const group = (Array.isArray(profile['cognito:groups']) && profile['cognito:groups'].length > 0)
+                                ? { name: profile['cognito:groups'][0], description: '' }
+                                : { name: '', description: '' };
                             // ログイン
-                            req.session.checkinAdminUser = Object.assign({}, cognitoUser, { group: groups[0] });
+                            req.session.checkinAdminUser = {
+                                username: profile['cognito:username'],
+                                familyName: profile.family_name,
+                                givenName: profile.given_name,
+                                email: profile.email,
+                                telephone: profile.phone_number,
+                                group: group
+                            };
                             // 入場確認へ
                             const cb = (!_.isEmpty(req.query.cb)) ? req.query.cb : checkInHome;
                             res.redirect(cb);
