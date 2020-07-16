@@ -22,11 +22,11 @@ if (Array.isArray(performance.additionalProperty)) {
     }    
 }
 
-let confirmationNumber = '';
+let paymentNo = '';
 if (Array.isArray(order.identifier)) {
-    const confirmationNumberProperty = order.identifier.find((p)=>p.name==='confirmationNumber');
-    if (confirmationNumberProperty !== undefined) {
-        confirmationNumber = confirmationNumberProperty.value;
+    const paymentNoProperty = order.identifier.find((p)=>p.name==='paymentNo');
+    if (paymentNoProperty !== undefined) {
+        paymentNo = paymentNoProperty.value;
     }    
 }
 %>
@@ -39,7 +39,7 @@ page-inquiry page-result page-complete page-<%- locale %>
 <script src="/js/qr/qr.js"></script>
 <script src="/js/common/VanillaQR.js"></script>
 <script>
-    window.ttts.isCancellable = <%- isCancellable %>;
+    window.ttts.isCancellable = <% - isCancellable %>;
 </script>
 <%- contentFor('body') %>
 
@@ -54,7 +54,7 @@ page-inquiry page-result page-complete page-<%- locale %>
         <tr class="tr-number">
             <th><%- __('PaymentNo') %></th>
             <td>
-                <span class="rsrvno"><%- confirmationNumber.slice(-6) %></span>
+                <span class="rsrvno"><%- paymentNo %></span>
             </td>
         </tr>
         <tr class="tr-date">

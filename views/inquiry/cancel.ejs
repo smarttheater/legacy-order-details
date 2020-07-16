@@ -8,14 +8,13 @@ if (Array.isArray(performance.additionalProperty)) {
     }    
 }
 
-let confirmationNumber = '';
+let paymentNo = '';
 if (Array.isArray(order.identifier)) {
-    const confirmationNumberProperty = order.identifier.find((p)=>p.name==='confirmationNumber');
-    if (confirmationNumberProperty !== undefined) {
-        confirmationNumber = confirmationNumberProperty.value;
+    const paymentNoProperty = order.identifier.find((p)=>p.name==='paymentNo');
+    if (paymentNoProperty !== undefined) {
+        paymentNo = paymentNoProperty.value;
     }    
 }
-const paymentNo = confirmationNumber.slice(-6);
 %>
 <div class="modal modal-cancel fade" id="modal_cancelreservation" tabindex="-1" data-paymentNo="<%- paymentNo %>">
     <div class="modal-dialog">

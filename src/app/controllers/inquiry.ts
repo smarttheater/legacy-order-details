@@ -378,11 +378,11 @@ function getCancelMail(
     const mail: string[] = [];
     const locale: string = (<Express.Session>req.session).locale;
 
-    let confirmationNumber = '';
+    let paymentNo = '';
     if (Array.isArray(order.identifier)) {
-        const confirmationNumberProperty = order.identifier.find((p) => p.name === 'confirmationNumber');
-        if (confirmationNumberProperty !== undefined) {
-            confirmationNumber = confirmationNumberProperty.value;
+        const paymentNoProperty = order.identifier.find((p) => p.name === 'paymentNo');
+        if (paymentNoProperty !== undefined) {
+            paymentNo = paymentNoProperty.value;
         }
     }
 
@@ -412,7 +412,7 @@ function getCancelMail(
 
     // 購入番号
     // tslint:disable-next-line:no-magic-numbers
-    mail.push(`${req.__('PaymentNo')} : ${confirmationNumber.slice(-6)}`);
+    mail.push(`${req.__('PaymentNo')} : ${paymentNo}`);
 
     // ご来塔日時
     const day: string = moment(reservations[0].reservationFor.startDate)
