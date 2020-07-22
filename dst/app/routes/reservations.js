@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -33,20 +34,20 @@ const reservationService = new tttsapi.service.Reservation({
  * チケット印刷(A4)
  * output:thermal→PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
  */
-reservationsRouter.get('/print', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+reservationsRouter.get('/print', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // tslint:disable-next-line:no-suspicious-comment
         // TODO トークン期限チェック
         // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
         req.session.locale = req.params.locale;
-        jwt.verify(req.query.token, process.env.TTTS_TOKEN_SECRET, (jwtErr, decoded) => __awaiter(this, void 0, void 0, function* () {
+        jwt.verify(req.query.token, process.env.TTTS_TOKEN_SECRET, (jwtErr, decoded) => __awaiter(void 0, void 0, void 0, function* () {
             if (jwtErr instanceof Error) {
                 next(jwtErr);
             }
             else {
                 debug('token verified.', decoded.object);
                 const ids = decoded.object;
-                let reservations = yield Promise.all(ids.map((id) => __awaiter(this, void 0, void 0, function* () { return reservationService.findById({ id }); })));
+                let reservations = yield Promise.all(ids.map((id) => __awaiter(void 0, void 0, void 0, function* () { return reservationService.findById({ id }); })));
                 reservations = reservations.filter((r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed);
                 if (reservations.length === 0) {
                     next(new Error(req.__('NotFound')));
@@ -64,7 +65,7 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(this, void 0, voi
  * 注文番号からチケット印刷(A4)
  * output:thermal→PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
  */
-reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const orderNumber = req.query.orderNumber;
         if (typeof orderNumber !== 'string' || orderNumber.length === 0) {

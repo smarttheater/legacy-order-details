@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getUnitPriceByAcceptedOffer = exports.editTicketInfos = exports.getTicketInfos = void 0;
 const cinerinoapi = require("@cinerino/sdk");
 const numeral = require("numeral");
 /**

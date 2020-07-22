@@ -1,19 +1,22 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.removeCheckIn = exports.addCheckIn = exports.getReservation = exports.getReservations = exports.confirmTest = exports.confirm = void 0;
 /**
  * 入場コントローラー
  * 上映当日入場画面から使う機能はここにあります。
  */
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 const createDebug = require("debug");
+// tslint:disable-next-line:ordered-imports
 const http_status_1 = require("http-status");
 const moment = require("moment-timezone");
 const _ = require("underscore");

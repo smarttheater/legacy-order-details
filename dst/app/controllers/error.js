@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.index = exports.notFound = void 0;
 const http_status_1 = require("http-status");
 /**
  * 404エラー
