@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const cinerinoapi = require("@cinerino/api-nodejs-client");
+const cinerinoapi = require("@cinerino/sdk");
 const numeral = require("numeral");
 /**
  * 券種ごとに合計枚数算出

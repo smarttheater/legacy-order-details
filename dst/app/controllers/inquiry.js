@@ -11,7 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * 予約照会コントローラー
  */
-const cinerinoapi = require("@cinerino/api-nodejs-client");
+const cinerinoapi = require("@cinerino/sdk");
 const conf = require("config");
 const http_status_1 = require("http-status");
 const jwt = require("jsonwebtoken");
@@ -247,7 +247,13 @@ function cancel(req, res) {
                     },
                     // クレジットカード返金後に注文通知
                     informOrder: [
-                        { recipient: { url: informOrderUrl } }
+                        {
+                            recipient: {
+                                typeOf: 'WebAPI',
+                                name: '東京タワー返金イベント受信エンドポイント',
+                                url: informOrderUrl
+                            }
+                        }
                     ]
                 }
             };
