@@ -76,12 +76,9 @@ function getReservations(req, res) {
                 endpoint: process.env.API_ENDPOINT,
                 auth: req.checkinAdminUser.authClient
             });
-            const searchReservationsResult = yield reservationService.search({
-                limit: 100,
-                typeOf: tttsapi.factory.chevre.reservationType.EventReservation,
-                reservationStatuses: [tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed],
-                reservationFor: Object.assign({ id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined, startThrough: now.add(1, 'second').toDate() }, { endFrom: now.toDate() })
-            });
+            const searchReservationsResult = yield reservationService.search(Object.assign({ limit: 100, typeOf: tttsapi.factory.chevre.reservationType.EventReservation, reservationStatuses: [tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed], reservationFor: Object.assign({ id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined, startThrough: now.add(1, 'second').toDate() }, { endFrom: now.toDate() }) }, {
+                noTotalCount: '1'
+            }));
             const reservations = searchReservationsResult.data.map(reservation_1.chevreReservation2ttts);
             debug(reservations.length, 'reservations found.');
             const reservationsById = {};

@@ -71,6 +71,9 @@ export async function getReservations(req: Request, res: Response): Promise<void
                 id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
                 startThrough: now.add(1, 'second').toDate(),
                 ...{ endFrom: now.toDate() }
+            },
+            ...{
+                noTotalCount: '1'
             }
         });
         const reservations = searchReservationsResult.data.map(chevreReservation2ttts);
