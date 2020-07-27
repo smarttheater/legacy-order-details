@@ -1,17 +1,19 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.cancel = exports.result = exports.search = void 0;
 /**
  * 予約照会コントローラー
  */
-const cinerinoapi = require("@cinerino/api-nodejs-client");
+const cinerinoapi = require("@cinerino/sdk");
 const conf = require("config");
 const http_status_1 = require("http-status");
 const jwt = require("jsonwebtoken");
@@ -162,7 +164,7 @@ function result(req, res, next) {
             }
             const reservations = inquiryResult.order.acceptedOffers.map((o) => {
                 const unitPrice = ticket.getUnitPriceByAcceptedOffer(o);
-                return Object.assign({}, o.itemOffered, { unitPrice: unitPrice });
+                return Object.assign(Object.assign({}, o.itemOffered), { unitPrice: unitPrice });
             })
                 .sort((a, b) => (a.reservedTicket.ticketType.identifier < b.reservedTicket.ticketType.identifier) ? 0 : 1);
             // 券種ごとに合計枚数算出
@@ -247,7 +249,13 @@ function cancel(req, res) {
                     },
                     // クレジットカード返金後に注文通知
                     informOrder: [
-                        { recipient: { url: informOrderUrl } }
+                        {
+                            recipient: {
+                                typeOf: 'WebAPI',
+                                name: '東京タワー返金イベント受信エンドポイント',
+                                url: informOrderUrl
+                            }
+                        }
                     ]
                 }
             };

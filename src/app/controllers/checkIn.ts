@@ -5,7 +5,8 @@
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
-import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, NO_CONTENT, NOT_FOUND } from 'http-status';
+// tslint:disable-next-line:ordered-imports
+import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, NOT_FOUND, NO_CONTENT } from 'http-status';
 import * as moment from 'moment-timezone';
 import * as _ from 'underscore';
 
@@ -70,6 +71,9 @@ export async function getReservations(req: Request, res: Response): Promise<void
                 id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
                 startThrough: now.add(1, 'second').toDate(),
                 ...{ endFrom: now.toDate() }
+            },
+            ...{
+                noTotalCount: '1'
             }
         });
         const reservations = searchReservationsResult.data.map(chevreReservation2ttts);

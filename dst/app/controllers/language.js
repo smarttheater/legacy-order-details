@@ -5,6 +5,7 @@
  * @namespace controller/language
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.update = void 0;
 const _ = require("underscore");
 /**
  * 言語切り替え

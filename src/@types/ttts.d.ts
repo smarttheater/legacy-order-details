@@ -2,7 +2,7 @@
  * アプリケーション固有の型定義
  * セッションの中身など
  */
-import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import * as cinerinoapi from '@cinerino/sdk';
 
 import CheckinAdminUser from '../app/models/user/checkinAdmin';
 

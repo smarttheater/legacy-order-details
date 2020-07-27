@@ -1,7 +1,7 @@
 /**
  * 予約照会コントローラー
  */
-import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import * as cinerinoapi from '@cinerino/sdk';
 import * as conf from 'config';
 import { NextFunction, Request, Response } from 'express';
 import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR } from 'http-status';
@@ -275,7 +275,13 @@ export async function cancel(req: Request, res: Response): Promise<void> {
                         },
                         // クレジットカード返金後に注文通知
                         informOrder: [
-                            { recipient: { url: informOrderUrl } }
+                            {
+                                recipient: {
+                                    typeOf: 'WebAPI',
+                                    name: '東京タワー返金イベント受信エンドポイント',
+                                    url: informOrderUrl
+                                }
+                            }
                         ]
                     }
                 };
@@ -402,8 +408,8 @@ function getCancelMail(
     mail.push(req.__('EmailHead1').replace(
         '$theater_name$',
         (locale === 'ja')
-            ? reservations[0].reservationFor.superEvent.location.name.ja
-            : reservations[0].reservationFor.superEvent.location.name.en
+            ? (<cinerinoapi.factory.multilingualString>reservations[0].reservationFor.superEvent.location.name).ja
+            : (<cinerinoapi.factory.multilingualString>reservations[0].reservationFor.superEvent.location.name).en
     ));
 
     // お客様がキャンセルされましたチケットの情報は下記の通りです。

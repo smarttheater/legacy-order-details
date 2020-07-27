@@ -1,4 +1,4 @@
-import * as cinerinoapi from '@cinerino/api-nodejs-client';
+import * as cinerinoapi from '@cinerino/sdk';
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import { Request } from 'express';
 import * as numeral from 'numeral';
@@ -48,7 +48,7 @@ export function getTicketInfos(order: cinerinoapi.factory.order.IOrder): any {
         // チケットタイプごとにチケット情報セット
         if (!ticketInfos.hasOwnProperty(dataValue)) {
             ticketInfos[dataValue] = {
-                ticket_type_name: ticketType.name,
+                ticket_type_name: <tttsapi.factory.chevre.multilingualString>ticketType.name,
                 charge: `\\${numeral(price).format('0,0')}`,
                 count: 1,
                 info: ''
