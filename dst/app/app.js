@@ -1,7 +1,6 @@
 "use strict";
 /**
  * expressアプリケーション
- * @module app
  */
 const middlewares = require("@motionpicture/express-middleware");
 const bodyParser = require("body-parser");
@@ -15,7 +14,6 @@ const _ = require("underscore");
 const expressLayouts = require('express-ejs-layouts');
 // ミドルウェア
 const session_1 = require("./middlewares/session");
-const userAuthentication_1 = require("./middlewares/userAuthentication");
 // ルーター
 const router_1 = require("./routes/router");
 const app = express();
@@ -61,12 +59,6 @@ app.use((req, _res, next) => {
 });
 // バリデーション
 app.use(expressValidator());
-// // ログイン
-// app.all('/login', checkInAuthController.login);
-// // ログアウト
-// app.all('/logout', checkInAuthController.logout);
 // router登録
 router_1.default(app);
-// ユーザー認証(ログインの登録の後で実行すること)
-app.use(userAuthentication_1.default);
 module.exports = app;

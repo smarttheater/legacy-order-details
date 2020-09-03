@@ -1,8 +1,6 @@
 /**
  * expressアプリケーション
- * @module app
  */
-
 import * as middlewares from '@motionpicture/express-middleware';
 import * as bodyParser from 'body-parser';
 import * as conf from 'config';
@@ -16,7 +14,6 @@ const expressLayouts = require('express-ejs-layouts');
 
 // ミドルウェア
 import session from './middlewares/session';
-import userAuthentication from './middlewares/userAuthentication';
 
 // ルーター
 import router from './routes/router';
@@ -72,13 +69,7 @@ app.use((req, _res, next) => {
 // バリデーション
 app.use(expressValidator());
 
-// // ログイン
-// app.all('/login', checkInAuthController.login);
-// // ログアウト
-// app.all('/logout', checkInAuthController.logout);
 // router登録
 router(app);
-// ユーザー認証(ログインの登録の後で実行すること)
-app.use(userAuthentication);
 
 export = app;

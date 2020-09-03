@@ -1,8 +1,6 @@
 /**
  * 入場ルーター
- * @namespace routes.checkin
  */
-
 import * as express from 'express';
 import * as checkInAuthController from '../controllers/auth';
 import * as checkInController from '../controllers/checkIn';
@@ -13,7 +11,7 @@ const checkinRouter = express.Router();
 // ログイン
 checkinRouter.all('/login', checkInAuthController.login);
 // ログアウト
-checkinRouter.all('/logout', checkInAuthController.logout);
+checkinRouter.all('/logout', userAuthentication, checkInAuthController.logout);
 
 // 入場確認
 checkinRouter.get('/confirm', userAuthentication, checkInController.confirm);

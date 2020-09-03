@@ -7,7 +7,7 @@ const conf = require("config");
 const baseController = require("../controllers/base");
 const errorController = require("../controllers/error");
 const languageController = require("../controllers/language");
-//import authRouter from './auth';
+const auth_1 = require("./auth");
 const checkin_1 = require("./checkin");
 const inquiry_1 = require("./inquiry");
 const reservations_1 = require("./reservations");
@@ -35,6 +35,7 @@ const getRedirectOfficialUrl = (req, urlByLocale) => {
  */
 exports.default = (app) => {
     const base = baseController.setLocals;
+    app.use(auth_1.default);
     // 言語切替
     app.get('/language/update/:locale', languageController.update);
     // 入場

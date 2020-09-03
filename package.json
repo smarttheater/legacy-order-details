@@ -127,6 +127,7 @@
     "doc": "jsdoc -c jsdoc.json",
     "mocha": "mocha",
     "start": "node dst/server.js",
+    "start:development": "node ./dst/ssl",
     "test": "npm run check",
     "tslint": "tslint --project tsconfig.json -c tslint.json --exclude \"**/*.spec.ts\" \"src/**/*.ts\"",
     "precommit": "npm test",
