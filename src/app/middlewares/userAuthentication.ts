@@ -1,29 +1,64 @@
 /**
  * ユーザー認証ミドルウェア
- * @namespace middlewares.userAuthentication
  */
-
-import * as createDebug from 'debug';
+import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import { NextFunction, Request, Response } from 'express';
 
-import CheckinAdminUser from '../models/user/checkinAdmin';
+// import CheckinAdminUser from '../models/user/checkinAdmin';
+import { User } from '../user';
 
-const debug = createDebug('ttts-authentication:middlewares:userAuthentication');
+// export default async (req: Request, res: Response, next: NextFunction) => {
+//     res.locals.req = req;
+//     req.checkinAdminUser = CheckinAdminUser.PARSE(req.session);
+
+//     // 既ログインの場合
+//     if (req.checkinAdminUser.isAuthenticated()) {
+//         next();
+
+//         return;
+//     }
+
+//     if (req.xhr) {
+//         res.json({
+//             success: false,
+//             message: 'login required'
+//         });
+//     } else {
+//         res.redirect(`/checkin/login?cb=${req.originalUrl}`);
+//     }
+// };
 
 export default async (req: Request, res: Response, next: NextFunction) => {
-    res.locals.req = req;
-    req.checkinAdminUser = CheckinAdminUser.PARSE(req.session);
-    debug('req.checkinAdminUser:', req.checkinAdminUser);
+    req.staffUser = User.PARSE(req.session, req.hostname);
 
     // 既ログインの場合
-    if (req.checkinAdminUser.isAuthenticated()) {
+    if (req.staffUser.isAuthenticated()) {
+        // tttsapi認証クライアントをリクエストオブジェクトにセット
+        const cognitoCredentials = (<Express.Session>req.session).cognitoCredentials;
+        if (cognitoCredentials === undefined) {
+            next(new Error(res.__('UnexpectedError')));
+
+            return;
+        }
+
+        const oauth2Client = new tttsapi.auth.OAuth2({
+            domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
+            clientId: <string>process.env.API_CLIENT_ID,
+            clientSecret: <string>process.env.API_CLIENT_SECRET
+        });
+        oauth2Client.setCredentials({
+            refresh_token: cognitoCredentials.refreshToken,
+            // expiry_date: moment().add(<number>authenticationResult.ExpiresIn, 'seconds').unix(),
+            // expiry_date: authenticationResult.ExpiresIn,
+            access_token: cognitoCredentials.accessToken,
+            token_type: cognitoCredentials.tokenType
+        });
+        req.tttsAuthClient = oauth2Client;
+
         next();
 
         return;
     }
-
-    // 自動ログインチェック
-    // いったん保留
 
     if (req.xhr) {
         res.json({
@@ -31,6 +66,8 @@ export default async (req: Request, res: Response, next: NextFunction) => {
             message: 'login required'
         });
     } else {
-        res.redirect(`/checkin/login?cb=${req.originalUrl}`);
+        // ログインページへリダイレクト
+        res.redirect(req.staffUser.generateAuthUrl());
+        // res.redirect(`/auth/login?cb=${req.originalUrl}`);
     }
 };

@@ -6,7 +6,7 @@ import { Application, Request, Response } from 'express';
 import * as baseController from '../controllers/base';
 import * as errorController from '../controllers/error';
 import * as languageController from '../controllers/language';
-//import authRouter from './auth';
+import authRouter from './auth';
 import checkinRouter from './checkin';
 import inquiryRouter from './inquiry';
 import reservationsRouter from './reservations';
@@ -38,6 +38,8 @@ const getRedirectOfficialUrl = (req: Request, urlByLocale: any): string => {
  */
 export default (app: Application) => {
     const base = baseController.setLocals;
+
+    app.use(authRouter);
 
     // 言語切替
     app.get('/language/update/:locale', languageController.update);

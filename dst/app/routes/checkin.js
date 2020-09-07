@@ -1,9 +1,8 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * 入場ルーター
- * @namespace routes.checkin
  */
-Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const checkInAuthController = require("../controllers/auth");
 const checkInController = require("../controllers/checkIn");
@@ -12,7 +11,7 @@ const checkinRouter = express.Router();
 // ログイン
 checkinRouter.all('/login', checkInAuthController.login);
 // ログアウト
-checkinRouter.all('/logout', checkInAuthController.logout);
+checkinRouter.all('/logout', userAuthentication_1.default, checkInAuthController.logout);
 // 入場確認
 checkinRouter.get('/confirm', userAuthentication_1.default, checkInController.confirm);
 checkinRouter.post('/confirm', userAuthentication_1.default, checkInController.confirm);

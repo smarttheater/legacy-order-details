@@ -3,14 +3,19 @@
  * セッションの中身など
  */
 import * as cinerinoapi from '@cinerino/sdk';
+import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 
-import CheckinAdminUser from '../app/models/user/checkinAdmin';
+// import CheckinAdminUser from '../app/models/user/checkinAdmin';
+
+import { User } from '../app/user';
 
 declare global {
     namespace Express {
         // tslint:disable-next-line:interface-name
         export interface Request {
-            checkinAdminUser?: CheckinAdminUser;
+            // checkinAdminUser?: CheckinAdminUser;
+            staffUser?: User;
+            tttsAuthClient: tttsapi.auth.OAuth2;
         }
 
         export interface IGroup {
@@ -19,6 +24,15 @@ declare global {
         }
 
         export interface ICheckinAdminUser {
+            group: IGroup;
+            familyName: string;
+            givenName: string;
+            email: string;
+            telephone: string;
+            username: string;
+        }
+
+        interface IStaffUser {
             group: IGroup;
             familyName: string;
             givenName: string;
@@ -37,6 +51,7 @@ declare global {
 
         // tslint:disable-next-line:interface-name
         export interface Session {
+            staffUser?: IStaffUser;
             checkinAdminUser?: ICheckinAdminUser;
             cognitoCredentials?: ICredentials;
             /**

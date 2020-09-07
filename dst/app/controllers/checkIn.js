@@ -33,7 +33,7 @@ function confirm(req, res, next) {
         }
         try {
             res.render('checkIn/confirm', {
-                checkinAdminUser: req.checkinAdminUser,
+                checkinAdminUser: req.staffUser,
                 layout: 'layouts/checkIn/layout'
             });
         }
@@ -51,7 +51,7 @@ function confirmTest(req, res, next) {
                 next(new Error('unexepected error'));
             }
             res.render('checkIn/confirmTest', {
-                checkinAdminUser: req.checkinAdminUser,
+                checkinAdminUser: req.staffUser,
                 layout: 'layouts/checkIn/layout'
             });
         }
@@ -68,13 +68,13 @@ function getReservations(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const now = moment();
-            if (req.checkinAdminUser === undefined) {
+            if (req.staffUser === undefined) {
                 throw new Error('checkinAdminUser not defined.');
             }
             // 予約を検索
             const reservationService = new tttsapi.service.Reservation({
                 endpoint: process.env.API_ENDPOINT,
-                auth: req.checkinAdminUser.authClient
+                auth: req.tttsAuthClient
             });
             const searchReservationsResult = yield reservationService.search(Object.assign({ limit: 100, typeOf: tttsapi.factory.chevre.reservationType.EventReservation, reservationStatuses: [tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed], reservationFor: Object.assign({ id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined, startThrough: now.add(1, 'second').toDate() }, { endFrom: now.toDate() }) }, {
                 noTotalCount: '1'
@@ -106,16 +106,16 @@ exports.getReservations = getReservations;
  */
 function getReservation(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (req.checkinAdminUser === undefined) {
+        if (req.staffUser === undefined) {
             throw new Error('checkinAdminUser not defined.');
         }
-        if (!req.checkinAdminUser.isAuthenticated()) {
+        if (!req.staffUser.isAuthenticated()) {
             throw new Error('checkinAdminUser not authenticated.');
         }
         try {
             const reservationService = new tttsapi.service.Reservation({
                 endpoint: process.env.API_ENDPOINT,
-                auth: req.checkinAdminUser.authClient
+                auth: req.tttsAuthClient
             });
             const reservation = yield reservationService.findById({ id: req.params.qr });
             if (reservation.reservationStatus !== tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed) {
@@ -144,10 +144,10 @@ exports.getReservation = getReservation;
 function addCheckIn(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            if (req.checkinAdminUser === undefined) {
+            if (req.staffUser === undefined) {
                 throw new Error('checkinAdminUser not defined.');
             }
-            if (!req.checkinAdminUser.isAuthenticated()) {
+            if (!req.staffUser.isAuthenticated()) {
                 throw new Error('checkinAdminUser not authenticated.');
             }
             if (!req.body.when || !req.body.where || !req.body.how) {
@@ -165,7 +165,7 @@ function addCheckIn(req, res) {
             };
             const reservationService = new tttsapi.service.Reservation({
                 endpoint: process.env.API_ENDPOINT,
-                auth: req.checkinAdminUser.authClient
+                auth: req.tttsAuthClient
             });
             yield reservationService.addCheckin({
                 reservationId: req.params.qr,
@@ -188,10 +188,10 @@ exports.addCheckIn = addCheckIn;
 function removeCheckIn(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            if (req.checkinAdminUser === undefined) {
+            if (req.staffUser === undefined) {
                 throw new Error('checkinAdminUser not defined.');
             }
-            if (!req.checkinAdminUser.isAuthenticated()) {
+            if (!req.staffUser.isAuthenticated()) {
                 throw new Error('checkinAdminUser not authenticated.');
             }
             if (!req.body.when) {
@@ -203,7 +203,7 @@ function removeCheckIn(req, res) {
             }
             const reservationService = new tttsapi.service.Reservation({
                 endpoint: process.env.API_ENDPOINT,
-                auth: req.checkinAdminUser.authClient
+                auth: req.tttsAuthClient
             });
             yield reservationService.cancelCheckin({
                 reservationId: req.params.qr,

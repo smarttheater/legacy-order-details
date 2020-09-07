@@ -24,7 +24,7 @@ export async function confirm(req: Request, res: Response, next: NextFunction): 
     }
     try {
         res.render('checkIn/confirm', {
-            checkinAdminUser: req.checkinAdminUser,
+            checkinAdminUser: req.staffUser,
             layout: 'layouts/checkIn/layout'
         });
     } catch (error) {
@@ -38,7 +38,7 @@ export async function confirmTest(req: Request, res: Response, next: NextFunctio
             next(new Error('unexepected error'));
         }
         res.render('checkIn/confirmTest', {
-            checkinAdminUser: req.checkinAdminUser,
+            checkinAdminUser: req.staffUser,
             layout: 'layouts/checkIn/layout'
         });
     } catch (error) {
@@ -53,14 +53,14 @@ export async function getReservations(req: Request, res: Response): Promise<void
     try {
         const now = moment();
 
-        if (req.checkinAdminUser === undefined) {
+        if (req.staffUser === undefined) {
             throw new Error('checkinAdminUser not defined.');
         }
 
         // 予約を検索
         const reservationService = new tttsapi.service.Reservation({
             endpoint: <string>process.env.API_ENDPOINT,
-            auth: req.checkinAdminUser.authClient
+            auth: req.tttsAuthClient
         });
 
         const searchReservationsResult = await reservationService.search({
@@ -106,17 +106,17 @@ export async function getReservations(req: Request, res: Response): Promise<void
  * 予約情報取得
  */
 export async function getReservation(req: Request, res: Response): Promise<void> {
-    if (req.checkinAdminUser === undefined) {
+    if (req.staffUser === undefined) {
         throw new Error('checkinAdminUser not defined.');
     }
-    if (!req.checkinAdminUser.isAuthenticated()) {
+    if (!req.staffUser.isAuthenticated()) {
         throw new Error('checkinAdminUser not authenticated.');
     }
 
     try {
         const reservationService = new tttsapi.service.Reservation({
             endpoint: <string>process.env.API_ENDPOINT,
-            auth: req.checkinAdminUser.authClient
+            auth: req.tttsAuthClient
         });
         const reservation = await reservationService.findById({ id: req.params.qr });
         if (reservation.reservationStatus !== tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed) {
@@ -143,10 +143,10 @@ export async function getReservation(req: Request, res: Response): Promise<void>
  */
 export async function addCheckIn(req: Request, res: Response): Promise<void> {
     try {
-        if (req.checkinAdminUser === undefined) {
+        if (req.staffUser === undefined) {
             throw new Error('checkinAdminUser not defined.');
         }
-        if (!req.checkinAdminUser.isAuthenticated()) {
+        if (!req.staffUser.isAuthenticated()) {
             throw new Error('checkinAdminUser not authenticated.');
         }
         if (!req.body.when || !req.body.where || !req.body.how) {
@@ -167,7 +167,7 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
 
         const reservationService = new tttsapi.service.Reservation({
             endpoint: <string>process.env.API_ENDPOINT,
-            auth: req.checkinAdminUser.authClient
+            auth: req.tttsAuthClient
         });
         await reservationService.addCheckin({
             reservationId: req.params.qr,
@@ -187,10 +187,10 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
  */
 export async function removeCheckIn(req: Request, res: Response): Promise<void> {
     try {
-        if (req.checkinAdminUser === undefined) {
+        if (req.staffUser === undefined) {
             throw new Error('checkinAdminUser not defined.');
         }
-        if (!req.checkinAdminUser.isAuthenticated()) {
+        if (!req.staffUser.isAuthenticated()) {
             throw new Error('checkinAdminUser not authenticated.');
         }
         if (!req.body.when) {
@@ -204,7 +204,7 @@ export async function removeCheckIn(req: Request, res: Response): Promise<void> 
 
         const reservationService = new tttsapi.service.Reservation({
             endpoint: <string>process.env.API_ENDPOINT,
-            auth: req.checkinAdminUser.authClient
+            auth: req.tttsAuthClient
         });
         await reservationService.cancelCheckin({
             reservationId: req.params.qr,
