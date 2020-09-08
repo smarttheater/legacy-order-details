@@ -13,25 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * ユーザー認証ミドルウェア
  */
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
-// import CheckinAdminUser from '../models/user/checkinAdmin';
 const user_1 = require("../user");
-// export default async (req: Request, res: Response, next: NextFunction) => {
-//     res.locals.req = req;
-//     req.checkinAdminUser = CheckinAdminUser.PARSE(req.session);
-//     // 既ログインの場合
-//     if (req.checkinAdminUser.isAuthenticated()) {
-//         next();
-//         return;
-//     }
-//     if (req.xhr) {
-//         res.json({
-//             success: false,
-//             message: 'login required'
-//         });
-//     } else {
-//         res.redirect(`/checkin/login?cb=${req.originalUrl}`);
-//     }
-// };
 exports.default = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     req.staffUser = user_1.User.PARSE(req.session, req.hostname);
     // 既ログインの場合

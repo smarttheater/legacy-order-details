@@ -2,15 +2,12 @@
  * 予約ルーター
  */
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
-import * as createDebug from 'debug';
 import { Request, Response, Router } from 'express';
 import * as jwt from 'jsonwebtoken';
 
-import { chevreReservation2ttts } from '../../common/Util/reservation';
+import { chevreReservation2ttts } from '../util/reservation';
 
 const reservationsRouter = Router();
-
-const debug = createDebug('ttts-authentication:routes:reservations');
 
 const authClient = new tttsapi.auth.ClientCredentials({
     domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
@@ -43,7 +40,6 @@ reservationsRouter.get(
                 if (jwtErr instanceof Error) {
                     next(jwtErr);
                 } else {
-                    debug('token verified.', decoded.object);
                     const ids = <string[]>decoded.object;
 
                     let reservations = await Promise.all(ids.map(async (id) => reservationService.findById({ id })));

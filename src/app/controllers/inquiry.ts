@@ -9,8 +9,7 @@ import * as jwt from 'jsonwebtoken';
 import * as moment from 'moment-timezone';
 import * as numeral from 'numeral';
 
-import * as Text from '../../common/Const/Text';
-import * as ticket from '../../common/Util/ticket';
+import * as ticket from '../util/ticket';
 
 const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
@@ -478,5 +477,5 @@ function getCancelMail(
     // TEL
     mail.push(req.__('EmailAccess2'));
 
-    return (mail.join(Text.Common.newline));
+    return (mail.join('\n'));
 }

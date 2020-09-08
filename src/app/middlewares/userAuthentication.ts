@@ -4,29 +4,7 @@
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import { NextFunction, Request, Response } from 'express';
 
-// import CheckinAdminUser from '../models/user/checkinAdmin';
 import { User } from '../user';
-
-// export default async (req: Request, res: Response, next: NextFunction) => {
-//     res.locals.req = req;
-//     req.checkinAdminUser = CheckinAdminUser.PARSE(req.session);
-
-//     // 既ログインの場合
-//     if (req.checkinAdminUser.isAuthenticated()) {
-//         next();
-
-//         return;
-//     }
-
-//     if (req.xhr) {
-//         res.json({
-//             success: false,
-//             message: 'login required'
-//         });
-//     } else {
-//         res.redirect(`/checkin/login?cb=${req.originalUrl}`);
-//     }
-// };
 
 export default async (req: Request, res: Response, next: NextFunction) => {
     req.staffUser = User.PARSE(req.session, req.hostname);

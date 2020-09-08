@@ -13,12 +13,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * 予約ルーター
  */
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
-const createDebug = require("debug");
 const express_1 = require("express");
 const jwt = require("jsonwebtoken");
-const reservation_1 = require("../../common/Util/reservation");
+const reservation_1 = require("../util/reservation");
 const reservationsRouter = express_1.Router();
-const debug = createDebug('ttts-authentication:routes:reservations');
 const authClient = new tttsapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: process.env.API_CLIENT_ID,
@@ -45,7 +43,6 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(void 0, void 0, v
                 next(jwtErr);
             }
             else {
-                debug('token verified.', decoded.object);
                 const ids = decoded.object;
                 let reservations = yield Promise.all(ids.map((id) => __awaiter(void 0, void 0, void 0, function* () { return reservationService.findById({ id }); })));
                 reservations = reservations.filter((r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed);

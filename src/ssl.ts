@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as https from 'https';
 import * as app from './app/app';
 
-const debug = createDebug('cinerino-console:server');
+const debug = createDebug('ttts-authentication:server');
 
 /**
  * Get port from environment and store in Express.

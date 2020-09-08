@@ -3,16 +3,13 @@
  * 上映当日入場画面から使う機能はここにあります。
  */
 import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
-import * as createDebug from 'debug';
 import { NextFunction, Request, Response } from 'express';
 // tslint:disable-next-line:ordered-imports
 import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, NOT_FOUND, NO_CONTENT } from 'http-status';
 import * as moment from 'moment-timezone';
 import * as _ from 'underscore';
 
-import { chevreReservation2ttts } from '../../common/Util/reservation';
-
-const debug = createDebug('ttts-authentication:controllers:checkIn');
+import { chevreReservation2ttts } from '../util/reservation';
 
 /**
  * QRコード認証画面
@@ -77,7 +74,6 @@ export async function getReservations(req: Request, res: Response): Promise<void
             }
         });
         const reservations = searchReservationsResult.data.map(chevreReservation2ttts);
-        debug(reservations.length, 'reservations found.');
 
         const reservationsById: {
             [id: string]: tttsapi.factory.reservation.event.IReservation;
