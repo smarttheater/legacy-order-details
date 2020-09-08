@@ -7,7 +7,7 @@ const createDebug = require("debug");
 const fs = require("fs");
 const https = require("https");
 const app = require("./app/app");
-const debug = createDebug('cinerino-console:server');
+const debug = createDebug('ttts-authentication:server');
 /**
  * Get port from environment and store in Express.
  */

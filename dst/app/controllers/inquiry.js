@@ -19,8 +19,7 @@ const http_status_1 = require("http-status");
 const jwt = require("jsonwebtoken");
 const moment = require("moment-timezone");
 const numeral = require("numeral");
-const Text = require("../../common/Const/Text");
-const ticket = require("../../common/Util/ticket");
+const ticket = require("../util/ticket");
 const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: process.env.API_CLIENT_ID,
@@ -420,5 +419,5 @@ function getCancelMail(req, order, fee) {
     mail.push(req.__('EmailAccess1'));
     // TEL
     mail.push(req.__('EmailAccess2'));
-    return (mail.join(Text.Common.newline));
+    return (mail.join('\n'));
 }

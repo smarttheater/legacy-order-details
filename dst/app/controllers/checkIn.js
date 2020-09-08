@@ -15,13 +15,11 @@ exports.removeCheckIn = exports.addCheckIn = exports.getReservation = exports.ge
  * 上映当日入場画面から使う機能はここにあります。
  */
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
-const createDebug = require("debug");
 // tslint:disable-next-line:ordered-imports
 const http_status_1 = require("http-status");
 const moment = require("moment-timezone");
 const _ = require("underscore");
-const reservation_1 = require("../../common/Util/reservation");
-const debug = createDebug('ttts-authentication:controllers:checkIn');
+const reservation_1 = require("../util/reservation");
 /**
  * QRコード認証画面
  * @desc Rコードを読み取って結果を表示するための画面
@@ -80,7 +78,6 @@ function getReservations(req, res) {
                 noTotalCount: '1'
             }));
             const reservations = searchReservationsResult.data.map(reservation_1.chevreReservation2ttts);
-            debug(reservations.length, 'reservations found.');
             const reservationsById = {};
             const reservationIdsByQrStr = {};
             reservations.forEach((reservation) => {

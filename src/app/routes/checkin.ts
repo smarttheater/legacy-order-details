@@ -2,16 +2,26 @@
  * 入場ルーター
  */
 import * as express from 'express';
-import * as checkInAuthController from '../controllers/auth';
 import * as checkInController from '../controllers/checkIn';
 import userAuthentication from '../middlewares/userAuthentication';
 
 const checkinRouter = express.Router();
 
 // ログイン
-checkinRouter.all('/login', checkInAuthController.login);
+checkinRouter.all(
+    '/login',
+    (__, res) => {
+        res.redirect('/checkin/confirm');
+    }
+);
 // ログアウト
-checkinRouter.all('/logout', userAuthentication, checkInAuthController.logout);
+checkinRouter.all(
+    '/logout',
+    userAuthentication,
+    (req, res) => {
+        res.redirect(<string>req.staffUser?.generateLogoutUrl());
+    }
+);
 
 // 入場確認
 checkinRouter.get('/confirm', userAuthentication, checkInController.confirm);
