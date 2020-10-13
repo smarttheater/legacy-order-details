@@ -383,13 +383,7 @@ function getCancelMail(
     const mail: string[] = [];
     const locale: string = (<Express.Session>req.session).locale;
 
-    let paymentNo = '';
-    if (Array.isArray(order.identifier)) {
-        const paymentNoProperty = order.identifier.find((p) => p.name === 'paymentNo');
-        if (paymentNoProperty !== undefined) {
-            paymentNo = paymentNoProperty.value;
-        }
-    }
+    const paymentNo = order.confirmationNumber;
 
     // 東京タワー TOP DECK チケットキャンセル完了のお知らせ
     mail.push(req.__('EmailTitleCan'));

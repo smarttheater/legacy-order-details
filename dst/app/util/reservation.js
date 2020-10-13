@@ -4,6 +4,7 @@ exports.chevreReservation2ttts = void 0;
 const moment = require("moment-timezone");
 // tslint:disable-next-line:cyclomatic-complexity
 function chevreReservation2ttts(params) {
+    var _a, _b;
     const ticketType = params.reservedTicket.ticketType;
     const underName = params.underName;
     let paymentMethod;
@@ -13,12 +14,9 @@ function chevreReservation2ttts(params) {
             paymentMethod = paymentMethodProperty.value;
         }
     }
-    let paymentNo = params.reservationNumber;
-    if (underName !== undefined && Array.isArray(underName.identifier)) {
-        const paymentNoProperty = underName.identifier.find((p) => p.name === 'paymentNo');
-        if (paymentNoProperty !== undefined) {
-            paymentNo = paymentNoProperty.value;
-        }
+    let paymentNo = (_b = (_a = underName === null || underName === void 0 ? void 0 : underName.identifier) === null || _a === void 0 ? void 0 : _a.find((p) => p.name === 'paymentNo')) === null || _b === void 0 ? void 0 : _b.value;
+    if (typeof paymentNo !== 'string') {
+        paymentNo = params.reservationNumber;
     }
     params.qr_str = params.id;
     params.payment_no = paymentNo;

@@ -17,12 +17,9 @@ export function chevreReservation2ttts(
         }
     }
 
-    let paymentNo: string = params.reservationNumber;
-    if (underName !== undefined && Array.isArray(underName.identifier)) {
-        const paymentNoProperty = underName.identifier.find((p) => p.name === 'paymentNo');
-        if (paymentNoProperty !== undefined) {
-            paymentNo = paymentNoProperty.value;
-        }
+    let paymentNo: string | undefined = underName?.identifier?.find((p) => p.name === 'paymentNo')?.value;
+    if (typeof paymentNo !== 'string') {
+        paymentNo = params.reservationNumber;
     }
 
     (<any>params).qr_str = params.id;
