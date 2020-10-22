@@ -235,7 +235,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
 
     // 返品メール作成
     const emailAttributes: cinerinoapi.factory.creativeWork.message.email.IAttributes = {
-        typeOf: cinerinoapi.factory.creativeWorkType.EmailMessage,
+        typeOf: cinerinoapi.factory.chevre.creativeWorkType.EmailMessage,
         sender: {
             name: conf.get<string>('email.fromname'),
             email: conf.get<string>('email.from')
@@ -401,8 +401,8 @@ function getCancelMail(
     mail.push(req.__('EmailHead1').replace(
         '$theater_name$',
         (locale === 'ja')
-            ? (<cinerinoapi.factory.multilingualString>reservations[0].reservationFor.superEvent.location.name).ja
-            : (<cinerinoapi.factory.multilingualString>reservations[0].reservationFor.superEvent.location.name).en
+            ? String((<cinerinoapi.factory.chevre.multilingualString>reservations[0].reservationFor.superEvent.location.name).ja)
+            : String((<cinerinoapi.factory.chevre.multilingualString>reservations[0].reservationFor.superEvent.location.name).en)
     ));
 
     // お客様がキャンセルされましたチケットの情報は下記の通りです。

@@ -212,7 +212,7 @@ function cancel(req, res) {
         }
         // 返品メール作成
         const emailAttributes = {
-            typeOf: cinerinoapi.factory.creativeWorkType.EmailMessage,
+            typeOf: cinerinoapi.factory.chevre.creativeWorkType.EmailMessage,
             sender: {
                 name: conf.get('email.fromname'),
                 email: conf.get('email.from')
@@ -355,8 +355,8 @@ function getCancelMail(req, order, fee) {
     mail.push('');
     // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
     mail.push(req.__('EmailHead1').replace('$theater_name$', (locale === 'ja')
-        ? reservations[0].reservationFor.superEvent.location.name.ja
-        : reservations[0].reservationFor.superEvent.location.name.en));
+        ? String(reservations[0].reservationFor.superEvent.location.name.ja)
+        : String(reservations[0].reservationFor.superEvent.location.name.en)));
     // お客様がキャンセルされましたチケットの情報は下記の通りです。
     mail.push(req.__('EmailHead2Can'));
     mail.push('');
