@@ -92,8 +92,7 @@ reservationsRouter.get(
                 try {
                     // 注文照会
                     const findOrderResult = await orderService.findByConfirmationNumber({
-                        customer: {},
-                        confirmationNumber: Number(confirmationNumber),
+                        confirmationNumber: String(confirmationNumber),
                         orderNumber: orderNumber
                     });
 
@@ -110,9 +109,11 @@ reservationsRouter.get(
 
                     // 注文承認
                     await orderService.authorize({
-                        orderNumber: order.orderNumber,
-                        customer: { telephone: order.customer.telephone },
-                        ...{
+                        object: {
+                            orderNumber: order.orderNumber,
+                            customer: { telephone: order.customer.telephone }
+                        },
+                        result: {
                             expiresInSeconds: CODE_EXPIRES_IN_SECONDS
                         }
                     });

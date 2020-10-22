@@ -97,9 +97,11 @@ export async function search(req: Request, res: Response): Promise<void> {
                 let code: string | undefined;
                 try {
                     const authorizeOrderResult = await orderService.authorize({
-                        orderNumber: order.orderNumber,
-                        customer: { telephone: order.customer.telephone },
-                        ...{
+                        object: {
+                            orderNumber: order.orderNumber,
+                            customer: { telephone: order.customer.telephone }
+                        },
+                        result: {
                             expiresInSeconds: CODE_EXPIRES_IN_SECONDS
                         }
                     });

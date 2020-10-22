@@ -91,9 +91,15 @@ function search(req, res) {
                     // 注文承認
                     let code;
                     try {
-                        const authorizeOrderResult = yield orderService.authorize(Object.assign({ orderNumber: order.orderNumber, customer: { telephone: order.customer.telephone } }, {
-                            expiresInSeconds: exports.CODE_EXPIRES_IN_SECONDS
-                        }));
+                        const authorizeOrderResult = yield orderService.authorize({
+                            object: {
+                                orderNumber: order.orderNumber,
+                                customer: { telephone: order.customer.telephone }
+                            },
+                            result: {
+                                expiresInSeconds: exports.CODE_EXPIRES_IN_SECONDS
+                            }
+                        });
                         code = authorizeOrderResult.code;
                     }
                     catch (error) {

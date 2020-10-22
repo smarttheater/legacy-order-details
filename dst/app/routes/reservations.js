@@ -82,8 +82,7 @@ reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void
             try {
                 // 注文照会
                 const findOrderResult = yield orderService.findByConfirmationNumber({
-                    customer: {},
-                    confirmationNumber: Number(confirmationNumber),
+                    confirmationNumber: String(confirmationNumber),
                     orderNumber: orderNumber
                 });
                 let order;
@@ -97,9 +96,15 @@ reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void
                     throw new Error(`${req.__('NotFound')}: Order`);
                 }
                 // 注文承認
-                yield orderService.authorize(Object.assign({ orderNumber: order.orderNumber, customer: { telephone: order.customer.telephone } }, {
-                    expiresInSeconds: inquiry_1.CODE_EXPIRES_IN_SECONDS
-                }));
+                yield orderService.authorize({
+                    object: {
+                        orderNumber: order.orderNumber,
+                        customer: { telephone: order.customer.telephone }
+                    },
+                    result: {
+                        expiresInSeconds: inquiry_1.CODE_EXPIRES_IN_SECONDS
+                    }
+                });
             }
             catch (error) {
                 // tslint:disable-next-line:no-console
