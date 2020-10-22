@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * 予約ルーター
  */
+const cinerinoapi = require("@cinerino/sdk");
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 const express_1 = require("express");
 const jwt = require("jsonwebtoken");
@@ -26,6 +27,10 @@ const authClient = new tttsapi.auth.ClientCredentials({
 });
 const reservationService = new tttsapi.service.Reservation({
     endpoint: process.env.API_ENDPOINT,
+    auth: authClient
+});
+const orderService = new cinerinoapi.service.Order({
+    endpoint: process.env.CINERINO_API_ENDPOINT,
     auth: authClient
 });
 /**
@@ -64,12 +69,43 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(void 0, void 0, v
  */
 reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
+        req.session.locale = req.params.locale;
         const orderNumber = req.query.orderNumber;
         if (typeof orderNumber !== 'string' || orderNumber.length === 0) {
             throw new Error('Order Number required');
         }
-        // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
-        req.session.locale = req.params.locale;
+        const confirmationNumber = req.query.confirmationNumber;
+        // confirmationNumberの指定があれば、Cinerinoで注文照会&注文承認
+        if (typeof confirmationNumber === 'string' && confirmationNumber.length > 0) {
+            try {
+                // 注文照会
+                const findOrderResult = yield orderService.findByConfirmationNumber({
+                    customer: {},
+                    confirmationNumber: Number(confirmationNumber),
+                    orderNumber: orderNumber
+                });
+                let order;
+                if (Array.isArray(findOrderResult)) {
+                    order = findOrderResult[0];
+                }
+                else {
+                    order = findOrderResult;
+                }
+                if (order === undefined) {
+                    throw new Error(`${req.__('NotFound')}: Order`);
+                }
+                // 注文承認
+                yield orderService.authorize({
+                    orderNumber: order.orderNumber,
+                    customer: { telephone: order.customer.telephone }
+                });
+            }
+            catch (error) {
+                // tslint:disable-next-line:no-console
+                console.error(error);
+            }
+        }
         const searchResult = yield reservationService.findByOrderNumber({
             orderNumber: orderNumber
         });
