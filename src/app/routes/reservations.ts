@@ -6,6 +6,7 @@ import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import { Request, Response, Router } from 'express';
 import * as jwt from 'jsonwebtoken';
 
+import { CODE_EXPIRES_IN_SECONDS } from '../controllers/inquiry';
 import { chevreReservation2ttts } from '../util/reservation';
 
 const reservationsRouter = Router();
@@ -110,7 +111,10 @@ reservationsRouter.get(
                     // 注文承認
                     await orderService.authorize({
                         orderNumber: order.orderNumber,
-                        customer: { telephone: order.customer.telephone }
+                        customer: { telephone: order.customer.telephone },
+                        ...{
+                            expiresInSeconds: CODE_EXPIRES_IN_SECONDS
+                        }
                     });
                 } catch (error) {
                     // tslint:disable-next-line:no-console

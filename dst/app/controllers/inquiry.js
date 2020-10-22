@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cancel = exports.result = exports.search = void 0;
+exports.cancel = exports.result = exports.search = exports.CODE_EXPIRES_IN_SECONDS = void 0;
 /**
  * 予約照会コントローラー
  */
@@ -20,6 +20,7 @@ const jwt = require("jsonwebtoken");
 const moment = require("moment-timezone");
 const numeral = require("numeral");
 const ticket = require("../util/ticket");
+exports.CODE_EXPIRES_IN_SECONDS = 8035200; // 93日
 const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: process.env.API_CLIENT_ID,
@@ -43,8 +44,9 @@ if (process.env.API_CLIENT_ID === undefined) {
     throw new Error('Please set an environment variable \'API_CLIENT_ID\'');
 }
 /**
- * 予約照会検索
+ * 注文照会
  */
+// tslint:disable-next-line:max-func-body-length
 function search(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         let message = '';
@@ -86,11 +88,24 @@ function search(req, res) {
                     if (order.orderStatus === cinerinoapi.factory.orderStatus.OrderReturned) {
                         throw new Error(req.__('MistakeInput'));
                     }
+                    // 注文承認
+                    let code;
+                    try {
+                        const authorizeOrderResult = yield orderService.authorize(Object.assign({ orderNumber: order.orderNumber, customer: { telephone: order.customer.telephone } }, {
+                            expiresInSeconds: exports.CODE_EXPIRES_IN_SECONDS
+                        }));
+                        code = authorizeOrderResult.code;
+                    }
+                    catch (error) {
+                        // tslint:disable-next-line:no-console
+                        console.error(error);
+                    }
                     // 印刷トークン生成
                     const reservationIds = order.acceptedOffers.map((o) => o.itemOffered.id);
                     const printToken = yield createPrintToken(reservationIds);
                     // 結果をセッションに保管して結果画面へ遷移
                     req.session.inquiryResult = {
+                        code: code,
                         printToken: printToken,
                         order: order
                     };

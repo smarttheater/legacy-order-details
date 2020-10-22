@@ -11,6 +11,8 @@ import * as numeral from 'numeral';
 
 import * as ticket from '../util/ticket';
 
+export const CODE_EXPIRES_IN_SECONDS = 8035200; // 93日
+
 const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: <string>process.env.API_CLIENT_ID,
@@ -40,8 +42,9 @@ if (process.env.API_CLIENT_ID === undefined) {
 }
 
 /**
- * 予約照会検索
+ * 注文照会
  */
+// tslint:disable-next-line:max-func-body-length
 export async function search(req: Request, res: Response): Promise<void> {
     let message = '';
     let errors: ExpressValidator.Dictionary<ExpressValidator.MappedError> | null = null;
@@ -90,12 +93,29 @@ export async function search(req: Request, res: Response): Promise<void> {
                     throw new Error(req.__('MistakeInput'));
                 }
 
+                // 注文承認
+                let code: string | undefined;
+                try {
+                    const authorizeOrderResult = await orderService.authorize({
+                        orderNumber: order.orderNumber,
+                        customer: { telephone: order.customer.telephone },
+                        ...{
+                            expiresInSeconds: CODE_EXPIRES_IN_SECONDS
+                        }
+                    });
+                    code = authorizeOrderResult.code;
+                } catch (error) {
+                    // tslint:disable-next-line:no-console
+                    console.error(error);
+                }
+
                 // 印刷トークン生成
                 const reservationIds = order.acceptedOffers.map((o) => (<cinerinoapi.factory.order.IReservation>o.itemOffered).id);
                 const printToken = await createPrintToken(reservationIds);
 
                 // 結果をセッションに保管して結果画面へ遷移
                 (<Express.Session>req.session).inquiryResult = {
+                    code: code,
                     printToken: printToken,
                     order: order
                 };

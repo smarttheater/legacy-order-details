@@ -16,6 +16,7 @@ const cinerinoapi = require("@cinerino/sdk");
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 const express_1 = require("express");
 const jwt = require("jsonwebtoken");
+const inquiry_1 = require("../controllers/inquiry");
 const reservation_1 = require("../util/reservation");
 const reservationsRouter = express_1.Router();
 const authClient = new tttsapi.auth.ClientCredentials({
@@ -96,10 +97,9 @@ reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void
                     throw new Error(`${req.__('NotFound')}: Order`);
                 }
                 // 注文承認
-                yield orderService.authorize({
-                    orderNumber: order.orderNumber,
-                    customer: { telephone: order.customer.telephone }
-                });
+                yield orderService.authorize(Object.assign({ orderNumber: order.orderNumber, customer: { telephone: order.customer.telephone } }, {
+                    expiresInSeconds: inquiry_1.CODE_EXPIRES_IN_SECONDS
+                }));
             }
             catch (error) {
                 // tslint:disable-next-line:no-console

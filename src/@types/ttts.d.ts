@@ -45,6 +45,7 @@ declare global {
              * チケット照会結果
              */
             inquiryResult?: {
+                code?: string;
                 printToken: string;
                 order: cinerinoapi.factory.order.IOrder;
             };

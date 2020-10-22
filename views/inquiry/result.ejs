@@ -104,7 +104,7 @@ page-inquiry page-result page-complete page-<%- locale %>
 
 <div>
     <a class="btn btn-blue btn-print visible-pc" target="_blank"
-        href='/reservations/print?token=<%= printToken %>'><span><%- __('PrintTicket') %></span></a>
+        href='/reservations/printByOrderNumber?orderNumber=<%= order.orderNumber %>&confirmationNumber=<%= order.confirmationNumber %>'><span><%- __('PrintTicket') %></span></a>
     <br>
     <p class="btn btn-cancel <%- (!isCancellable) ? 'btn-disabled' : '' %>"><span><%- __('CancelTicket') %></span></p>
     <% if (!isCancellable) { %>
