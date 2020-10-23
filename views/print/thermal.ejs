@@ -25,15 +25,27 @@ body {
 
 <%
 moment.locale('ja');
+
+let paymentMethod = '';
+let paymentNo = '';
+
+// 注文情報があれば、決済方法名称を注文情報より取得
+if (order !== undefined && Array.isArray(order.paymentMethods) && order.paymentMethods.length > 0) {
+    paymentMethod = order.paymentMethods[0].name;
+    paymentNo = order.confirmationNumber;
+}
+
 for (let reservation of reservations) {
     // ※決済手段が「無料招待」と「トップデッキのみ（手売り）」の予約はチケット価格が非表示
-    let paymentMethod = '';
-    const paymentMethodProperty = reservation.underName.identifier.find(function (p) {
-        return p.name === 'paymentMethod';
-    });
-    if (paymentMethodProperty !== undefined) {
-        paymentMethod = paymentMethodProperty.value;
+    if (reservation.underName !== undefined && Array.isArray(reservation.underName.identifier)) {
+        const paymentMethodProperty = reservation.underName.identifier.find(function (p) {
+            return p.name === 'paymentMethod';
+        });
+        if (paymentMethodProperty !== undefined) {
+            paymentMethod = paymentMethodProperty.value;
+        }    
     }
+
     let isNoCharge = /^(Invitation|OTC)$/.test(paymentMethod);
 
     const performance = reservation.reservationFor;
@@ -45,7 +57,6 @@ for (let reservation of reservations) {
         }    
     }
 
-    let paymentNo = reservation.reservationNumber;
     if (reservation.underName !== undefined && Array.isArray(reservation.underName.identifier)) {
         const paymentNoProperty = reservation.underName.identifier.find(function (p) {
             return p.name === 'paymentNo';

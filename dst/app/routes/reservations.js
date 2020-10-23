@@ -76,6 +76,8 @@ reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void
         if (typeof orderNumber !== 'string' || orderNumber.length === 0) {
             throw new Error('Order Number required');
         }
+        let order;
+        let reservations;
         const confirmationNumber = req.query.confirmationNumber;
         // confirmationNumberの指定があれば、Cinerinoで注文照会&注文承認
         if (typeof confirmationNumber === 'string' && confirmationNumber.length > 0) {
@@ -85,7 +87,6 @@ reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void
                     confirmationNumber: String(confirmationNumber),
                     orderNumber: orderNumber
                 });
-                let order;
                 if (Array.isArray(findOrderResult)) {
                     order = findOrderResult[0];
                 }
@@ -105,22 +106,31 @@ reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void
                         expiresInSeconds: inquiry_1.CODE_EXPIRES_IN_SECONDS
                     }
                 });
+                reservations = order.acceptedOffers.map((offer) => {
+                    const unitPriceSpec = offer.priceSpecification.priceComponent[0];
+                    const itemOffered = offer.itemOffered;
+                    // 注文データのticketTypeに単価仕様が存在しないので、補完する
+                    return Object.assign(Object.assign({}, itemOffered), { reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
+                });
             }
             catch (error) {
                 // tslint:disable-next-line:no-console
                 console.error(error);
             }
         }
-        const searchResult = yield reservationService.findByOrderNumber({
-            orderNumber: orderNumber
-        });
-        let reservations = searchResult.data;
-        reservations = reservations.filter((r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed);
-        if (reservations.length === 0) {
-            next(new Error(req.__('NotFound')));
-            return;
+        if (!Array.isArray(reservations)) {
+            // tttsで予約検索する場合はこちら↓
+            const searchResult = yield reservationService.findByOrderNumber({
+                orderNumber: orderNumber
+            });
+            reservations = searchResult.data;
+            reservations = reservations.filter((r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed);
+            if (reservations.length === 0) {
+                next(new Error(req.__('NotFound')));
+                return;
+            }
         }
-        renderPrintFormat(req, res)({ reservations });
+        renderPrintFormat(req, res)({ reservations, order });
     }
     catch (error) {
         next(new Error(error.message));
@@ -145,6 +155,7 @@ function renderPrintFormat(req, res) {
             case 'thermal':
                 res.render('print/thermal', {
                     layout: false,
+                    order: params.order,
                     reservations: reservations
                 });
                 break;
@@ -152,6 +163,7 @@ function renderPrintFormat(req, res) {
             case 'thermal_normal':
                 res.render('print/print_pcthermal', {
                     layout: false,
+                    order: params.order,
                     reservations: reservations
                 });
                 break;
@@ -159,6 +171,7 @@ function renderPrintFormat(req, res) {
             default:
                 res.render('print/print', {
                     layout: false,
+                    order: params.order,
                     reservations: reservations
                 });
         }

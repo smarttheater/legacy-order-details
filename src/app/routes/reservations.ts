@@ -69,6 +69,10 @@ reservationsRouter.get(
     }
 );
 
+export type ICompoundPriceSpecification
+    // tslint:disable-next-line:max-line-length
+    = cinerinoapi.factory.chevre.compoundPriceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>;
+
 /**
  * 注文番号からチケット印刷(A4)
  * output:thermal→PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
@@ -85,6 +89,9 @@ reservationsRouter.get(
                 throw new Error('Order Number required');
             }
 
+            let order: cinerinoapi.factory.order.IOrder | undefined;
+            let reservations: tttsapi.factory.reservation.event.IReservation[] | undefined;
+
             const confirmationNumber = req.query.confirmationNumber;
 
             // confirmationNumberの指定があれば、Cinerinoで注文照会&注文承認
@@ -96,7 +103,6 @@ reservationsRouter.get(
                         orderNumber: orderNumber
                     });
 
-                    let order: cinerinoapi.factory.order.IOrder | undefined;
                     if (Array.isArray(findOrderResult)) {
                         order = findOrderResult[0];
                     } else {
@@ -117,28 +123,49 @@ reservationsRouter.get(
                             expiresInSeconds: CODE_EXPIRES_IN_SECONDS
                         }
                     });
+
+                    reservations = order.acceptedOffers.map((offer) => {
+                        const unitPriceSpec = (<ICompoundPriceSpecification>offer.priceSpecification).priceComponent[0];
+
+                        const itemOffered = <cinerinoapi.factory.order.IReservation>offer.itemOffered;
+
+                        // 注文データのticketTypeに単価仕様が存在しないので、補完する
+                        return <any>{
+                            ...itemOffered,
+                            reservedTicket: {
+                                ...itemOffered.reservedTicket,
+                                ticketType: {
+                                    ...itemOffered.reservedTicket.ticketType,
+                                    priceSpecification: unitPriceSpec
+                                }
+                            }
+                        };
+                    });
                 } catch (error) {
                     // tslint:disable-next-line:no-console
                     console.error(error);
                 }
             }
 
-            const searchResult = await reservationService.findByOrderNumber({
-                orderNumber: orderNumber
-            });
-            let reservations = searchResult.data;
+            if (!Array.isArray(reservations)) {
+                // tttsで予約検索する場合はこちら↓
+                const searchResult = await reservationService.findByOrderNumber({
+                    orderNumber: orderNumber
+                });
+                reservations = searchResult.data;
 
-            reservations = reservations.filter(
-                (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
-            );
+                reservations = reservations.filter(
+                    (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
+                );
 
-            if (reservations.length === 0) {
-                next(new Error(req.__('NotFound')));
+                if (reservations.length === 0) {
+                    next(new Error(req.__('NotFound')));
 
-                return;
+                    return;
+                }
             }
 
-            renderPrintFormat(req, res)({ reservations });
+            renderPrintFormat(req, res)({ reservations, order });
         } catch (error) {
             next(new Error(error.message));
         }
@@ -146,7 +173,10 @@ reservationsRouter.get(
 );
 
 function renderPrintFormat(req: Request, res: Response) {
-    return (params: { reservations: tttsapi.factory.reservation.event.IReservation[] }) => {
+    return (params: {
+        order?: cinerinoapi.factory.order.IOrder;
+        reservations: tttsapi.factory.reservation.event.IReservation[];
+    }) => {
         // チケットコード順にソート
         const reservations = params.reservations.sort((a, b) => {
             if (a.reservedTicket.ticketType.identifier < b.reservedTicket.ticketType.identifier) {
@@ -166,6 +196,7 @@ function renderPrintFormat(req: Request, res: Response) {
             case 'thermal':
                 res.render('print/thermal', {
                     layout: false,
+                    order: params.order,
                     reservations: reservations
                 });
 
@@ -175,6 +206,7 @@ function renderPrintFormat(req: Request, res: Response) {
             case 'thermal_normal':
                 res.render('print/print_pcthermal', {
                     layout: false,
+                    order: params.order,
                     reservations: reservations
                 });
 
@@ -184,6 +216,7 @@ function renderPrintFormat(req: Request, res: Response) {
             default:
                 res.render('print/print', {
                     layout: false,
+                    order: params.order,
                     reservations: reservations
                 });
         }
