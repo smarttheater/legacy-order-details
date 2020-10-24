@@ -47,6 +47,7 @@ if (order !== undefined && Array.isArray(order.paymentMethods) && order.paymentM
 
 for (let reservation of reservations) {
     // ※決済手段が「無料招待」と「トップデッキのみ（手売り）」の予約はチケット価格が非表示
+    paymentMethod = reservation.paymentMethod;
     if (reservation.underName !== undefined && Array.isArray(reservation.underName.identifier)) {
         const paymentMethodProperty = reservation.underName.identifier.find(function (p) {
             return p.name === 'paymentMethod';
@@ -67,6 +68,7 @@ for (let reservation of reservations) {
         }    
     }
 
+    paymentNo = reservation.paymentNo;
     if (reservation.underName !== undefined && Array.isArray(reservation.underName.identifier)) {
         const paymentNoProperty = reservation.underName.identifier.find(function (p) {
             return p.name === 'paymentNo';
