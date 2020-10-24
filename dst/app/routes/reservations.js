@@ -70,66 +70,63 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(void 0, void 0, v
  */
 reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
+        // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく
         req.session.locale = req.params.locale;
         const orderNumber = req.query.orderNumber;
+        const confirmationNumber = req.query.confirmationNumber;
         if (typeof orderNumber !== 'string' || orderNumber.length === 0) {
             throw new Error('Order Number required');
         }
+        if (typeof confirmationNumber !== 'string' || confirmationNumber.length === 0) {
+            throw new Error('Confirmation Number required');
+        }
         let order;
         let reservations;
-        const confirmationNumber = req.query.confirmationNumber;
-        // confirmationNumberの指定があれば、Cinerinoで注文照会&注文承認
-        if (typeof confirmationNumber === 'string' && confirmationNumber.length > 0) {
-            try {
-                // 注文照会
-                const findOrderResult = yield orderService.findByConfirmationNumber({
-                    confirmationNumber: String(confirmationNumber),
-                    orderNumber: orderNumber
-                });
-                if (Array.isArray(findOrderResult)) {
-                    order = findOrderResult[0];
-                }
-                else {
-                    order = findOrderResult;
-                }
-                if (order === undefined) {
-                    throw new Error(`${req.__('NotFound')}: Order`);
-                }
-                // 注文承認
-                yield orderService.authorize({
-                    object: {
-                        orderNumber: order.orderNumber,
-                        customer: { telephone: order.customer.telephone }
-                    },
-                    result: {
-                        expiresInSeconds: inquiry_1.CODE_EXPIRES_IN_SECONDS
-                    }
-                });
-                reservations = order.acceptedOffers.map((offer) => {
-                    const unitPriceSpec = offer.priceSpecification.priceComponent[0];
-                    const itemOffered = offer.itemOffered;
-                    // 注文データのticketTypeに単価仕様が存在しないので、補完する
-                    return Object.assign(Object.assign({}, itemOffered), { reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
-                });
-            }
-            catch (error) {
-                // tslint:disable-next-line:no-console
-                console.error(error);
-            }
+        // Cinerinoで注文照会&注文承認
+        const findOrderResult = yield orderService.findByConfirmationNumber({
+            confirmationNumber: String(confirmationNumber),
+            orderNumber: orderNumber
+        });
+        if (Array.isArray(findOrderResult)) {
+            order = findOrderResult[0];
         }
-        if (!Array.isArray(reservations)) {
-            // tttsで予約検索する場合はこちら↓
-            const searchResult = yield reservationService.findByOrderNumber({
-                orderNumber: orderNumber
-            });
-            reservations = searchResult.data;
-            reservations = reservations.filter((r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed);
-            if (reservations.length === 0) {
-                next(new Error(req.__('NotFound')));
-                return;
-            }
+        else {
+            order = findOrderResult;
         }
+        if (order === undefined) {
+            throw new Error(`${req.__('NotFound')}: Order`);
+        }
+        // 注文承認
+        yield orderService.authorize({
+            object: {
+                orderNumber: order.orderNumber,
+                customer: { telephone: order.customer.telephone }
+            },
+            result: {
+                expiresInSeconds: inquiry_1.CODE_EXPIRES_IN_SECONDS
+            }
+        });
+        reservations = order.acceptedOffers.map((offer) => {
+            const unitPriceSpec = offer.priceSpecification.priceComponent[0];
+            const itemOffered = offer.itemOffered;
+            // 注文データのticketTypeに単価仕様が存在しないので、補完する
+            return Object.assign(Object.assign({}, itemOffered), { reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
+        });
+        // ↓動作確認がとれたら削除
+        // if (!Array.isArray(reservations)) {
+        //     // tttsで予約検索する場合はこちら↓
+        //     const searchResult = await reservationService.findByOrderNumber({
+        //         orderNumber: orderNumber
+        //     });
+        //     reservations = searchResult.data;
+        //     reservations = reservations.filter(
+        //         (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
+        //     );
+        //     if (reservations.length === 0) {
+        //         next(new Error(req.__('NotFound')));
+        //         return;
+        //     }
+        // }
         renderPrintFormat(req, res)({ reservations, order });
     }
     catch (error) {
