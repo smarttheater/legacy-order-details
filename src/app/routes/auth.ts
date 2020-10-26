@@ -5,7 +5,7 @@ import * as express from 'express';
 
 import { User } from '../user';
 
-const DEFAULT_CALLBACK = process.env.DEFAULT_CALLBACK;
+const DEFAULT_CALLBACK = <string>process.env.DEFAULT_CALLBACK;
 
 const authRouter = express.Router();
 
@@ -22,7 +22,7 @@ authRouter.get(
             // stateにはイベントオブジェクトとして受け取ったリクエストボディが入っている
             const user = User.PARSE(req.session, req.hostname);
 
-            await user.signIn(req.query.code);
+            await user.signIn(<string>req.query.code);
 
             user.authClient.setCredentials({
                 refresh_token: user.getRefreshToken()

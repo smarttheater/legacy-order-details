@@ -57,7 +57,7 @@ app.use((req, _res, next) => {
     }
 
     if (!_.isEmpty(req.query.locale)) {
-        req.setLocale(req.query.locale);
+        req.setLocale(<string>req.query.locale);
         (<any>req.session).locale = req.query.locale;
     }
     // add 2017/06/20 set default locale
