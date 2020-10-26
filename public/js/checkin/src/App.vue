@@ -545,7 +545,7 @@ export default {
             if (e.keyCode === 13) {
                 this.is_processing = true;
                 this.tempReservation = null;
-                // this.tempQrStr = 'TTT285925417645218-0@12345-12345';
+                // this.tempQrStr = 'TTT285925417645218-0@afeccb73-386b-435a-9b95-e45ebb2699ef';
                 return this.checkQr(this.tempQrStr).then(() => {
                     this.is_processing = false;
                     this.tempQrStr = '';
