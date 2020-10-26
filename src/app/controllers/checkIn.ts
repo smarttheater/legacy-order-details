@@ -145,6 +145,7 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
         if (!req.staffUser.isAuthenticated()) {
             throw new Error('checkinAdminUser not authenticated.');
         }
+
         if (!req.body.when || !req.body.where || !req.body.how) {
             res.status(BAD_REQUEST).json({
                 error: 'チェックイン情報作成失敗',
@@ -169,6 +170,9 @@ export async function addCheckIn(req: Request, res: Response): Promise<void> {
             reservationId: req.params.qr,
             checkin: checkin
         });
+
+        // tslint:disable-next-line:no-suspicious-comment
+        // TODO Cinerinoで、req.body.codeを使用して予約使用
 
         res.status(CREATED).json(checkin);
     } catch (error) {

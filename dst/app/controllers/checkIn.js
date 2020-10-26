@@ -168,6 +168,8 @@ function addCheckIn(req, res) {
                 reservationId: req.params.qr,
                 checkin: checkin
             });
+            // tslint:disable-next-line:no-suspicious-comment
+            // TODO Cinerinoで、req.body.codeを使用して予約使用
             res.status(http_status_1.CREATED).json(checkin);
         }
         catch (error) {
