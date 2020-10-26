@@ -5,7 +5,6 @@ import * as cinerinoapi from '@cinerino/sdk';
 import * as conf from 'config';
 import { NextFunction, Request, Response } from 'express';
 import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR } from 'http-status';
-import * as jwt from 'jsonwebtoken';
 import * as moment from 'moment-timezone';
 import * as numeral from 'numeral';
 
@@ -111,14 +110,9 @@ export async function search(req: Request, res: Response): Promise<void> {
                     console.error(error);
                 }
 
-                // 印刷トークン生成
-                const reservationIds = order.acceptedOffers.map((o) => (<cinerinoapi.factory.order.IReservation>o.itemOffered).id);
-                const printToken = await createPrintToken(reservationIds);
-
                 // 結果をセッションに保管して結果画面へ遷移
                 (<Express.Session>req.session).inquiryResult = {
                     code: code,
-                    printToken: printToken,
                     order: order
                 };
                 res.redirect('/inquiry/search/result');
@@ -151,34 +145,6 @@ export async function search(req: Request, res: Response): Promise<void> {
         },
         reserveMaxDate: reserveMaxDate,
         layout: 'layouts/inquiry/layout'
-    });
-}
-
-/**
- * 印刷トークンインターフェース
- */
-export type IPrintToken = string;
-/**
- * 印刷トークン対象(予約IDリスト)インターフェース
- */
-export type IPrintObject = string[];
-
-/**
- * 予約印刷トークンを発行する
- */
-async function createPrintToken(object: IPrintObject): Promise<IPrintToken> {
-    return new Promise<IPrintToken>((resolve, reject) => {
-        const payload = {
-            object: object
-        };
-
-        jwt.sign(payload, <string>process.env.TTTS_TOKEN_SECRET, (jwtErr, token) => {
-            if (jwtErr instanceof Error) {
-                reject(jwtErr);
-            } else {
-                resolve(token);
-            }
-        });
     });
 }
 
@@ -217,7 +183,6 @@ export async function result(req: Request, res: Response, next: NextFunction): P
 
         // 画面描画
         res.render('inquiry/result', {
-            printToken: inquiryResult.printToken,
             order: inquiryResult.order,
             moment: moment,
             reservations: reservations,

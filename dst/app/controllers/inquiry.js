@@ -16,7 +16,6 @@ exports.cancel = exports.result = exports.search = exports.CODE_EXPIRES_IN_SECON
 const cinerinoapi = require("@cinerino/sdk");
 const conf = require("config");
 const http_status_1 = require("http-status");
-const jwt = require("jsonwebtoken");
 const moment = require("moment-timezone");
 const numeral = require("numeral");
 const ticket = require("../util/ticket");
@@ -106,13 +105,9 @@ function search(req, res) {
                         // tslint:disable-next-line:no-console
                         console.error(error);
                     }
-                    // 印刷トークン生成
-                    const reservationIds = order.acceptedOffers.map((o) => o.itemOffered.id);
-                    const printToken = yield createPrintToken(reservationIds);
                     // 結果をセッションに保管して結果画面へ遷移
                     req.session.inquiryResult = {
                         code: code,
-                        printToken: printToken,
                         order: order
                     };
                     res.redirect('/inquiry/search/result');
@@ -149,26 +144,6 @@ function search(req, res) {
 }
 exports.search = search;
 /**
- * 予約印刷トークンを発行する
- */
-function createPrintToken(object) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new Promise((resolve, reject) => {
-            const payload = {
-                object: object
-            };
-            jwt.sign(payload, process.env.TTTS_TOKEN_SECRET, (jwtErr, token) => {
-                if (jwtErr instanceof Error) {
-                    reject(jwtErr);
-                }
-                else {
-                    resolve(token);
-                }
-            });
-        });
-    });
-}
-/**
  * 予約照会結果画面(getのみ)
  */
 function result(req, res, next) {
@@ -193,7 +168,6 @@ function result(req, res, next) {
             const cancellationFee = numeral(CANCEL_CHARGE).format('0,0');
             // 画面描画
             res.render('inquiry/result', {
-                printToken: inquiryResult.printToken,
                 order: inquiryResult.order,
                 moment: moment,
                 reservations: reservations,

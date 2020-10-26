@@ -46,7 +46,6 @@ declare global {
              */
             inquiryResult?: {
                 code?: string;
-                printToken: string;
                 order: cinerinoapi.factory.order.IOrder;
             };
         }
