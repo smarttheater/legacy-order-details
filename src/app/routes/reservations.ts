@@ -183,7 +183,7 @@ reservationsRouter.get(
             }
 
             // 注文承認
-            await orderService.authorize({
+            const { code } = await orderService.authorize({
                 object: {
                     orderNumber: order.orderNumber,
                     customer: { telephone: order.customer.telephone }
@@ -201,6 +201,7 @@ reservationsRouter.get(
                 // 注文データのticketTypeに単価仕様が存在しないので、補完する
                 return <any>{
                     ...itemOffered,
+                    code: code,
                     paymentNo: order.confirmationNumber,
                     paymentMethod: order.paymentMethods[0]?.name,
                     reservedTicket: {

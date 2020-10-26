@@ -77,6 +77,13 @@ for (let reservation of reservations) {
             paymentNo = paymentNoProperty.value;
         }
     }
+
+    let qrCode = reservation.id;
+
+    // 注文コードが発行されていれば、QRコードに情報追加
+    if (typeof reservation.code ==='string' && reservation.code.length > 0) {
+        qrCode += `@${reservation.code}`;
+    }
 %>
 <div class="printcontent">
 
@@ -106,7 +113,7 @@ for (let reservation of reservations) {
             <div class="wrapper-qrimg pr-bg">
                 <!-- <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.id %>"> -->
                 <!-- <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&cht=qr&data=<%= reservation.id %>"> -->
-                <span class="codeimg-barcode" data-qrcode=<%= reservation.id %>></span>
+                <span class="codeimg-barcode" data-qrcode="<%= qrCode %>"></span>
             </div>
         </div>
     </div>
@@ -119,7 +126,7 @@ for (let reservation of reservations) {
                 <tr>
                     <td class="main-info">
                         <div class="pr-rsrvnum">
-                        <h3><%- __('PaymentNo') %></h3>
+                            <h3><%- __('PaymentNo') %></h3>
                             <strong><%- paymentNo %></strong>
                         </div>
 

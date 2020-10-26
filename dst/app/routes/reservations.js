@@ -149,7 +149,7 @@ reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void
             throw new Error(`${req.__('NotFound')}: Order`);
         }
         // 注文承認
-        yield orderService.authorize({
+        const { code } = yield orderService.authorize({
             object: {
                 orderNumber: order.orderNumber,
                 customer: { telephone: order.customer.telephone }
@@ -163,7 +163,7 @@ reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void
             const unitPriceSpec = offer.priceSpecification.priceComponent[0];
             const itemOffered = offer.itemOffered;
             // 注文データのticketTypeに単価仕様が存在しないので、補完する
-            return Object.assign(Object.assign({}, itemOffered), { paymentNo: order.confirmationNumber, paymentMethod: (_a = order.paymentMethods[0]) === null || _a === void 0 ? void 0 : _a.name, reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
+            return Object.assign(Object.assign({}, itemOffered), { code: code, paymentNo: order.confirmationNumber, paymentMethod: (_a = order.paymentMethods[0]) === null || _a === void 0 ? void 0 : _a.name, reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
         });
         // ↓動作確認がとれたら削除
         // if (!Array.isArray(reservations)) {

@@ -168,6 +168,7 @@ function result(req, res, next) {
             const cancellationFee = numeral(CANCEL_CHARGE).format('0,0');
             // 画面描画
             res.render('inquiry/result', {
+                code: inquiryResult.code,
                 order: inquiryResult.order,
                 moment: moment,
                 reservations: reservations,

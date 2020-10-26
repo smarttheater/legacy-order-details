@@ -183,6 +183,7 @@ export async function result(req: Request, res: Response, next: NextFunction): P
 
         // 画面描画
         res.render('inquiry/result', {
+            code: inquiryResult.code,
             order: inquiryResult.order,
             moment: moment,
             reservations: reservations,
