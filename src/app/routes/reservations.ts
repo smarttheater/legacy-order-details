@@ -19,10 +19,10 @@ const authClient = new tttsapi.auth.ClientCredentials({
     state: ''
 });
 
-const reservationService = new tttsapi.service.Reservation({
-    endpoint: <string>process.env.API_ENDPOINT,
-    auth: authClient
-});
+// const reservationService = new tttsapi.service.Reservation({
+//     endpoint: <string>process.env.API_ENDPOINT,
+//     auth: authClient
+// });
 
 const orderService = new cinerinoapi.service.Order({
     endpoint: <string>process.env.CINERINO_API_ENDPOINT,
@@ -118,16 +118,19 @@ reservationsRouter.get(
                             []
                         );
                     } else {
-                        reservations = await Promise.all(ids.map(async (id) => reservationService.findById({ id })));
-                        reservations = reservations.filter(
-                            (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
-                        );
+                        next(new Error('パラメータを確認できませんでした:orders'));
 
-                        if (reservations.length === 0) {
-                            next(new Error(req.__('NotFound')));
+                        // ↓動作確認がとれたら削除
+                        // reservations = await Promise.all(ids.map(async (id) => reservationService.findById({ id })));
+                        // reservations = reservations.filter(
+                        //     (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
+                        // );
 
-                            return;
-                        }
+                        // if (reservations.length === 0) {
+                        //     next(new Error(req.__('NotFound')));
+
+                        //     return;
+                        // }
                     }
 
                     renderPrintFormat(req, res)({ reservations });
