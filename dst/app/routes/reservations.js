@@ -26,10 +26,10 @@ const authClient = new tttsapi.auth.ClientCredentials({
     scopes: [],
     state: ''
 });
-// const reservationService = new tttsapi.service.Reservation({
-//     endpoint: <string>process.env.API_ENDPOINT,
-//     auth: authClient
-// });
+const reservationService = new tttsapi.service.Reservation({
+    endpoint: process.env.API_ENDPOINT,
+    auth: authClient
+});
 const orderService = new cinerinoapi.service.Order({
     endpoint: process.env.CINERINO_API_ENDPOINT,
     auth: authClient
@@ -42,8 +42,6 @@ reservationsRouter.get('/print',
 // tslint:disable-next-line:max-func-body-length
 (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // tslint:disable-next-line:no-suspicious-comment
-        // TODO トークン期限チェック
         // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
         req.session.locale = req.params.locale;
         let orders;
@@ -101,16 +99,14 @@ reservationsRouter.get('/print',
                     }, []);
                 }
                 else {
-                    next(new Error('パラメータを確認できませんでした:orders'));
+                    // next(new Error('パラメータを確認できませんでした:orders'));
                     // ↓動作確認がとれたら削除
-                    // reservations = await Promise.all(ids.map(async (id) => reservationService.findById({ id })));
-                    // reservations = reservations.filter(
-                    //     (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
-                    // );
-                    // if (reservations.length === 0) {
-                    //     next(new Error(req.__('NotFound')));
-                    //     return;
-                    // }
+                    reservations = yield Promise.all(ids.map((id) => __awaiter(void 0, void 0, void 0, function* () { return reservationService.findById({ id }); })));
+                    reservations = reservations.filter((r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed);
+                    if (reservations.length === 0) {
+                        next(new Error(req.__('NotFound')));
+                        return;
+                    }
                 }
                 renderPrintFormat(req, res)({ reservations });
             }

@@ -19,10 +19,10 @@ const authClient = new tttsapi.auth.ClientCredentials({
     state: ''
 });
 
-// const reservationService = new tttsapi.service.Reservation({
-//     endpoint: <string>process.env.API_ENDPOINT,
-//     auth: authClient
-// });
+const reservationService = new tttsapi.service.Reservation({
+    endpoint: <string>process.env.API_ENDPOINT,
+    auth: authClient
+});
 
 const orderService = new cinerinoapi.service.Order({
     endpoint: <string>process.env.CINERINO_API_ENDPOINT,
@@ -38,9 +38,6 @@ reservationsRouter.get(
     // tslint:disable-next-line:max-func-body-length
     async (req, res, next) => {
         try {
-            // tslint:disable-next-line:no-suspicious-comment
-            // TODO トークン期限チェック
-
             // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
             (<any>req.session).locale = req.params.locale;
 
@@ -118,19 +115,19 @@ reservationsRouter.get(
                             []
                         );
                     } else {
-                        next(new Error('パラメータを確認できませんでした:orders'));
+                        // next(new Error('パラメータを確認できませんでした:orders'));
 
                         // ↓動作確認がとれたら削除
-                        // reservations = await Promise.all(ids.map(async (id) => reservationService.findById({ id })));
-                        // reservations = reservations.filter(
-                        //     (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
-                        // );
+                        reservations = await Promise.all(ids.map(async (id) => reservationService.findById({ id })));
+                        reservations = reservations.filter(
+                            (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
+                        );
 
-                        // if (reservations.length === 0) {
-                        //     next(new Error(req.__('NotFound')));
+                        if (reservations.length === 0) {
+                            next(new Error(req.__('NotFound')));
 
-                        //     return;
-                        // }
+                            return;
+                        }
                     }
 
                     renderPrintFormat(req, res)({ reservations });
