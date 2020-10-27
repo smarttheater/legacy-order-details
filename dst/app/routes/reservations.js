@@ -108,7 +108,10 @@ reservationsRouter.get('/print',
                         return;
                     }
                 }
-                renderPrintFormat(req, res)({ reservations });
+                // 印刷結果へ遷移
+                req.session.printResult = { reservations };
+                res.redirect(`/reservations/print/result?output=${req.query.output}`);
+                // renderPrintFormat(req, res)({ reservations });
             }
         }));
     }
@@ -117,8 +120,7 @@ reservationsRouter.get('/print',
     }
 }));
 /**
- * 注文番号からチケット印刷(A4)
- * output:thermal→PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
+ * 注文番号からチケット印刷
  */
 reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -132,12 +134,49 @@ reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void
         if (typeof confirmationNumber !== 'string' || confirmationNumber.length === 0) {
             throw new Error('Confirmation Number required');
         }
+        yield printByOrderNumber(req, res)({
+            confirmationNumber: String(confirmationNumber),
+            orderNumber: orderNumber
+        });
+    }
+    catch (error) {
+        next(new Error(error.message));
+    }
+}));
+/**
+ * 注文番号をpostで印刷
+ */
+reservationsRouter.post('/printByOrderNumber', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく
+        if (typeof req.body.locale === 'string' && req.body.locale.length > 0) {
+            req.session.locale = req.body.locale;
+        }
+        const orderNumber = req.body.orderNumber;
+        const confirmationNumber = req.body.confirmationNumber;
+        if (typeof orderNumber !== 'string' || orderNumber.length === 0) {
+            throw new Error('Order Number required');
+        }
+        if (typeof confirmationNumber !== 'string' || confirmationNumber.length === 0) {
+            throw new Error('Confirmation Number required');
+        }
+        yield printByOrderNumber(req, res)({
+            confirmationNumber: String(confirmationNumber),
+            orderNumber: orderNumber
+        });
+    }
+    catch (error) {
+        next(new Error(error.message));
+    }
+}));
+function printByOrderNumber(req, res) {
+    return (params) => __awaiter(this, void 0, void 0, function* () {
         let order;
         let reservations;
         // Cinerinoで注文照会&注文承認
         const findOrderResult = yield orderService.findByConfirmationNumber({
-            confirmationNumber: String(confirmationNumber),
-            orderNumber: orderNumber
+            confirmationNumber: params.confirmationNumber,
+            orderNumber: params.orderNumber
         });
         if (Array.isArray(findOrderResult)) {
             order = findOrderResult[0];
@@ -180,7 +219,24 @@ reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void
         //         return;
         //     }
         // }
-        renderPrintFormat(req, res)({ reservations, order });
+        // 印刷結果へ遷移
+        const output = (typeof req.query.output === 'string') ? req.query.output : '';
+        req.session.printResult = { reservations, order };
+        res.redirect(`/reservations/print/result?output=${output}`);
+        // renderPrintFormat(req, res)({ reservations, order });
+    });
+}
+/**
+ * 印刷結果
+ */
+reservationsRouter.get('/print/result', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const printResult = (_a = req.session) === null || _a === void 0 ? void 0 : _a.printResult;
+        if (printResult === undefined || printResult === null) {
+            throw new Error(`${req.__('NotFound')}:printResult`);
+        }
+        renderPrintFormat(req, res)(printResult);
     }
     catch (error) {
         next(new Error(error.message));

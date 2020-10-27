@@ -130,7 +130,10 @@ reservationsRouter.get(
                         }
                     }
 
-                    renderPrintFormat(req, res)({ reservations });
+                    // 印刷結果へ遷移
+                    (<Express.Session>req.session).printResult = { reservations };
+                    res.redirect(`/reservations/print/result?output=${req.query.output}`);
+                    // renderPrintFormat(req, res)({ reservations });
                 }
             });
         } catch (error) {
@@ -144,8 +147,7 @@ export type ICompoundPriceSpecification
     = cinerinoapi.factory.chevre.compoundPriceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>;
 
 /**
- * 注文番号からチケット印刷(A4)
- * output:thermal→PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
+ * 注文番号からチケット印刷
  */
 reservationsRouter.get(
     '/printByOrderNumber',
@@ -163,77 +165,143 @@ reservationsRouter.get(
                 throw new Error('Confirmation Number required');
             }
 
-            let order: cinerinoapi.factory.order.IOrder;
-            let reservations: tttsapi.factory.reservation.event.IReservation[];
-
-            // Cinerinoで注文照会&注文承認
-            const findOrderResult = await orderService.findByConfirmationNumber({
+            await printByOrderNumber(req, res)({
                 confirmationNumber: String(confirmationNumber),
                 orderNumber: orderNumber
             });
+        } catch (error) {
+            next(new Error(error.message));
+        }
+    }
+);
 
-            if (Array.isArray(findOrderResult)) {
-                order = findOrderResult[0];
-            } else {
-                order = findOrderResult;
+/**
+ * 注文番号をpostで印刷
+ */
+reservationsRouter.post(
+    '/printByOrderNumber',
+    async (req, res, next) => {
+        try {
+            // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく
+            if (typeof req.body.locale === 'string' && req.body.locale.length > 0) {
+                (<any>req.session).locale = req.body.locale;
             }
 
-            if (order === undefined) {
-                throw new Error(`${req.__('NotFound')}: Order`);
+            const orderNumber = req.body.orderNumber;
+            const confirmationNumber = req.body.confirmationNumber;
+            if (typeof orderNumber !== 'string' || orderNumber.length === 0) {
+                throw new Error('Order Number required');
+            }
+            if (typeof confirmationNumber !== 'string' || confirmationNumber.length === 0) {
+                throw new Error('Confirmation Number required');
             }
 
-            // 注文承認
-            const { code } = await orderService.authorize({
-                object: {
-                    orderNumber: order.orderNumber,
-                    customer: { telephone: order.customer.telephone }
-                },
-                result: {
-                    expiresInSeconds: CODE_EXPIRES_IN_SECONDS
-                }
+            await printByOrderNumber(req, res)({
+                confirmationNumber: String(confirmationNumber),
+                orderNumber: orderNumber
             });
+        } catch (error) {
+            next(new Error(error.message));
+        }
+    }
+);
 
-            reservations = order.acceptedOffers.map((offer) => {
-                const unitPriceSpec = (<ICompoundPriceSpecification>offer.priceSpecification).priceComponent[0];
+function printByOrderNumber(req: Request, res: Response) {
+    return async (params: {
+        orderNumber: string;
+        confirmationNumber: string;
+    }) => {
+        let order: cinerinoapi.factory.order.IOrder;
+        let reservations: tttsapi.factory.reservation.event.IReservation[];
 
-                const itemOffered = <cinerinoapi.factory.order.IReservation>offer.itemOffered;
+        // Cinerinoで注文照会&注文承認
+        const findOrderResult = await orderService.findByConfirmationNumber({
+            confirmationNumber: params.confirmationNumber,
+            orderNumber: params.orderNumber
+        });
 
-                // 注文データのticketTypeに単価仕様が存在しないので、補完する
-                return <any>{
-                    ...itemOffered,
-                    code: code,
-                    paymentNo: order.confirmationNumber,
-                    paymentMethod: order.paymentMethods[0]?.name,
-                    reservedTicket: {
-                        ...itemOffered.reservedTicket,
-                        ticketType: {
-                            ...itemOffered.reservedTicket.ticketType,
-                            priceSpecification: unitPriceSpec
-                        }
+        if (Array.isArray(findOrderResult)) {
+            order = findOrderResult[0];
+        } else {
+            order = findOrderResult;
+        }
+
+        if (order === undefined) {
+            throw new Error(`${req.__('NotFound')}: Order`);
+        }
+
+        // 注文承認
+        const { code } = await orderService.authorize({
+            object: {
+                orderNumber: order.orderNumber,
+                customer: { telephone: order.customer.telephone }
+            },
+            result: {
+                expiresInSeconds: CODE_EXPIRES_IN_SECONDS
+            }
+        });
+
+        reservations = order.acceptedOffers.map((offer) => {
+            const unitPriceSpec = (<ICompoundPriceSpecification>offer.priceSpecification).priceComponent[0];
+
+            const itemOffered = <cinerinoapi.factory.order.IReservation>offer.itemOffered;
+
+            // 注文データのticketTypeに単価仕様が存在しないので、補完する
+            return <any>{
+                ...itemOffered,
+                code: code,
+                paymentNo: order.confirmationNumber,
+                paymentMethod: order.paymentMethods[0]?.name,
+                reservedTicket: {
+                    ...itemOffered.reservedTicket,
+                    ticketType: {
+                        ...itemOffered.reservedTicket.ticketType,
+                        priceSpecification: unitPriceSpec
                     }
-                };
-            });
+                }
+            };
+        });
 
-            // ↓動作確認がとれたら削除
-            // if (!Array.isArray(reservations)) {
-            //     // tttsで予約検索する場合はこちら↓
-            //     const searchResult = await reservationService.findByOrderNumber({
-            //         orderNumber: orderNumber
-            //     });
-            //     reservations = searchResult.data;
+        // ↓動作確認がとれたら削除
+        // if (!Array.isArray(reservations)) {
+        //     // tttsで予約検索する場合はこちら↓
+        //     const searchResult = await reservationService.findByOrderNumber({
+        //         orderNumber: orderNumber
+        //     });
+        //     reservations = searchResult.data;
 
-            //     reservations = reservations.filter(
-            //         (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
-            //     );
+        //     reservations = reservations.filter(
+        //         (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
+        //     );
 
-            //     if (reservations.length === 0) {
-            //         next(new Error(req.__('NotFound')));
+        //     if (reservations.length === 0) {
+        //         next(new Error(req.__('NotFound')));
 
-            //         return;
-            //     }
-            // }
+        //         return;
+        //     }
+        // }
 
-            renderPrintFormat(req, res)({ reservations, order });
+        // 印刷結果へ遷移
+        const output = (typeof req.query.output === 'string') ? req.query.output : '';
+        (<Express.Session>req.session).printResult = { reservations, order };
+        res.redirect(`/reservations/print/result?output=${output}`);
+        // renderPrintFormat(req, res)({ reservations, order });
+    };
+}
+
+/**
+ * 印刷結果
+ */
+reservationsRouter.get(
+    '/print/result',
+    async (req, res, next) => {
+        try {
+            const printResult = req.session?.printResult;
+            if (printResult === undefined || printResult === null) {
+                throw new Error(`${req.__('NotFound')}:printResult`);
+            }
+
+            renderPrintFormat(req, res)(printResult);
         } catch (error) {
             next(new Error(error.message));
         }

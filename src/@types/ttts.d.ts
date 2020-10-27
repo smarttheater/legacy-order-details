@@ -48,6 +48,13 @@ declare global {
                 code?: string;
                 order: cinerinoapi.factory.order.IOrder;
             };
+            /**
+             * 印刷結果
+             */
+            printResult?: {
+                order?: cinerinoapi.factory.order.IOrder;
+                reservations: tttsapi.factory.reservation.event.IReservation[];
+            };
         }
     }
 }
