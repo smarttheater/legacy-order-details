@@ -55,6 +55,7 @@ reservationsRouter.get(
                     // decoded.reservationsが存在する場合に対応する
                     if (Array.isArray(decoded.orders)) {
                         await printByReservationIds(req, res)({
+                            output: <string>req.query.output,
                             ids: ids,
                             orders: decoded.orders
                         });
@@ -100,10 +101,15 @@ reservationsRouter.post(
                     const ids = <string[]>decoded.object;
 
                     if (Array.isArray(decoded.orders)) {
-                        await printByReservationIds(req, res)({
-                            ids: ids,
-                            orders: decoded.orders
-                        });
+                        try {
+                            await printByReservationIds(req, res)({
+                                output: req.body.output,
+                                ids: ids,
+                                orders: decoded.orders
+                            });
+                        } catch (error) {
+                            next(error);
+                        }
                     } else {
                         next(new Error('パラメータを確認できませんでした:orders'));
                     }
@@ -260,6 +266,7 @@ function printByOrderNumber(req: Request, res: Response) {
 
 function printByReservationIds(req: Request, res: Response) {
     return async (params: {
+        output: string;
         ids: string[];
         orders: { orderNumber: string; confirmationNumber: string }[];
     }) => {
@@ -330,7 +337,7 @@ function printByReservationIds(req: Request, res: Response) {
 
         // 印刷結果へ遷移
         (<Express.Session>req.session).printResult = { reservations };
-        res.redirect(`/reservations/print/result?output=${req.query.output}`);
+        res.redirect(`/reservations/print/result?output=${params.output}`);
     };
 }
 
