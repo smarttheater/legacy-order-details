@@ -36,15 +36,11 @@ const orderService = new cinerinoapi.service.Order({
 });
 /**
  * チケット印刷(A4)
- * output:thermal→PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
  */
-reservationsRouter.get('/print', 
-// tslint:disable-next-line:max-func-body-length
-(req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+reservationsRouter.get('/print', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
         req.session.locale = req.params.locale;
-        let orders;
         let reservations;
         jwt.verify(req.query.token, process.env.TTTS_TOKEN_SECRET, (jwtErr, decoded) => __awaiter(void 0, void 0, void 0, function* () {
             if (jwtErr instanceof Error) {
@@ -55,48 +51,11 @@ reservationsRouter.get('/print',
                 const ids = decoded.object;
                 // decoded.reservationsが存在する場合に対応する
                 if (Array.isArray(decoded.orders)) {
-                    // 注文番号と確認番号で注文照会
-                    const printingOrders = decoded.orders;
-                    orders = yield Promise.all(printingOrders.map((printingOrder) => __awaiter(void 0, void 0, void 0, function* () {
-                        const findOrderResult = yield orderService.findByConfirmationNumber({
-                            confirmationNumber: String(printingOrder.confirmationNumber),
-                            orderNumber: String(printingOrder.orderNumber)
-                        });
-                        if (Array.isArray(findOrderResult)) {
-                            return findOrderResult[0];
-                        }
-                        else {
-                            return findOrderResult;
-                        }
-                    })));
-                    // 注文承認
-                    yield Promise.all(orders.map((order) => __awaiter(void 0, void 0, void 0, function* () {
-                        yield orderService.authorize({
-                            object: {
-                                orderNumber: order.orderNumber,
-                                customer: { telephone: order.customer.telephone }
-                            },
-                            result: {
-                                expiresInSeconds: inquiry_1.CODE_EXPIRES_IN_SECONDS
-                            }
-                        });
-                    })));
-                    // 予約リストを抽出
-                    reservations = orders.reduce((a, b) => {
-                        const reservationsByOrder = b.acceptedOffers
-                            // 指定された予約IDに絞る
-                            .filter((offer) => {
-                            return ids.includes(offer.itemOffered.id);
-                        })
-                            .map((offer) => {
-                            var _a;
-                            const unitPriceSpec = offer.priceSpecification.priceComponent[0];
-                            const itemOffered = offer.itemOffered;
-                            // 注文データのticketTypeに単価仕様が存在しないので、補完する
-                            return Object.assign(Object.assign({}, itemOffered), { paymentNo: b.confirmationNumber, paymentMethod: (_a = b.paymentMethods[0]) === null || _a === void 0 ? void 0 : _a.name, reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
-                        });
-                        return [...a, ...reservationsByOrder];
-                    }, []);
+                    yield printByReservationIds(req, res)({
+                        ids: ids,
+                        orders: decoded.orders
+                    });
+                    return;
                 }
                 else {
                     // next(new Error('パラメータを確認できませんでした:orders'));
@@ -117,6 +76,31 @@ reservationsRouter.get('/print',
     }
     catch (error) {
         next(new Error(req.__('UnexpectedError')));
+    }
+}));
+reservationsRouter.post('/print', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        jwt.verify(req.body.token, process.env.TTTS_TOKEN_SECRET, (jwtErr, decoded) => __awaiter(void 0, void 0, void 0, function* () {
+            if (jwtErr instanceof Error) {
+                next(jwtErr);
+            }
+            else {
+                // 指定された予約ID
+                const ids = decoded.object;
+                if (Array.isArray(decoded.orders)) {
+                    yield printByReservationIds(req, res)({
+                        ids: ids,
+                        orders: decoded.orders
+                    });
+                }
+                else {
+                    next(new Error('パラメータを確認できませんでした:orders'));
+                }
+            }
+        }));
+    }
+    catch (error) {
+        next(new Error(`${req.__('UnexpectedError')}:${error.message}`));
     }
 }));
 /**
@@ -224,6 +208,57 @@ function printByOrderNumber(req, res) {
         req.session.printResult = { reservations, order };
         res.redirect(`/reservations/print/result?output=${output}`);
         // renderPrintFormat(req, res)({ reservations, order });
+    });
+}
+function printByReservationIds(req, res) {
+    return (params) => __awaiter(this, void 0, void 0, function* () {
+        let orders;
+        let reservations;
+        // 注文番号と確認番号で注文照会
+        const printingOrders = params.orders;
+        orders = yield Promise.all(printingOrders.map((printingOrder) => __awaiter(this, void 0, void 0, function* () {
+            const findOrderResult = yield orderService.findByConfirmationNumber({
+                confirmationNumber: String(printingOrder.confirmationNumber),
+                orderNumber: String(printingOrder.orderNumber)
+            });
+            if (Array.isArray(findOrderResult)) {
+                return findOrderResult[0];
+            }
+            else {
+                return findOrderResult;
+            }
+        })));
+        // 注文承認
+        yield Promise.all(orders.map((order) => __awaiter(this, void 0, void 0, function* () {
+            yield orderService.authorize({
+                object: {
+                    orderNumber: order.orderNumber,
+                    customer: { telephone: order.customer.telephone }
+                },
+                result: {
+                    expiresInSeconds: inquiry_1.CODE_EXPIRES_IN_SECONDS
+                }
+            });
+        })));
+        // 予約リストを抽出
+        reservations = orders.reduce((a, b) => {
+            const reservationsByOrder = b.acceptedOffers
+                // 指定された予約IDに絞る
+                .filter((offer) => {
+                return params.ids.includes(offer.itemOffered.id);
+            })
+                .map((offer) => {
+                var _a;
+                const unitPriceSpec = offer.priceSpecification.priceComponent[0];
+                const itemOffered = offer.itemOffered;
+                // 注文データのticketTypeに単価仕様が存在しないので、補完する
+                return Object.assign(Object.assign({}, itemOffered), { paymentNo: b.confirmationNumber, paymentMethod: (_a = b.paymentMethods[0]) === null || _a === void 0 ? void 0 : _a.name, reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
+            });
+            return [...a, ...reservationsByOrder];
+        }, []);
+        // 印刷結果へ遷移
+        req.session.printResult = { reservations };
+        res.redirect(`/reservations/print/result?output=${req.query.output}`);
     });
 }
 /**

@@ -29,19 +29,20 @@ const orderService = new cinerinoapi.service.Order({
     auth: authClient
 });
 
+export type ICompoundPriceSpecification
+    // tslint:disable-next-line:max-line-length
+    = cinerinoapi.factory.chevre.compoundPriceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>;
+
 /**
  * チケット印刷(A4)
- * output:thermal→PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
  */
 reservationsRouter.get(
     '/print',
-    // tslint:disable-next-line:max-func-body-length
     async (req, res, next) => {
         try {
             // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
             (<any>req.session).locale = req.params.locale;
 
-            let orders: cinerinoapi.factory.order.IOrder[];
             let reservations: tttsapi.factory.reservation.event.IReservation[];
 
             jwt.verify(<string>req.query.token, <string>process.env.TTTS_TOKEN_SECRET, async (jwtErr, decoded: any) => {
@@ -53,67 +54,12 @@ reservationsRouter.get(
 
                     // decoded.reservationsが存在する場合に対応する
                     if (Array.isArray(decoded.orders)) {
-                        // 注文番号と確認番号で注文照会
-                        const printingOrders: { orderNumber: string; confirmationNumber: string }[] = decoded.orders;
-                        orders = await Promise.all(printingOrders.map(async (printingOrder) => {
-                            const findOrderResult = await orderService.findByConfirmationNumber({
-                                confirmationNumber: String(printingOrder.confirmationNumber),
-                                orderNumber: String(printingOrder.orderNumber)
-                            });
+                        await printByReservationIds(req, res)({
+                            ids: ids,
+                            orders: decoded.orders
+                        });
 
-                            if (Array.isArray(findOrderResult)) {
-                                return findOrderResult[0];
-                            } else {
-                                return findOrderResult;
-                            }
-                        }));
-
-                        // 注文承認
-                        await Promise.all(orders.map(async (order) => {
-                            await orderService.authorize({
-                                object: {
-                                    orderNumber: order.orderNumber,
-                                    customer: { telephone: order.customer.telephone }
-                                },
-                                result: {
-                                    expiresInSeconds: CODE_EXPIRES_IN_SECONDS
-                                }
-                            });
-                        }));
-
-                        // 予約リストを抽出
-                        reservations = orders.reduce<tttsapi.factory.reservation.event.IReservation[]>(
-                            (a, b) => {
-                                const reservationsByOrder = b.acceptedOffers
-                                    // 指定された予約IDに絞る
-                                    .filter((offer) => {
-                                        return ids.includes((<cinerinoapi.factory.order.IReservation>offer.itemOffered).id);
-                                    })
-                                    .map((offer) => {
-                                        const unitPriceSpec = (<ICompoundPriceSpecification>offer.priceSpecification).priceComponent[0];
-
-                                        const itemOffered = <cinerinoapi.factory.order.IReservation>offer.itemOffered;
-
-                                        // 注文データのticketTypeに単価仕様が存在しないので、補完する
-                                        return <any>{
-                                            ...itemOffered,
-                                            paymentNo: b.confirmationNumber,
-                                            paymentMethod: b.paymentMethods[0]?.name,
-                                            reservedTicket: {
-                                                ...itemOffered.reservedTicket,
-                                                ticketType: {
-                                                    ...itemOffered.reservedTicket.ticketType,
-                                                    priceSpecification: unitPriceSpec
-                                                }
-                                            }
-                                        };
-                                    });
-
-                                return [...a, ...reservationsByOrder];
-
-                            },
-                            []
-                        );
+                        return;
                     } else {
                         // next(new Error('パラメータを確認できませんでした:orders'));
 
@@ -142,9 +88,32 @@ reservationsRouter.get(
     }
 );
 
-export type ICompoundPriceSpecification
-    // tslint:disable-next-line:max-line-length
-    = cinerinoapi.factory.chevre.compoundPriceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>;
+reservationsRouter.post(
+    '/print',
+    async (req, res, next) => {
+        try {
+            jwt.verify(<string>req.body.token, <string>process.env.TTTS_TOKEN_SECRET, async (jwtErr, decoded: any) => {
+                if (jwtErr instanceof Error) {
+                    next(jwtErr);
+                } else {
+                    // 指定された予約ID
+                    const ids = <string[]>decoded.object;
+
+                    if (Array.isArray(decoded.orders)) {
+                        await printByReservationIds(req, res)({
+                            ids: ids,
+                            orders: decoded.orders
+                        });
+                    } else {
+                        next(new Error('パラメータを確認できませんでした:orders'));
+                    }
+                }
+            });
+        } catch (error) {
+            next(new Error(`${req.__('UnexpectedError')}:${error.message}`));
+        }
+    }
+);
 
 /**
  * 注文番号からチケット印刷
@@ -286,6 +255,82 @@ function printByOrderNumber(req: Request, res: Response) {
         (<Express.Session>req.session).printResult = { reservations, order };
         res.redirect(`/reservations/print/result?output=${output}`);
         // renderPrintFormat(req, res)({ reservations, order });
+    };
+}
+
+function printByReservationIds(req: Request, res: Response) {
+    return async (params: {
+        ids: string[];
+        orders: { orderNumber: string; confirmationNumber: string }[];
+    }) => {
+        let orders: cinerinoapi.factory.order.IOrder[];
+        let reservations: tttsapi.factory.reservation.event.IReservation[];
+
+        // 注文番号と確認番号で注文照会
+        const printingOrders: { orderNumber: string; confirmationNumber: string }[] = params.orders;
+        orders = await Promise.all(printingOrders.map(async (printingOrder) => {
+            const findOrderResult = await orderService.findByConfirmationNumber({
+                confirmationNumber: String(printingOrder.confirmationNumber),
+                orderNumber: String(printingOrder.orderNumber)
+            });
+
+            if (Array.isArray(findOrderResult)) {
+                return findOrderResult[0];
+            } else {
+                return findOrderResult;
+            }
+        }));
+
+        // 注文承認
+        await Promise.all(orders.map(async (order) => {
+            await orderService.authorize({
+                object: {
+                    orderNumber: order.orderNumber,
+                    customer: { telephone: order.customer.telephone }
+                },
+                result: {
+                    expiresInSeconds: CODE_EXPIRES_IN_SECONDS
+                }
+            });
+        }));
+
+        // 予約リストを抽出
+        reservations = orders.reduce<tttsapi.factory.reservation.event.IReservation[]>(
+            (a, b) => {
+                const reservationsByOrder = b.acceptedOffers
+                    // 指定された予約IDに絞る
+                    .filter((offer) => {
+                        return params.ids.includes((<cinerinoapi.factory.order.IReservation>offer.itemOffered).id);
+                    })
+                    .map((offer) => {
+                        const unitPriceSpec = (<ICompoundPriceSpecification>offer.priceSpecification).priceComponent[0];
+
+                        const itemOffered = <cinerinoapi.factory.order.IReservation>offer.itemOffered;
+
+                        // 注文データのticketTypeに単価仕様が存在しないので、補完する
+                        return <any>{
+                            ...itemOffered,
+                            paymentNo: b.confirmationNumber,
+                            paymentMethod: b.paymentMethods[0]?.name,
+                            reservedTicket: {
+                                ...itemOffered.reservedTicket,
+                                ticketType: {
+                                    ...itemOffered.reservedTicket.ticketType,
+                                    priceSpecification: unitPriceSpec
+                                }
+                            }
+                        };
+                    });
+
+                return [...a, ...reservationsByOrder];
+
+            },
+            []
+        );
+
+        // 印刷結果へ遷移
+        (<Express.Session>req.session).printResult = { reservations };
+        res.redirect(`/reservations/print/result?output=${req.query.output}`);
     };
 }
 
