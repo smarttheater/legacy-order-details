@@ -19,11 +19,6 @@ const authClient = new tttsapi.auth.ClientCredentials({
     state: ''
 });
 
-const reservationService = new tttsapi.service.Reservation({
-    endpoint: <string>process.env.API_ENDPOINT,
-    auth: authClient
-});
-
 const orderService = new cinerinoapi.service.Order({
     endpoint: <string>process.env.CINERINO_API_ENDPOINT,
     auth: authClient
@@ -35,6 +30,7 @@ export type ICompoundPriceSpecification
 
 /**
  * チケット印刷(A4)
+ * @deprecated Use POST /print
  */
 reservationsRouter.get(
     '/print',
@@ -43,8 +39,6 @@ reservationsRouter.get(
             // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
             (<any>req.session).locale = req.params.locale;
 
-            let reservations: tttsapi.factory.reservation.event.IReservation[];
-
             jwt.verify(<string>req.query.token, <string>process.env.TTTS_TOKEN_SECRET, async (jwtErr, decoded: any) => {
                 if (jwtErr instanceof Error) {
                     next(jwtErr);
@@ -52,35 +46,19 @@ reservationsRouter.get(
                     // 指定された予約ID
                     const ids = <string[]>decoded.object;
 
-                    // decoded.reservationsが存在する場合に対応する
                     if (Array.isArray(decoded.orders)) {
-                        await printByReservationIds(req, res)({
-                            output: <string>req.query.output,
-                            ids: ids,
-                            orders: decoded.orders
-                        });
-
-                        return;
-                    } else {
-                        // next(new Error('パラメータを確認できませんでした:orders'));
-
-                        // ↓動作確認がとれたら削除
-                        reservations = await Promise.all(ids.map(async (id) => reservationService.findById({ id })));
-                        reservations = reservations.filter(
-                            (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
-                        );
-
-                        if (reservations.length === 0) {
-                            next(new Error(req.__('NotFound')));
-
-                            return;
+                        try {
+                            await printByReservationIds(req, res)({
+                                output: <string>req.query.output,
+                                ids: ids,
+                                orders: decoded.orders
+                            });
+                        } catch (error) {
+                            next(error);
                         }
+                    } else {
+                        next(new Error('パラメータを確認できませんでした:orders'));
                     }
-
-                    // 印刷結果へ遷移
-                    (<Express.Session>req.session).printResult = { reservations };
-                    res.redirect(`/reservations/print/result?output=${req.query.output}`);
-                    // renderPrintFormat(req, res)({ reservations });
                 }
             });
         } catch (error) {
@@ -237,30 +215,10 @@ function printByOrderNumber(req: Request, res: Response) {
             };
         });
 
-        // ↓動作確認がとれたら削除
-        // if (!Array.isArray(reservations)) {
-        //     // tttsで予約検索する場合はこちら↓
-        //     const searchResult = await reservationService.findByOrderNumber({
-        //         orderNumber: orderNumber
-        //     });
-        //     reservations = searchResult.data;
-
-        //     reservations = reservations.filter(
-        //         (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
-        //     );
-
-        //     if (reservations.length === 0) {
-        //         next(new Error(req.__('NotFound')));
-
-        //         return;
-        //     }
-        // }
-
         // 印刷結果へ遷移
         const output = (typeof req.query.output === 'string') ? req.query.output : '';
         (<Express.Session>req.session).printResult = { reservations, order };
         res.redirect(`/reservations/print/result?output=${output}`);
-        // renderPrintFormat(req, res)({ reservations, order });
     };
 }
 

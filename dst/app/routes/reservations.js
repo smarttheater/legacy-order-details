@@ -26,22 +26,18 @@ const authClient = new tttsapi.auth.ClientCredentials({
     scopes: [],
     state: ''
 });
-const reservationService = new tttsapi.service.Reservation({
-    endpoint: process.env.API_ENDPOINT,
-    auth: authClient
-});
 const orderService = new cinerinoapi.service.Order({
     endpoint: process.env.CINERINO_API_ENDPOINT,
     auth: authClient
 });
 /**
  * チケット印刷(A4)
+ * @deprecated Use POST /print
  */
 reservationsRouter.get('/print', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
         req.session.locale = req.params.locale;
-        let reservations;
         jwt.verify(req.query.token, process.env.TTTS_TOKEN_SECRET, (jwtErr, decoded) => __awaiter(void 0, void 0, void 0, function* () {
             if (jwtErr instanceof Error) {
                 next(jwtErr);
@@ -49,29 +45,21 @@ reservationsRouter.get('/print', (req, res, next) => __awaiter(void 0, void 0, v
             else {
                 // 指定された予約ID
                 const ids = decoded.object;
-                // decoded.reservationsが存在する場合に対応する
                 if (Array.isArray(decoded.orders)) {
-                    yield printByReservationIds(req, res)({
-                        output: req.query.output,
-                        ids: ids,
-                        orders: decoded.orders
-                    });
-                    return;
-                }
-                else {
-                    // next(new Error('パラメータを確認できませんでした:orders'));
-                    // ↓動作確認がとれたら削除
-                    reservations = yield Promise.all(ids.map((id) => __awaiter(void 0, void 0, void 0, function* () { return reservationService.findById({ id }); })));
-                    reservations = reservations.filter((r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed);
-                    if (reservations.length === 0) {
-                        next(new Error(req.__('NotFound')));
-                        return;
+                    try {
+                        yield printByReservationIds(req, res)({
+                            output: req.query.output,
+                            ids: ids,
+                            orders: decoded.orders
+                        });
+                    }
+                    catch (error) {
+                        next(error);
                     }
                 }
-                // 印刷結果へ遷移
-                req.session.printResult = { reservations };
-                res.redirect(`/reservations/print/result?output=${req.query.output}`);
-                // renderPrintFormat(req, res)({ reservations });
+                else {
+                    next(new Error('パラメータを確認できませんでした:orders'));
+                }
             }
         }));
     }
@@ -195,26 +183,10 @@ function printByOrderNumber(req, res) {
             // 注文データのticketTypeに単価仕様が存在しないので、補完する
             return Object.assign(Object.assign({}, itemOffered), { code: code, paymentNo: order.confirmationNumber, paymentMethod: (_a = order.paymentMethods[0]) === null || _a === void 0 ? void 0 : _a.name, reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
         });
-        // ↓動作確認がとれたら削除
-        // if (!Array.isArray(reservations)) {
-        //     // tttsで予約検索する場合はこちら↓
-        //     const searchResult = await reservationService.findByOrderNumber({
-        //         orderNumber: orderNumber
-        //     });
-        //     reservations = searchResult.data;
-        //     reservations = reservations.filter(
-        //         (r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed
-        //     );
-        //     if (reservations.length === 0) {
-        //         next(new Error(req.__('NotFound')));
-        //         return;
-        //     }
-        // }
         // 印刷結果へ遷移
         const output = (typeof req.query.output === 'string') ? req.query.output : '';
         req.session.printResult = { reservations, order };
         res.redirect(`/reservations/print/result?output=${output}`);
-        // renderPrintFormat(req, res)({ reservations, order });
     });
 }
 function printByReservationIds(req, res) {
