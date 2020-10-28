@@ -107,7 +107,9 @@ reservationsRouter.get(
     async (req, res, next) => {
         try {
             // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく
-            (<any>req.session).locale = req.params.locale;
+            if (typeof req.query.locale === 'string' && req.query.locale.length > 0) {
+                (<any>req.session).locale = req.query.locale;
+            }
 
             const orderNumber = req.query.orderNumber;
             const confirmationNumber = req.query.confirmationNumber;
@@ -118,9 +120,14 @@ reservationsRouter.get(
                 throw new Error('Confirmation Number required');
             }
 
+            const output = (typeof req.query.output === 'string')
+                ? req.query.output
+                : '';
+
             await printByOrderNumber(req, res)({
                 confirmationNumber: String(confirmationNumber),
-                orderNumber: orderNumber
+                orderNumber: orderNumber,
+                output: output
             });
         } catch (error) {
             next(new Error(error.message));
@@ -136,8 +143,8 @@ reservationsRouter.post(
     async (req, res, next) => {
         try {
             // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく
-            if (typeof req.body.locale === 'string' && req.body.locale.length > 0) {
-                (<any>req.session).locale = req.body.locale;
+            if (typeof req.query.locale === 'string' && req.query.locale.length > 0) {
+                (<any>req.session).locale = req.query.locale;
             }
 
             const orderNumber = req.body.orderNumber;
@@ -149,9 +156,14 @@ reservationsRouter.post(
                 throw new Error('Confirmation Number required');
             }
 
+            const output = (typeof req.query.output === 'string')
+                ? req.query.output
+                : '';
+
             await printByOrderNumber(req, res)({
                 confirmationNumber: String(confirmationNumber),
-                orderNumber: orderNumber
+                orderNumber: orderNumber,
+                output: output
             });
         } catch (error) {
             next(new Error(error.message));
@@ -163,6 +175,7 @@ function printByOrderNumber(req: Request, res: Response) {
     return async (params: {
         orderNumber: string;
         confirmationNumber: string;
+        output: string;
     }) => {
         let order: cinerinoapi.factory.order.IOrder;
         let reservations: tttsapi.factory.reservation.event.IReservation[];
@@ -216,9 +229,8 @@ function printByOrderNumber(req: Request, res: Response) {
         });
 
         // 印刷結果へ遷移
-        const output = (typeof req.query.output === 'string') ? req.query.output : '';
         (<Express.Session>req.session).printResult = { reservations, order };
-        res.redirect(`/reservations/print/result?output=${output}`);
+        res.redirect(`/reservations/print/result?output=${params.output}`);
     };
 }
 

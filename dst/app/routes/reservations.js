@@ -104,7 +104,9 @@ reservationsRouter.post('/print', (req, res, next) => __awaiter(void 0, void 0, 
 reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく
-        req.session.locale = req.params.locale;
+        if (typeof req.query.locale === 'string' && req.query.locale.length > 0) {
+            req.session.locale = req.query.locale;
+        }
         const orderNumber = req.query.orderNumber;
         const confirmationNumber = req.query.confirmationNumber;
         if (typeof orderNumber !== 'string' || orderNumber.length === 0) {
@@ -113,9 +115,13 @@ reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void
         if (typeof confirmationNumber !== 'string' || confirmationNumber.length === 0) {
             throw new Error('Confirmation Number required');
         }
+        const output = (typeof req.query.output === 'string')
+            ? req.query.output
+            : '';
         yield printByOrderNumber(req, res)({
             confirmationNumber: String(confirmationNumber),
-            orderNumber: orderNumber
+            orderNumber: orderNumber,
+            output: output
         });
     }
     catch (error) {
@@ -128,8 +134,8 @@ reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void
 reservationsRouter.post('/printByOrderNumber', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく
-        if (typeof req.body.locale === 'string' && req.body.locale.length > 0) {
-            req.session.locale = req.body.locale;
+        if (typeof req.query.locale === 'string' && req.query.locale.length > 0) {
+            req.session.locale = req.query.locale;
         }
         const orderNumber = req.body.orderNumber;
         const confirmationNumber = req.body.confirmationNumber;
@@ -139,9 +145,13 @@ reservationsRouter.post('/printByOrderNumber', (req, res, next) => __awaiter(voi
         if (typeof confirmationNumber !== 'string' || confirmationNumber.length === 0) {
             throw new Error('Confirmation Number required');
         }
+        const output = (typeof req.query.output === 'string')
+            ? req.query.output
+            : '';
         yield printByOrderNumber(req, res)({
             confirmationNumber: String(confirmationNumber),
-            orderNumber: orderNumber
+            orderNumber: orderNumber,
+            output: output
         });
     }
     catch (error) {
@@ -184,9 +194,8 @@ function printByOrderNumber(req, res) {
             return Object.assign(Object.assign({}, itemOffered), { code: code, paymentNo: order.confirmationNumber, paymentMethod: (_a = order.paymentMethods[0]) === null || _a === void 0 ? void 0 : _a.name, reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
         });
         // 印刷結果へ遷移
-        const output = (typeof req.query.output === 'string') ? req.query.output : '';
         req.session.printResult = { reservations, order };
-        res.redirect(`/reservations/print/result?output=${output}`);
+        res.redirect(`/reservations/print/result?output=${params.output}`);
     });
 }
 function printByReservationIds(req, res) {
