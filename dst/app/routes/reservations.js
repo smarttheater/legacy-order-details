@@ -236,8 +236,8 @@ function printByReservationIds(req, res) {
             }
         })));
         // 注文承認
-        yield Promise.all(orders.map((order) => __awaiter(this, void 0, void 0, function* () {
-            yield orderService.authorize({
+        orders = yield Promise.all(orders.map((order) => __awaiter(this, void 0, void 0, function* () {
+            const { code } = yield orderService.authorize({
                 object: {
                     orderNumber: order.orderNumber,
                     customer: { telephone: order.customer.telephone }
@@ -246,6 +246,7 @@ function printByReservationIds(req, res) {
                     expiresInSeconds: inquiry_1.CODE_EXPIRES_IN_SECONDS
                 }
             });
+            return Object.assign(Object.assign({}, order), { code: code });
         })));
         // 予約リストを抽出
         reservations = orders.reduce((a, b) => {
@@ -259,7 +260,7 @@ function printByReservationIds(req, res) {
                 const unitPriceSpec = offer.priceSpecification.priceComponent[0];
                 const itemOffered = offer.itemOffered;
                 // 注文データのticketTypeに単価仕様が存在しないので、補完する
-                return Object.assign(Object.assign({}, itemOffered), { paymentNo: b.confirmationNumber, paymentMethod: (_a = b.paymentMethods[0]) === null || _a === void 0 ? void 0 : _a.name, reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
+                return Object.assign(Object.assign({}, itemOffered), { code: b.code, paymentNo: b.confirmationNumber, paymentMethod: (_a = b.paymentMethods[0]) === null || _a === void 0 ? void 0 : _a.name, reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
             });
             return [...a, ...reservationsByOrder];
         }, []);

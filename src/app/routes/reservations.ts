@@ -264,13 +264,17 @@ function printByOrderNumber(req: Request, res: Response) {
     };
 }
 
+export type IOrderWithCode = cinerinoapi.factory.order.IOrder & {
+    code?: string;
+};
+
 function printByReservationIds(req: Request, res: Response) {
     return async (params: {
         output: string;
         ids: string[];
         orders: { orderNumber: string; confirmationNumber: string }[];
     }) => {
-        let orders: cinerinoapi.factory.order.IOrder[];
+        let orders: IOrderWithCode[];
         let reservations: tttsapi.factory.reservation.event.IReservation[];
 
         // 注文番号と確認番号で注文照会
@@ -289,8 +293,8 @@ function printByReservationIds(req: Request, res: Response) {
         }));
 
         // 注文承認
-        await Promise.all(orders.map(async (order) => {
-            await orderService.authorize({
+        orders = await Promise.all(orders.map(async (order) => {
+            const { code } = await orderService.authorize({
                 object: {
                     orderNumber: order.orderNumber,
                     customer: { telephone: order.customer.telephone }
@@ -299,6 +303,11 @@ function printByReservationIds(req: Request, res: Response) {
                     expiresInSeconds: CODE_EXPIRES_IN_SECONDS
                 }
             });
+
+            return {
+                ...order,
+                code: code
+            };
         }));
 
         // 予約リストを抽出
@@ -317,6 +326,7 @@ function printByReservationIds(req: Request, res: Response) {
                         // 注文データのticketTypeに単価仕様が存在しないので、補完する
                         return <any>{
                             ...itemOffered,
+                            code: b.code,
                             paymentNo: b.confirmationNumber,
                             paymentMethod: b.paymentMethods[0]?.name,
                             reservedTicket: {
