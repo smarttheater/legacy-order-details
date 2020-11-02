@@ -32,40 +32,40 @@ export type ICompoundPriceSpecification
  * チケット印刷(A4)
  * @deprecated Use POST /print
  */
-reservationsRouter.get(
-    '/print',
-    async (req, res, next) => {
-        try {
-            // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
-            (<any>req.session).locale = req.params.locale;
+// reservationsRouter.get(
+//     '/print',
+//     async (req, res, next) => {
+//         try {
+//             // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
+//             (<any>req.session).locale = req.params.locale;
 
-            jwt.verify(<string>req.query.token, <string>process.env.TTTS_TOKEN_SECRET, async (jwtErr, decoded: any) => {
-                if (jwtErr instanceof Error) {
-                    next(jwtErr);
-                } else {
-                    // 指定された予約ID
-                    const ids = <string[]>decoded.object;
+//             jwt.verify(<string>req.query.token, <string>process.env.TTTS_TOKEN_SECRET, async (jwtErr, decoded: any) => {
+//                 if (jwtErr instanceof Error) {
+//                     next(jwtErr);
+//                 } else {
+//                     // 指定された予約ID
+//                     const ids = <string[]>decoded.object;
 
-                    if (Array.isArray(decoded.orders)) {
-                        try {
-                            await printByReservationIds(req, res)({
-                                output: <string>req.query.output,
-                                ids: ids,
-                                orders: decoded.orders
-                            });
-                        } catch (error) {
-                            next(error);
-                        }
-                    } else {
-                        next(new Error('パラメータを確認できませんでした:orders'));
-                    }
-                }
-            });
-        } catch (error) {
-            next(new Error(req.__('UnexpectedError')));
-        }
-    }
-);
+//                     if (Array.isArray(decoded.orders)) {
+//                         try {
+//                             await printByReservationIds(req, res)({
+//                                 output: <string>req.query.output,
+//                                 ids: ids,
+//                                 orders: decoded.orders
+//                             });
+//                         } catch (error) {
+//                             next(error);
+//                         }
+//                     } else {
+//                         next(new Error('パラメータを確認できませんでした:orders'));
+//                     }
+//                 }
+//             });
+//         } catch (error) {
+//             next(new Error(req.__('UnexpectedError')));
+//         }
+//     }
+// );
 
 reservationsRouter.post(
     '/print',
