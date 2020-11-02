@@ -14,12 +14,28 @@ exports.removeCheckIn = exports.addCheckIn = exports.getReservation = exports.ge
  * 入場コントローラー
  * 上映当日入場画面から使う機能はここにあります。
  */
+const cinerinoapi = require("@cinerino/sdk");
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 // tslint:disable-next-line:ordered-imports
 const http_status_1 = require("http-status");
 const moment = require("moment-timezone");
 const _ = require("underscore");
 const reservation_1 = require("../util/reservation");
+const authClient = new cinerinoapi.auth.ClientCredentials({
+    domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
+    clientId: process.env.API_CLIENT_ID,
+    clientSecret: process.env.API_CLIENT_SECRET,
+    scopes: [],
+    state: ''
+});
+const tokenService = new cinerinoapi.service.Token({
+    endpoint: process.env.CINERINO_API_ENDPOINT,
+    auth: authClient
+});
+const reservationService = new cinerinoapi.service.Reservation({
+    endpoint: process.env.CINERINO_API_ENDPOINT,
+    auth: authClient
+});
 /**
  * QRコード認証画面
  * @desc Rコードを読み取って結果を表示するための画面
@@ -70,11 +86,11 @@ function getReservations(req, res) {
                 throw new Error('checkinAdminUser not defined.');
             }
             // 予約を検索
-            const reservationService = new tttsapi.service.Reservation({
+            const tttsReservationService = new tttsapi.service.Reservation({
                 endpoint: process.env.API_ENDPOINT,
                 auth: req.tttsAuthClient
             });
-            const searchReservationsResult = yield reservationService.search(Object.assign({ limit: 100, typeOf: tttsapi.factory.chevre.reservationType.EventReservation, reservationStatuses: [tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed], reservationFor: Object.assign({ id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined, startThrough: now.add(1, 'second').toDate() }, { endFrom: now.toDate() }) }, {
+            const searchReservationsResult = yield tttsReservationService.search(Object.assign({ limit: 100, typeOf: tttsapi.factory.chevre.reservationType.EventReservation, reservationStatuses: [tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed], reservationFor: Object.assign({ id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined, startThrough: now.add(1, 'second').toDate() }, { endFrom: now.toDate() }) }, {
                 noTotalCount: '1'
             }));
             const reservations = searchReservationsResult.data.map(reservation_1.chevreReservation2ttts);
@@ -110,11 +126,11 @@ function getReservation(req, res) {
             throw new Error('checkinAdminUser not authenticated.');
         }
         try {
-            const reservationService = new tttsapi.service.Reservation({
+            const tttsReservationService = new tttsapi.service.Reservation({
                 endpoint: process.env.API_ENDPOINT,
                 auth: req.tttsAuthClient
             });
-            const reservation = yield reservationService.findById({ id: req.params.qr });
+            const reservation = yield tttsReservationService.findById({ id: req.params.qr });
             if (reservation.reservationStatus !== tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed) {
                 res.status(http_status_1.NOT_FOUND).json(null);
             }
@@ -160,14 +176,29 @@ function addCheckIn(req, res) {
                 why: '',
                 how: req.body.how
             };
-            const reservationService = new tttsapi.service.Reservation({
+            const reservationId = req.params.qr;
+            const tttsReservationService = new tttsapi.service.Reservation({
                 endpoint: process.env.API_ENDPOINT,
                 auth: req.tttsAuthClient
             });
-            yield reservationService.addCheckin({
-                reservationId: req.params.qr,
+            yield tttsReservationService.addCheckin({
+                reservationId: reservationId,
                 checkin: checkin
             });
+            // Cinerinoで、req.body.codeを使用して予約使用
+            const code = req.body.code;
+            if (typeof code === 'string' && code.length > 0) {
+                try {
+                    // getToken
+                    const { token } = yield tokenService.getToken({ code });
+                    // 予約使用
+                    yield reservationService.useByToken({ object: { id: reservationId }, instrument: { token } });
+                }
+                catch (error) {
+                    // tslint:disable-next-line:no-console
+                    console.error('useByToken failed', error);
+                }
+            }
             res.status(http_status_1.CREATED).json(checkin);
         }
         catch (error) {
@@ -198,11 +229,11 @@ function removeCheckIn(req, res) {
                 });
                 return;
             }
-            const reservationService = new tttsapi.service.Reservation({
+            const tttsReservationService = new tttsapi.service.Reservation({
                 endpoint: process.env.API_ENDPOINT,
                 auth: req.tttsAuthClient
             });
-            yield reservationService.cancelCheckin({
+            yield tttsReservationService.cancelCheckin({
                 reservationId: req.params.qr,
                 when: moment(req.body.when).toDate()
             });

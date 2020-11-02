@@ -5,11 +5,12 @@ import * as cinerinoapi from '@cinerino/sdk';
 import * as conf from 'config';
 import { NextFunction, Request, Response } from 'express';
 import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR } from 'http-status';
-import * as jwt from 'jsonwebtoken';
 import * as moment from 'moment-timezone';
 import * as numeral from 'numeral';
 
 import * as ticket from '../util/ticket';
+
+export const CODE_EXPIRES_IN_SECONDS = 8035200; // 93日
 
 const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
@@ -40,8 +41,9 @@ if (process.env.API_CLIENT_ID === undefined) {
 }
 
 /**
- * 予約照会検索
+ * 注文照会
  */
+// tslint:disable-next-line:max-func-body-length
 export async function search(req: Request, res: Response): Promise<void> {
     let message = '';
     let errors: ExpressValidator.Dictionary<ExpressValidator.MappedError> | null = null;
@@ -90,13 +92,27 @@ export async function search(req: Request, res: Response): Promise<void> {
                     throw new Error(req.__('MistakeInput'));
                 }
 
-                // 印刷トークン生成
-                const reservationIds = order.acceptedOffers.map((o) => (<cinerinoapi.factory.order.IReservation>o.itemOffered).id);
-                const printToken = await createPrintToken(reservationIds);
+                // 注文承認
+                let code: string | undefined;
+                try {
+                    const authorizeOrderResult = await orderService.authorize({
+                        object: {
+                            orderNumber: order.orderNumber,
+                            customer: { telephone: order.customer.telephone }
+                        },
+                        result: {
+                            expiresInSeconds: CODE_EXPIRES_IN_SECONDS
+                        }
+                    });
+                    code = authorizeOrderResult.code;
+                } catch (error) {
+                    // tslint:disable-next-line:no-console
+                    console.error(error);
+                }
 
                 // 結果をセッションに保管して結果画面へ遷移
                 (<Express.Session>req.session).inquiryResult = {
-                    printToken: printToken,
+                    code: code,
                     order: order
                 };
                 res.redirect('/inquiry/search/result');
@@ -129,34 +145,6 @@ export async function search(req: Request, res: Response): Promise<void> {
         },
         reserveMaxDate: reserveMaxDate,
         layout: 'layouts/inquiry/layout'
-    });
-}
-
-/**
- * 印刷トークンインターフェース
- */
-export type IPrintToken = string;
-/**
- * 印刷トークン対象(予約IDリスト)インターフェース
- */
-export type IPrintObject = string[];
-
-/**
- * 予約印刷トークンを発行する
- */
-async function createPrintToken(object: IPrintObject): Promise<IPrintToken> {
-    return new Promise<IPrintToken>((resolve, reject) => {
-        const payload = {
-            object: object
-        };
-
-        jwt.sign(payload, <string>process.env.TTTS_TOKEN_SECRET, (jwtErr, token) => {
-            if (jwtErr instanceof Error) {
-                reject(jwtErr);
-            } else {
-                resolve(token);
-            }
-        });
     });
 }
 
@@ -195,7 +183,7 @@ export async function result(req: Request, res: Response, next: NextFunction): P
 
         // 画面描画
         res.render('inquiry/result', {
-            printToken: inquiryResult.printToken,
+            code: inquiryResult.code,
             order: inquiryResult.order,
             moment: moment,
             reservations: reservations,
@@ -235,7 +223,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
 
     // 返品メール作成
     const emailAttributes: cinerinoapi.factory.creativeWork.message.email.IAttributes = {
-        typeOf: cinerinoapi.factory.creativeWorkType.EmailMessage,
+        typeOf: cinerinoapi.factory.chevre.creativeWorkType.EmailMessage,
         sender: {
             name: conf.get<string>('email.fromname'),
             email: conf.get<string>('email.from')
@@ -401,8 +389,8 @@ function getCancelMail(
     mail.push(req.__('EmailHead1').replace(
         '$theater_name$',
         (locale === 'ja')
-            ? (<cinerinoapi.factory.multilingualString>reservations[0].reservationFor.superEvent.location.name).ja
-            : (<cinerinoapi.factory.multilingualString>reservations[0].reservationFor.superEvent.location.name).en
+            ? String((<cinerinoapi.factory.chevre.multilingualString>reservations[0].reservationFor.superEvent.location.name).ja)
+            : String((<cinerinoapi.factory.chevre.multilingualString>reservations[0].reservationFor.superEvent.location.name).en)
     ));
 
     // お客様がキャンセルされましたチケットの情報は下記の通りです。

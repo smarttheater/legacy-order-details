@@ -35,15 +35,28 @@ if (momentLocale === 'zh-hans') {
     momentLocale = 'zh-tw';
 }
 moment.locale(momentLocale);
+
+let paymentMethod = '';
+let paymentNo = '';
+
+// 注文情報があれば、決済方法名称を注文情報より取得
+if (order !== undefined && Array.isArray(order.paymentMethods) && order.paymentMethods.length > 0) {
+    paymentMethod = order.paymentMethods[0].name;
+    paymentNo = order.confirmationNumber;
+}
+
 for (let reservation of reservations) {
     // ※決済手段が「無料招待」と「トップデッキのみ（手売り）」の予約はチケット価格が非表示
-    let paymentMethod = '';
-    const paymentMethodProperty = reservation.underName.identifier.find(function (p) {
-        return p.name === 'paymentMethod';
-    });
-    if (paymentMethodProperty !== undefined) {
-        paymentMethod = paymentMethodProperty.value;
+    paymentMethod = reservation.paymentMethod;
+    if (reservation.underName !== undefined && Array.isArray(reservation.underName.identifier)) {
+        const paymentMethodProperty = reservation.underName.identifier.find(function (p) {
+            return p.name === 'paymentMethod';
+        });
+        if (paymentMethodProperty !== undefined) {
+            paymentMethod = paymentMethodProperty.value;
+        }            
     }
+
     let isNoCharge = /^(Invitation|OTC)$/.test(paymentMethod);
 
     const performance = reservation.reservationFor;
@@ -55,7 +68,7 @@ for (let reservation of reservations) {
         }    
     }
 
-    let paymentNo = reservation.reservationNumber;
+    paymentNo = reservation.paymentNo;
     if (reservation.underName !== undefined && Array.isArray(reservation.underName.identifier)) {
         const paymentNoProperty = reservation.underName.identifier.find(function (p) {
             return p.name === 'paymentNo';
@@ -63,6 +76,13 @@ for (let reservation of reservations) {
         if (paymentNoProperty !== undefined) {
             paymentNo = paymentNoProperty.value;
         }
+    }
+
+    let qrCode = reservation.id;
+
+    // 注文コードが発行されていれば、QRコードに情報追加
+    if (typeof reservation.code ==='string' && reservation.code.length > 0) {
+        qrCode += `@${reservation.code}`;
     }
 %>
 <div class="printcontent">
@@ -93,7 +113,7 @@ for (let reservation of reservations) {
             <div class="wrapper-qrimg pr-bg">
                 <!-- <img src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.id %>"> -->
                 <!-- <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&cht=qr&data=<%= reservation.id %>"> -->
-                <span class="codeimg-barcode" data-qrcode=<%= reservation.id %>></span>
+                <span class="codeimg-barcode" data-qrcode="<%= qrCode %>"></span>
             </div>
         </div>
     </div>
@@ -106,7 +126,7 @@ for (let reservation of reservations) {
                 <tr>
                     <td class="main-info">
                         <div class="pr-rsrvnum">
-                        <h3><%- __('PaymentNo') %></h3>
+                            <h3><%- __('PaymentNo') %></h3>
                             <strong><%- paymentNo %></strong>
                         </div>
 

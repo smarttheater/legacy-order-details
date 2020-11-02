@@ -73,13 +73,17 @@ page-inquiry page-result page-complete page-<%- locale %>
             <th><%- __('QRCode') %></th>
             <td>
                 <% reservations.forEach((reservation, index) => {
+                    let qrCode = reservation.id;
+
+                    // 注文コードが発行されていれば、QRコードに情報追加
+                    if (typeof code ==='string' && code.length > 0) {
+                        qrCode += `@${code}`;
+                    }
                 %>
                 <div class="wrapper-qrcodes">
                     <div>
                         <p>
-                            <!-- <img class="codeimg-barcode" src="//chart.apis.google.com/chart?chs=150x150&cht=qr&chl=<%= reservation.id %>" alt=""> -->
-                            <!-- <img class="codeimg-barcode" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&cht=qr&data=<%= reservation.id %>" alt=""> -->
-                            <span class="codeimg-barcode" data-qrcode=<%= reservation.id %>></span>
+                            <span class="codeimg-barcode" data-qrcode="<%= qrCode %>"></span>
                         </p>
                         <p>
                             <%- reservation.reservedTicket.ticketType.name[locale] || reservation.reservedTicket.ticketType.name.en %>
@@ -104,7 +108,7 @@ page-inquiry page-result page-complete page-<%- locale %>
 
 <div>
     <a class="btn btn-blue btn-print visible-pc" target="_blank"
-        href='/reservations/print?token=<%= printToken %>'><span><%- __('PrintTicket') %></span></a>
+        href='/reservations/printByOrderNumber?orderNumber=<%= order.orderNumber %>&confirmationNumber=<%= order.confirmationNumber %>'><span><%- __('PrintTicket') %></span></a>
     <br>
     <p class="btn btn-cancel <%- (!isCancellable) ? 'btn-disabled' : '' %>"><span><%- __('CancelTicket') %></span></p>
     <% if (!isCancellable) { %>

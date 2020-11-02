@@ -9,17 +9,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cancel = exports.result = exports.search = void 0;
+exports.cancel = exports.result = exports.search = exports.CODE_EXPIRES_IN_SECONDS = void 0;
 /**
  * 予約照会コントローラー
  */
 const cinerinoapi = require("@cinerino/sdk");
 const conf = require("config");
 const http_status_1 = require("http-status");
-const jwt = require("jsonwebtoken");
 const moment = require("moment-timezone");
 const numeral = require("numeral");
 const ticket = require("../util/ticket");
+exports.CODE_EXPIRES_IN_SECONDS = 8035200; // 93日
 const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: process.env.API_CLIENT_ID,
@@ -43,8 +43,9 @@ if (process.env.API_CLIENT_ID === undefined) {
     throw new Error('Please set an environment variable \'API_CLIENT_ID\'');
 }
 /**
- * 予約照会検索
+ * 注文照会
  */
+// tslint:disable-next-line:max-func-body-length
 function search(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         let message = '';
@@ -86,12 +87,27 @@ function search(req, res) {
                     if (order.orderStatus === cinerinoapi.factory.orderStatus.OrderReturned) {
                         throw new Error(req.__('MistakeInput'));
                     }
-                    // 印刷トークン生成
-                    const reservationIds = order.acceptedOffers.map((o) => o.itemOffered.id);
-                    const printToken = yield createPrintToken(reservationIds);
+                    // 注文承認
+                    let code;
+                    try {
+                        const authorizeOrderResult = yield orderService.authorize({
+                            object: {
+                                orderNumber: order.orderNumber,
+                                customer: { telephone: order.customer.telephone }
+                            },
+                            result: {
+                                expiresInSeconds: exports.CODE_EXPIRES_IN_SECONDS
+                            }
+                        });
+                        code = authorizeOrderResult.code;
+                    }
+                    catch (error) {
+                        // tslint:disable-next-line:no-console
+                        console.error(error);
+                    }
                     // 結果をセッションに保管して結果画面へ遷移
                     req.session.inquiryResult = {
-                        printToken: printToken,
+                        code: code,
                         order: order
                     };
                     res.redirect('/inquiry/search/result');
@@ -128,26 +144,6 @@ function search(req, res) {
 }
 exports.search = search;
 /**
- * 予約印刷トークンを発行する
- */
-function createPrintToken(object) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new Promise((resolve, reject) => {
-            const payload = {
-                object: object
-            };
-            jwt.sign(payload, process.env.TTTS_TOKEN_SECRET, (jwtErr, token) => {
-                if (jwtErr instanceof Error) {
-                    reject(jwtErr);
-                }
-                else {
-                    resolve(token);
-                }
-            });
-        });
-    });
-}
-/**
  * 予約照会結果画面(getのみ)
  */
 function result(req, res, next) {
@@ -172,7 +168,7 @@ function result(req, res, next) {
             const cancellationFee = numeral(CANCEL_CHARGE).format('0,0');
             // 画面描画
             res.render('inquiry/result', {
-                printToken: inquiryResult.printToken,
+                code: inquiryResult.code,
                 order: inquiryResult.order,
                 moment: moment,
                 reservations: reservations,
@@ -212,7 +208,7 @@ function cancel(req, res) {
         }
         // 返品メール作成
         const emailAttributes = {
-            typeOf: cinerinoapi.factory.creativeWorkType.EmailMessage,
+            typeOf: cinerinoapi.factory.chevre.creativeWorkType.EmailMessage,
             sender: {
                 name: conf.get('email.fromname'),
                 email: conf.get('email.from')
@@ -355,8 +351,8 @@ function getCancelMail(req, order, fee) {
     mail.push('');
     // この度は、「東京タワー TOP DECK」のオンライン先売りチケットサービスにてご購入頂き、誠にありがとうございます。
     mail.push(req.__('EmailHead1').replace('$theater_name$', (locale === 'ja')
-        ? reservations[0].reservationFor.superEvent.location.name.ja
-        : reservations[0].reservationFor.superEvent.location.name.en));
+        ? String(reservations[0].reservationFor.superEvent.location.name.ja)
+        : String(reservations[0].reservationFor.superEvent.location.name.en)));
     // お客様がキャンセルされましたチケットの情報は下記の通りです。
     mail.push(req.__('EmailHead2Can'));
     mail.push('');

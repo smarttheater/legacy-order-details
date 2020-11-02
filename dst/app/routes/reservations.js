@@ -12,9 +12,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * 予約ルーター
  */
+const cinerinoapi = require("@cinerino/sdk");
 const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 const express_1 = require("express");
 const jwt = require("jsonwebtoken");
+const inquiry_1 = require("../controllers/inquiry");
 const reservation_1 = require("../util/reservation");
 const reservationsRouter = express_1.Router();
 const authClient = new tttsapi.auth.ClientCredentials({
@@ -24,62 +26,240 @@ const authClient = new tttsapi.auth.ClientCredentials({
     scopes: [],
     state: ''
 });
-const reservationService = new tttsapi.service.Reservation({
-    endpoint: process.env.API_ENDPOINT,
+const orderService = new cinerinoapi.service.Order({
+    endpoint: process.env.CINERINO_API_ENDPOINT,
     auth: authClient
 });
 /**
  * チケット印刷(A4)
- * output:thermal→PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
+ * @deprecated Use POST /print
  */
-reservationsRouter.get('/print', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+// reservationsRouter.get(
+//     '/print',
+//     async (req, res, next) => {
+//         try {
+//             // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
+//             (<any>req.session).locale = req.params.locale;
+//             jwt.verify(<string>req.query.token, <string>process.env.TTTS_TOKEN_SECRET, async (jwtErr, decoded: any) => {
+//                 if (jwtErr instanceof Error) {
+//                     next(jwtErr);
+//                 } else {
+//                     // 指定された予約ID
+//                     const ids = <string[]>decoded.object;
+//                     if (Array.isArray(decoded.orders)) {
+//                         try {
+//                             await printByReservationIds(req, res)({
+//                                 output: <string>req.query.output,
+//                                 ids: ids,
+//                                 orders: decoded.orders
+//                             });
+//                         } catch (error) {
+//                             next(error);
+//                         }
+//                     } else {
+//                         next(new Error('パラメータを確認できませんでした:orders'));
+//                     }
+//                 }
+//             });
+//         } catch (error) {
+//             next(new Error(req.__('UnexpectedError')));
+//         }
+//     }
+// );
+reservationsRouter.post('/print', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // tslint:disable-next-line:no-suspicious-comment
-        // TODO トークン期限チェック
-        // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
-        req.session.locale = req.params.locale;
-        jwt.verify(req.query.token, process.env.TTTS_TOKEN_SECRET, (jwtErr, decoded) => __awaiter(void 0, void 0, void 0, function* () {
+        jwt.verify(req.body.token, process.env.TTTS_TOKEN_SECRET, (jwtErr, decoded) => __awaiter(void 0, void 0, void 0, function* () {
             if (jwtErr instanceof Error) {
                 next(jwtErr);
             }
             else {
+                // 指定された予約ID
                 const ids = decoded.object;
-                let reservations = yield Promise.all(ids.map((id) => __awaiter(void 0, void 0, void 0, function* () { return reservationService.findById({ id }); })));
-                reservations = reservations.filter((r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed);
-                if (reservations.length === 0) {
-                    next(new Error(req.__('NotFound')));
-                    return;
+                if (Array.isArray(decoded.orders)) {
+                    try {
+                        yield printByReservationIds(req, res)({
+                            output: req.body.output,
+                            ids: ids,
+                            orders: decoded.orders
+                        });
+                    }
+                    catch (error) {
+                        next(error);
+                    }
                 }
-                renderPrintFormat(req, res)({ reservations });
+                else {
+                    next(new Error('パラメータを確認できませんでした:orders'));
+                }
             }
         }));
     }
     catch (error) {
-        next(new Error(req.__('UnexpectedError')));
+        next(new Error(`${req.__('UnexpectedError')}:${error.message}`));
     }
 }));
 /**
- * 注文番号からチケット印刷(A4)
- * output:thermal→PCサーマル印刷 (WindowsでStarPRNTドライバを使用)
+ * 注文番号からチケット印刷
  */
 reservationsRouter.get('/printByOrderNumber', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく
+        if (typeof req.query.locale === 'string' && req.query.locale.length > 0) {
+            req.session.locale = req.query.locale;
+        }
         const orderNumber = req.query.orderNumber;
+        const confirmationNumber = req.query.confirmationNumber;
         if (typeof orderNumber !== 'string' || orderNumber.length === 0) {
             throw new Error('Order Number required');
         }
-        // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
-        req.session.locale = req.params.locale;
-        const searchResult = yield reservationService.findByOrderNumber({
-            orderNumber: orderNumber
-        });
-        let reservations = searchResult.data;
-        reservations = reservations.filter((r) => r.reservationStatus === tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed);
-        if (reservations.length === 0) {
-            next(new Error(req.__('NotFound')));
-            return;
+        if (typeof confirmationNumber !== 'string' || confirmationNumber.length === 0) {
+            throw new Error('Confirmation Number required');
         }
-        renderPrintFormat(req, res)({ reservations });
+        const output = (typeof req.query.output === 'string')
+            ? req.query.output
+            : '';
+        yield printByOrderNumber(req, res)({
+            confirmationNumber: String(confirmationNumber),
+            orderNumber: orderNumber,
+            output: output
+        });
+    }
+    catch (error) {
+        next(new Error(error.message));
+    }
+}));
+/**
+ * 注文番号をpostで印刷
+ */
+reservationsRouter.post('/printByOrderNumber', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく
+        if (typeof req.query.locale === 'string' && req.query.locale.length > 0) {
+            req.session.locale = req.query.locale;
+        }
+        const orderNumber = req.body.orderNumber;
+        const confirmationNumber = req.body.confirmationNumber;
+        if (typeof orderNumber !== 'string' || orderNumber.length === 0) {
+            throw new Error('Order Number required');
+        }
+        if (typeof confirmationNumber !== 'string' || confirmationNumber.length === 0) {
+            throw new Error('Confirmation Number required');
+        }
+        const output = (typeof req.query.output === 'string')
+            ? req.query.output
+            : '';
+        yield printByOrderNumber(req, res)({
+            confirmationNumber: String(confirmationNumber),
+            orderNumber: orderNumber,
+            output: output
+        });
+    }
+    catch (error) {
+        next(new Error(error.message));
+    }
+}));
+function printByOrderNumber(req, res) {
+    return (params) => __awaiter(this, void 0, void 0, function* () {
+        let order;
+        let reservations;
+        // Cinerinoで注文照会&注文承認
+        const findOrderResult = yield orderService.findByConfirmationNumber({
+            confirmationNumber: params.confirmationNumber,
+            orderNumber: params.orderNumber
+        });
+        if (Array.isArray(findOrderResult)) {
+            order = findOrderResult[0];
+        }
+        else {
+            order = findOrderResult;
+        }
+        if (order === undefined) {
+            throw new Error(`${req.__('NotFound')}: Order`);
+        }
+        // 注文承認
+        const { code } = yield orderService.authorize({
+            object: {
+                orderNumber: order.orderNumber,
+                customer: { telephone: order.customer.telephone }
+            },
+            result: {
+                expiresInSeconds: inquiry_1.CODE_EXPIRES_IN_SECONDS
+            }
+        });
+        reservations = order.acceptedOffers.map((offer) => {
+            var _a;
+            const unitPriceSpec = offer.priceSpecification.priceComponent[0];
+            const itemOffered = offer.itemOffered;
+            // 注文データのticketTypeに単価仕様が存在しないので、補完する
+            return Object.assign(Object.assign({}, itemOffered), { code: code, paymentNo: order.confirmationNumber, paymentMethod: (_a = order.paymentMethods[0]) === null || _a === void 0 ? void 0 : _a.name, reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
+        });
+        // 印刷結果へ遷移
+        req.session.printResult = { reservations, order };
+        res.redirect(`/reservations/print/result?output=${params.output}`);
+    });
+}
+function printByReservationIds(req, res) {
+    return (params) => __awaiter(this, void 0, void 0, function* () {
+        let orders;
+        let reservations;
+        // 注文番号と確認番号で注文照会
+        const printingOrders = params.orders;
+        orders = yield Promise.all(printingOrders.map((printingOrder) => __awaiter(this, void 0, void 0, function* () {
+            const findOrderResult = yield orderService.findByConfirmationNumber({
+                confirmationNumber: String(printingOrder.confirmationNumber),
+                orderNumber: String(printingOrder.orderNumber)
+            });
+            if (Array.isArray(findOrderResult)) {
+                return findOrderResult[0];
+            }
+            else {
+                return findOrderResult;
+            }
+        })));
+        // 注文承認
+        orders = yield Promise.all(orders.map((order) => __awaiter(this, void 0, void 0, function* () {
+            const { code } = yield orderService.authorize({
+                object: {
+                    orderNumber: order.orderNumber,
+                    customer: { telephone: order.customer.telephone }
+                },
+                result: {
+                    expiresInSeconds: inquiry_1.CODE_EXPIRES_IN_SECONDS
+                }
+            });
+            return Object.assign(Object.assign({}, order), { code: code });
+        })));
+        // 予約リストを抽出
+        reservations = orders.reduce((a, b) => {
+            const reservationsByOrder = b.acceptedOffers
+                // 指定された予約IDに絞る
+                .filter((offer) => {
+                return params.ids.includes(offer.itemOffered.id);
+            })
+                .map((offer) => {
+                var _a;
+                const unitPriceSpec = offer.priceSpecification.priceComponent[0];
+                const itemOffered = offer.itemOffered;
+                // 注文データのticketTypeに単価仕様が存在しないので、補完する
+                return Object.assign(Object.assign({}, itemOffered), { code: b.code, paymentNo: b.confirmationNumber, paymentMethod: (_a = b.paymentMethods[0]) === null || _a === void 0 ? void 0 : _a.name, reservedTicket: Object.assign(Object.assign({}, itemOffered.reservedTicket), { ticketType: Object.assign(Object.assign({}, itemOffered.reservedTicket.ticketType), { priceSpecification: unitPriceSpec }) }) });
+            });
+            return [...a, ...reservationsByOrder];
+        }, []);
+        // 印刷結果へ遷移
+        req.session.printResult = { reservations };
+        res.redirect(`/reservations/print/result?output=${params.output}`);
+    });
+}
+/**
+ * 印刷結果
+ */
+reservationsRouter.get('/print/result', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const printResult = (_a = req.session) === null || _a === void 0 ? void 0 : _a.printResult;
+        if (printResult === undefined || printResult === null) {
+            throw new Error(`${req.__('NotFound')}:printResult`);
+        }
+        renderPrintFormat(req, res)(printResult);
     }
     catch (error) {
         next(new Error(error.message));
@@ -104,6 +284,7 @@ function renderPrintFormat(req, res) {
             case 'thermal':
                 res.render('print/thermal', {
                     layout: false,
+                    order: params.order,
                     reservations: reservations
                 });
                 break;
@@ -111,6 +292,7 @@ function renderPrintFormat(req, res) {
             case 'thermal_normal':
                 res.render('print/print_pcthermal', {
                     layout: false,
+                    order: params.order,
                     reservations: reservations
                 });
                 break;
@@ -118,6 +300,7 @@ function renderPrintFormat(req, res) {
             default:
                 res.render('print/print', {
                     layout: false,
+                    order: params.order,
                     reservations: reservations
                 });
         }

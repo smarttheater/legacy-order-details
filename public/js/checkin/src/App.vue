@@ -271,6 +271,7 @@ export default {
                     if (!qrStr) {
                         return resolve(`QRコードが読み取れていません${qrStr}`);
                     }
+
                     // キャッシュにあったら返す (オブジェクトを検査したうえで)
                     const reservationsCache = this.reservationsCacheById[this.reservationCacheIdsByQrStr[qrStr]];
                     if (reservationsCache && !this.getErrStrByReservationValidater(reservationsCache)) {
@@ -312,6 +313,7 @@ export default {
                     // APIに送信
                     let errmsg = '';
                     this.tempSubmittingQrStr = targetQr;
+
                     return axios.post(`/checkin/reservation/${targetQr}`, targetCheckin, { timeout: 15000 }).then(() => {
                         // 無事完了したので削除
                         delete this.unsentCheckinsByQrStr[targetQr];
@@ -415,13 +417,14 @@ export default {
             return false;
         },
         // 得た reservation を表示用に整形しつつ送信キューに入れる
-        processScanResult(reservation) {
+        processScanResult(reservation, code) {
             // チェックインを作成 (checkinsがArrayなのはgetReservationByQrStrで確認済)
             reservation.checkins.push({
                 when: (new Date()).toISOString(),
                 where: this.checkinAdminUser.group.name,
                 why: '',
                 how: this.checkinAdminUser.username,
+                code: code
             });
 
             // 効果音の再生状態を初期化しておく
@@ -513,13 +516,19 @@ export default {
                         this.addLog(`[${moment().format('HH:mm:ss')}]${errmsg}`);
                         return resolve();
                     }
-                    const result = await this.getReservationByQrStr(qrStr);
+
+                    // QR文字列から予約IDを抽出する
+                    const splittedQRStr = String(qrStr).split('@');
+                    const reservationId = splittedQRStr[0];
+                    const code = splittedQRStr[1];
+
+                    const result = await this.getReservationByQrStr(reservationId);
                     if (type(result) === 'string') {
                         audioNo.play(); // QRコードが異常 || 通信エラー
                         alert(result);
                         return resolve();
                     }
-                    this.processScanResult(result);
+                    this.processScanResult(result, code);
                 } catch (e) {
                     this.addLog(`[${moment().format('HH:mm:ss')}][catched][checkQr][${qrStr}] ${e.message}`);
                 }
@@ -536,6 +545,7 @@ export default {
             if (e.keyCode === 13) {
                 this.is_processing = true;
                 this.tempReservation = null;
+                // this.tempQrStr = 'TTT285925417645218-0@afeccb73-386b-435a-9b95-e45ebb2699ef';
                 return this.checkQr(this.tempQrStr).then(() => {
                     this.is_processing = false;
                     this.tempQrStr = '';
