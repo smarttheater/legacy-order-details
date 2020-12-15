@@ -57,7 +57,11 @@ export default (app: Application) => {
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
 
-        res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
+        res.render('common/terms/', {
+            layout: 'layouts/inquiry/layout',
+            pageId: '',
+            pageClassName: ''
+        });
     });
 
     // 特定商取引法に基づく表示ページ
@@ -67,7 +71,11 @@ export default (app: Application) => {
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
 
-        res.render('common/asct/', { layout: 'layouts/inquiry/layout' });
+        res.render('common/asct/', {
+            layout: 'layouts/inquiry/layout',
+            pageId: '',
+            pageClassName: ''
+        });
     });
 
     // 本体サイトの入場案内ページの対応言語版に転送
