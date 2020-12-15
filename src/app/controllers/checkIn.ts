@@ -40,7 +40,9 @@ export async function confirm(req: Request, res: Response, next: NextFunction): 
     try {
         res.render('checkIn/confirm', {
             checkinAdminUser: req.staffUser,
-            layout: 'layouts/checkIn/layout'
+            layout: 'layouts/checkIn/layout',
+            pageId: 'page_checkin_confirm',
+            pageClassName: 'page-checkin page-confirm'
         });
     } catch (error) {
         next(new Error('unexepected error'));
@@ -54,7 +56,9 @@ export async function confirmTest(req: Request, res: Response, next: NextFunctio
         }
         res.render('checkIn/confirmTest', {
             checkinAdminUser: req.staffUser,
-            layout: 'layouts/checkIn/layout'
+            layout: 'layouts/checkIn/layout',
+            pageId: 'page_checkin_confirm',
+            pageClassName: 'page-checkin page-confirm'
         });
     } catch (error) {
         next(new Error('unexepected error'));

@@ -24,10 +24,6 @@ if (Array.isArray(performance.additionalProperty)) {
 
 const paymentNo = order.confirmationNumber;
 %>
-<%- contentFor('pageId') %>
-page_inquiry_result
-<%- contentFor('pageClassName') %>
-page-inquiry page-result page-complete page-<%- locale %>
 <%- contentFor('scripts') %>
 <script src="/js/inquiry/result.js"></script>
 <script src="/js/qr/qr.js"></script>

@@ -48,7 +48,9 @@ function confirm(req, res, next) {
         try {
             res.render('checkIn/confirm', {
                 checkinAdminUser: req.staffUser,
-                layout: 'layouts/checkIn/layout'
+                layout: 'layouts/checkIn/layout',
+                pageId: 'page_checkin_confirm',
+                pageClassName: 'page-checkin page-confirm'
             });
         }
         catch (error) {
@@ -66,7 +68,9 @@ function confirmTest(req, res, next) {
             }
             res.render('checkIn/confirmTest', {
                 checkinAdminUser: req.staffUser,
-                layout: 'layouts/checkIn/layout'
+                layout: 'layouts/checkIn/layout',
+                pageId: 'page_checkin_confirm',
+                pageClassName: 'page-checkin page-confirm'
             });
         }
         catch (error) {
