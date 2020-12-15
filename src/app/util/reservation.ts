@@ -1,11 +1,10 @@
 import * as cinerinoapi from '@cinerino/sdk';
-import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import * as moment from 'moment-timezone';
 
 // tslint:disable-next-line:cyclomatic-complexity
 export function chevreReservation2ttts(
-    params: tttsapi.factory.reservation.event.IReservation
-): tttsapi.factory.reservation.event.IReservation {
+    params: cinerinoapi.factory.chevre.reservation.IReservation<cinerinoapi.factory.chevre.reservationType.EventReservation>
+): cinerinoapi.factory.chevre.reservation.IReservation<cinerinoapi.factory.chevre.reservationType.EventReservation> {
     const ticketType = params.reservedTicket.ticketType;
     const underName = params.underName;
 
