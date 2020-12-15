@@ -8,7 +8,6 @@ import { NextFunction, Request, Response } from 'express';
 // tslint:disable-next-line:ordered-imports
 import { BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, NOT_FOUND, NO_CONTENT } from 'http-status';
 import * as moment from 'moment-timezone';
-import * as _ from 'underscore';
 
 import { chevreReservation2ttts } from '../util/reservation';
 
@@ -87,7 +86,10 @@ export async function getReservations(req: Request, res: Response): Promise<void
             typeOf: tttsapi.factory.chevre.reservationType.EventReservation,
             reservationStatuses: [tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed],
             reservationFor: {
-                id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined,
+                id: ((typeof req.body.performanceId === 'number' || typeof req.body.performanceId === 'string')
+                    && String(req.body.performanceId).length > 0)
+                    ? String(req.body.performanceId)
+                    : undefined,
                 startThrough: now.add(1, 'second').toDate(),
                 ...{ endFrom: now.toDate() }
             },

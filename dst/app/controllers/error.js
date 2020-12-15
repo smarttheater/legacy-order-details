@@ -11,7 +11,7 @@ function notFound(req, res) {
     }
     else {
         res.status(http_status_1.NOT_FOUND);
-        res.render('error/notFound');
+        res.render('error/notFound', { layout: 'layouts/inquiry/layout' });
     }
 }
 exports.notFound = notFound;
@@ -29,6 +29,7 @@ function index(err, req, res) {
     else {
         res.status(http_status_1.INTERNAL_SERVER_ERROR);
         res.render('error/error', {
+            layout: 'layouts/inquiry/layout',
             message: err.message,
             error: err
         });

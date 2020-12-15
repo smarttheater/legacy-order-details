@@ -19,7 +19,6 @@ const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 // tslint:disable-next-line:ordered-imports
 const http_status_1 = require("http-status");
 const moment = require("moment-timezone");
-const _ = require("underscore");
 const reservation_1 = require("../util/reservation");
 const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
@@ -94,7 +93,10 @@ function getReservations(req, res) {
                 endpoint: process.env.API_ENDPOINT,
                 auth: req.tttsAuthClient
             });
-            const searchReservationsResult = yield tttsReservationService.search(Object.assign({ limit: 100, typeOf: tttsapi.factory.chevre.reservationType.EventReservation, reservationStatuses: [tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed], reservationFor: Object.assign({ id: (!_.isEmpty(req.body.performanceId)) ? req.body.performanceId : undefined, startThrough: now.add(1, 'second').toDate() }, { endFrom: now.toDate() }) }, {
+            const searchReservationsResult = yield tttsReservationService.search(Object.assign({ limit: 100, typeOf: tttsapi.factory.chevre.reservationType.EventReservation, reservationStatuses: [tttsapi.factory.chevre.reservationStatusType.ReservationConfirmed], reservationFor: Object.assign({ id: ((typeof req.body.performanceId === 'number' || typeof req.body.performanceId === 'string')
+                        && String(req.body.performanceId).length > 0)
+                        ? String(req.body.performanceId)
+                        : undefined, startThrough: now.add(1, 'second').toDate() }, { endFrom: now.toDate() }) }, {
                 noTotalCount: '1'
             }));
             const reservations = searchReservationsResult.data.map(reservation_1.chevreReservation2ttts);

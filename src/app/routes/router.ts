@@ -3,7 +3,6 @@
  */
 import * as conf from 'config';
 import { Application, Request, Response } from 'express';
-import * as baseController from '../controllers/base';
 import * as errorController from '../controllers/error';
 import * as languageController from '../controllers/language';
 import authRouter from './auth';
@@ -37,21 +36,19 @@ const getRedirectOfficialUrl = (req: Request, urlByLocale: any): string => {
  * リクエスト毎に、req,res,nextでコントローラーインスタンスを生成して、URLに応じたメソッドを実行する、という考え方
  */
 export default (app: Application) => {
-    const base = baseController.setLocals;
-
     app.use(authRouter);
 
     // 言語切替
     app.get('/language/update/:locale', languageController.update);
 
     // 入場
-    app.use('/checkin', base, checkinRouter);
+    app.use('/checkin', checkinRouter);
     // チケット照会
-    app.use('/inquiry', base, inquiryRouter);
-    app.use('/reservations', base, reservationsRouter);
+    app.use('/inquiry', inquiryRouter);
+    app.use('/reservations', reservationsRouter);
 
     // 利用規約ページ
-    app.get('/terms/', base, (req: Request, res: Response) => {
+    app.get('/terms/', (req: Request, res: Response) => {
         res.locals.req = req;
         res.locals.conf = conf;
         res.locals.validation = null;
@@ -61,7 +58,7 @@ export default (app: Application) => {
     });
 
     // 特定商取引法に基づく表示ページ
-    app.get('/asct/', base, (req: Request, res: Response) => {
+    app.get('/asct/', (req: Request, res: Response) => {
         res.locals.req = req;
         res.locals.conf = conf;
         res.locals.validation = null;
@@ -91,7 +88,7 @@ export default (app: Application) => {
     });
 
     // 404
-    app.get('/error/notFound', base, errorController.notFound);
+    app.get('/error/notFound', errorController.notFound);
     app.use((_: Request, res: Response) => { res.redirect('/error/notFound'); });
 
     // error handlers

@@ -12,7 +12,7 @@ export function notFound(req: Request, res: Response): void {
         res.status(NOT_FOUND).send({ error: 'Not Found.' });
     } else {
         res.status(NOT_FOUND);
-        res.render('error/notFound');
+        res.render('error/notFound', { layout: 'layouts/inquiry/layout' });
     }
 }
 
@@ -29,6 +29,7 @@ export function index(err: Error, req: Request, res: Response): void {
     } else {
         res.status(INTERNAL_SERVER_ERROR);
         res.render('error/error', {
+            layout: 'layouts/inquiry/layout',
             message: err.message,
             error: err
         });
