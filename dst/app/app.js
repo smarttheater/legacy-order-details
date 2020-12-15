@@ -26,7 +26,7 @@ app.use(session_1.default); // セッション
 app.set('views', `${__dirname}/../../views`);
 app.set('view engine', 'ejs');
 app.use(expressLayouts);
-app.set('layout', 'layouts/layout');
+app.set('layout', 'layouts/inquiry/layout');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
