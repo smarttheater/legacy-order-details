@@ -18,7 +18,5 @@ export function setLocals(req: Request, res: Response, next: NextFunction): void
     res.locals.validation = null;
     res.locals.officialWebsiteUrl = 'https://motionpicture.jp';
     res.locals.title = 'TTTS checkin';
-    res.locals.description = 'TTTS checkin';
-    res.locals.keywords = 'TTTS checkin';
     next();
 }

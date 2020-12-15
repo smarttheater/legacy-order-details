@@ -49,8 +49,6 @@ exports.default = (app) => {
         res.locals.conf = conf;
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
-        res.locals.description = 'TTTS Terms';
-        res.locals.keywords = 'TTTS Terms';
         res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
     });
     // 特定商取引法に基づく表示ページ
@@ -59,8 +57,6 @@ exports.default = (app) => {
         res.locals.conf = conf;
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
-        res.locals.description = 'TTTS Act on Specified Commercial Transactions';
-        res.locals.keywords = 'TTTS Act on Specified Commercial Transactions';
         res.render('common/asct/', { layout: 'layouts/inquiry/layout' });
     });
     // 本体サイトの入場案内ページの対応言語版に転送

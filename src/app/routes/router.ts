@@ -56,8 +56,6 @@ export default (app: Application) => {
         res.locals.conf = conf;
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
-        res.locals.description = 'TTTS Terms';
-        res.locals.keywords = 'TTTS Terms';
 
         res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
     });
@@ -68,8 +66,6 @@ export default (app: Application) => {
         res.locals.conf = conf;
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
-        res.locals.description = 'TTTS Act on Specified Commercial Transactions';
-        res.locals.keywords = 'TTTS Act on Specified Commercial Transactions';
 
         res.render('common/asct/', { layout: 'layouts/inquiry/layout' });
     });
