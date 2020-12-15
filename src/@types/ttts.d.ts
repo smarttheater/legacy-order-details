@@ -53,7 +53,7 @@ declare global {
              */
             printResult?: {
                 order?: cinerinoapi.factory.order.IOrder;
-                reservations: tttsapi.factory.reservation.event.IReservation[];
+                reservations: cinerinoapi.factory.order.IReservation[];
             };
         }
     }

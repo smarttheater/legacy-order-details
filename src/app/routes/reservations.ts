@@ -2,7 +2,6 @@
  * 予約ルーター
  */
 import * as cinerinoapi from '@cinerino/sdk';
-import * as tttsapi from '@motionpicture/ttts-api-nodejs-client';
 import { Request, Response, Router } from 'express';
 import * as jwt from 'jsonwebtoken';
 
@@ -11,7 +10,7 @@ import { chevreReservation2ttts } from '../util/reservation';
 
 const reservationsRouter = Router();
 
-const authClient = new tttsapi.auth.ClientCredentials({
+const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: <string>process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: <string>process.env.API_CLIENT_ID,
     clientSecret: <string>process.env.API_CLIENT_SECRET,
@@ -27,6 +26,7 @@ const orderService = new cinerinoapi.service.Order({
 export type ICompoundPriceSpecification
     // tslint:disable-next-line:max-line-length
     = cinerinoapi.factory.chevre.compoundPriceSpecification.IPriceSpecification<cinerinoapi.factory.chevre.priceSpecificationType.UnitPriceSpecification>;
+export type IReservation = cinerinoapi.factory.chevre.reservation.IReservation<cinerinoapi.factory.chevre.reservationType.EventReservation>;
 
 /**
  * チケット印刷(A4)
@@ -178,7 +178,7 @@ function printByOrderNumber(req: Request, res: Response) {
         output: string;
     }) => {
         let order: cinerinoapi.factory.order.IOrder;
-        let reservations: tttsapi.factory.reservation.event.IReservation[];
+        let reservations: IReservation[];
 
         // Cinerinoで注文照会&注文承認
         const findOrderResult = await orderService.findByConfirmationNumber({
@@ -245,7 +245,7 @@ function printByReservationIds(req: Request, res: Response) {
         orders: { orderNumber: string; confirmationNumber: string }[];
     }) => {
         let orders: IOrderWithCode[];
-        let reservations: tttsapi.factory.reservation.event.IReservation[];
+        let reservations: IReservation[];
 
         // 注文番号と確認番号で注文照会
         const printingOrders: { orderNumber: string; confirmationNumber: string }[] = params.orders;
@@ -281,7 +281,7 @@ function printByReservationIds(req: Request, res: Response) {
         }));
 
         // 予約リストを抽出
-        reservations = orders.reduce<tttsapi.factory.reservation.event.IReservation[]>(
+        reservations = orders.reduce<IReservation[]>(
             (a, b) => {
                 const reservationsByOrder = b.acceptedOffers
                     // 指定された予約IDに絞る
@@ -343,7 +343,7 @@ reservationsRouter.get(
 function renderPrintFormat(req: Request, res: Response) {
     return (params: {
         order?: cinerinoapi.factory.order.IOrder;
-        reservations: tttsapi.factory.reservation.event.IReservation[];
+        reservations: IReservation[];
     }) => {
         // チケットコード順にソート
         const reservations = params.reservations.sort((a, b) => {

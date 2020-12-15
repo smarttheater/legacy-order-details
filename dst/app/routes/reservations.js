@@ -13,13 +13,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * 予約ルーター
  */
 const cinerinoapi = require("@cinerino/sdk");
-const tttsapi = require("@motionpicture/ttts-api-nodejs-client");
 const express_1 = require("express");
 const jwt = require("jsonwebtoken");
 const inquiry_1 = require("../controllers/inquiry");
 const reservation_1 = require("../util/reservation");
 const reservationsRouter = express_1.Router();
-const authClient = new tttsapi.auth.ClientCredentials({
+const authClient = new cinerinoapi.auth.ClientCredentials({
     domain: process.env.API_AUTHORIZE_SERVER_DOMAIN,
     clientId: process.env.API_CLIENT_ID,
     clientSecret: process.env.API_CLIENT_SECRET,

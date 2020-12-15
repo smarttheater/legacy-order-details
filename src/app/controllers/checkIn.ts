@@ -100,7 +100,7 @@ export async function getReservations(req: Request, res: Response): Promise<void
             [qr: string]: string;
         } = {};
         reservations.forEach((reservation) => {
-            reservationsById[reservation.id] = reservation;
+            reservationsById[reservation.id] = <tttsapi.factory.reservation.event.IReservation>reservation;
             reservationIdsByQrStr[reservation.id] = reservation.id;
         });
 
