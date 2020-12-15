@@ -44,28 +44,20 @@ exports.default = (app) => {
     app.use('/inquiry', base, inquiry_1.default);
     app.use('/reservations', base, reservations_1.default);
     // 利用規約ページ
-    app.get('/terms/', (req, res) => {
+    app.get('/terms/', base, (req, res) => {
         res.locals.req = req;
         res.locals.conf = conf;
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
-        res.render('common/terms/', {
-            layout: 'layouts/inquiry/layout',
-            pageId: '',
-            pageClassName: ''
-        });
+        res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
     });
     // 特定商取引法に基づく表示ページ
-    app.get('/asct/', (req, res) => {
+    app.get('/asct/', base, (req, res) => {
         res.locals.req = req;
         res.locals.conf = conf;
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
-        res.render('common/asct/', {
-            layout: 'layouts/inquiry/layout',
-            pageId: '',
-            pageClassName: ''
-        });
+        res.render('common/asct/', { layout: 'layouts/inquiry/layout' });
     });
     // 本体サイトの入場案内ページの対応言語版に転送
     app.get('/aboutenter', (req, res) => {

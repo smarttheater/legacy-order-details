@@ -51,31 +51,23 @@ export default (app: Application) => {
     app.use('/reservations', base, reservationsRouter);
 
     // 利用規約ページ
-    app.get('/terms/', (req: Request, res: Response) => {
+    app.get('/terms/', base, (req: Request, res: Response) => {
         res.locals.req = req;
         res.locals.conf = conf;
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
 
-        res.render('common/terms/', {
-            layout: 'layouts/inquiry/layout',
-            pageId: '',
-            pageClassName: ''
-        });
+        res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
     });
 
     // 特定商取引法に基づく表示ページ
-    app.get('/asct/', (req: Request, res: Response) => {
+    app.get('/asct/', base, (req: Request, res: Response) => {
         res.locals.req = req;
         res.locals.conf = conf;
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
 
-        res.render('common/asct/', {
-            layout: 'layouts/inquiry/layout',
-            pageId: '',
-            pageClassName: ''
-        });
+        res.render('common/asct/', { layout: 'layouts/inquiry/layout' });
     });
 
     // 本体サイトの入場案内ページの対応言語版に転送

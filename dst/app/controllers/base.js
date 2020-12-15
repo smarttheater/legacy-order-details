@@ -19,6 +19,8 @@ function setLocals(req, res, next) {
     res.locals.validation = null;
     res.locals.officialWebsiteUrl = 'https://motionpicture.jp';
     res.locals.title = 'TTTS checkin';
+    res.locals.pageId = '';
+    res.locals.pageClassName = '';
     next();
 }
 exports.setLocals = setLocals;
