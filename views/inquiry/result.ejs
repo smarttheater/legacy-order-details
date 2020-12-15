@@ -24,13 +24,6 @@ if (Array.isArray(performance.additionalProperty)) {
 
 const paymentNo = order.confirmationNumber;
 %>
-<%- contentFor('scripts') %>
-<script src="/js/inquiry/result.js"></script>
-<script src="/js/qr/qr.js"></script>
-<script src="/js/common/VanillaQR.js"></script>
-<script>
-    window.ttts.isCancellable = <%- isCancellable %>;
-</script>
 <%- contentFor('body') %>
 
 <h1 class="pagetitle"><%- __('TicketDetail') %></h1>
@@ -123,3 +116,10 @@ const paymentNo = order.confirmationNumber;
     <a class="btn-back" href="/inquiry/search"><span><%- __('InquiryOther') %></span></a>
 </div>
 <%- include('cancel') %>
+
+<script src="/js/inquiry/result.js"></script>
+<script src="/js/qr/qr.js"></script>
+<script src="/js/common/VanillaQR.js"></script>
+<script>
+    window.ttts.isCancellable = <%- isCancellable %>;
+</script>
