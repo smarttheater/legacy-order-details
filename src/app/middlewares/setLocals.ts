@@ -38,8 +38,8 @@ export default (req: Request, res: Response, next: NextFunction) => {
     res.locals.conf = conf;
     res.locals.moment = moment;
     res.locals.validation = null;
-    res.locals.officialWebsiteUrl = 'https://motionpicture.jp';
-    res.locals.title = 'TTTS checkin';
+    res.locals.officialWebsiteUrl = '';
+    res.locals.title = 'Order Details';
     res.locals.pageId = '';
     res.locals.pageClassName = '';
 

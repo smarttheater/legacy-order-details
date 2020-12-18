@@ -7,7 +7,7 @@ const startTime = process.hrtime();
 const createDebug = require("debug");
 const http = require("http");
 const app = require("./app/app");
-const debug = createDebug('ttts-authentication:server');
+const debug = createDebug('legacy-order-details:server');
 /**
  * Get port from environment and store in Express.
  */

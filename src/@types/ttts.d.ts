@@ -7,11 +7,6 @@ import * as cinerinoapi from '@cinerino/sdk';
 declare global {
     namespace Express {
         // tslint:disable-next-line:interface-name
-        export interface Request {
-            tttsAuthClient: cinerinoapi.auth.OAuth2;
-        }
-
-        // tslint:disable-next-line:interface-name
         export interface Session {
             /**
              * チケット照会結果
