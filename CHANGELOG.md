@@ -10,8 +10,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Changed
 
-- Smart Theaterとして再構築
-
 ### Deprecated
 
 ### Removed
@@ -19,6 +17,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Fixed
 
 ### Security
+
+## v3.0.1 - 2020-12-18
+
+### Changed
+
+- Smart Theaterとして再構築
 
 ## v3.0.0 - 2020-12-18
 
