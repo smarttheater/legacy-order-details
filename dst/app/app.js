@@ -44,5 +44,5 @@ app.use(i18n.init);
 app.use(expressValidator());
 app.use(setLocals_1.default); // ローカル変数セット
 // router登録
-router_1.default(app);
+app.use('/', router_1.default);
 module.exports = app;
