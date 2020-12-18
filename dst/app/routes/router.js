@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const conf = require("config");
 const errorController = require("../controllers/error");
 const languageController = require("../controllers/language");
-const auth_1 = require("./auth");
 const checkin_1 = require("./checkin");
 const inquiry_1 = require("./inquiry");
 const reservations_1 = require("./reservations");
@@ -33,7 +32,6 @@ const getRedirectOfficialUrl = (req, urlByLocale) => {
  * リクエスト毎に、req,res,nextでコントローラーインスタンスを生成して、URLに応じたメソッドを実行する、という考え方
  */
 exports.default = (app) => {
-    app.use(auth_1.default);
     // 言語切替
     app.get('/language/update/:locale', languageController.update);
     // 入場

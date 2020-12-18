@@ -19,15 +19,12 @@
   "dependencies": {
     "@cinerino/sdk": "1.16.0-alpha.2",
     "@motionpicture/express-middleware": "0.0.0",
-    "@motionpicture/ttts-api-nodejs-client": "^8.0.0",
-    "axios": "0.18.0",
     "body-parser": "^1.18.2",
     "config": "^1.29.0",
     "connect-redis": "^3.3.3",
     "cookie-parser": "^1.4.3",
     "debug": "^3.1.0",
     "ejs": "^2.5.7",
-    "es6-promise": "4.2.4",
     "express": "^4.17.1",
     "express-partials": "^0.3.0",
     "express-session": "^1.15.6",
@@ -41,7 +38,6 @@
     "redis": "^2.8.0",
     "request": "^2.83.0",
     "request-promise-native": "^1.0.5",
-    "type-detect": "^4.0.8",
     "vue": "2.6.12"
   },
   "description": "This is a repogitory for TTTS online authentication.",

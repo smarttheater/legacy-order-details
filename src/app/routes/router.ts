@@ -5,7 +5,6 @@ import * as conf from 'config';
 import { Application, Request, Response } from 'express';
 import * as errorController from '../controllers/error';
 import * as languageController from '../controllers/language';
-import authRouter from './auth';
 import checkinRouter from './checkin';
 import inquiryRouter from './inquiry';
 import reservationsRouter from './reservations';
@@ -36,8 +35,6 @@ const getRedirectOfficialUrl = (req: Request, urlByLocale: any): string => {
  * リクエスト毎に、req,res,nextでコントローラーインスタンスを生成して、URLに応じたメソッドを実行する、という考え方
  */
 export default (app: Application) => {
-    app.use(authRouter);
-
     // 言語切替
     app.get('/language/update/:locale', languageController.update);
 
