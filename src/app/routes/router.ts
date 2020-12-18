@@ -3,10 +3,8 @@
  */
 import * as conf from 'config';
 import { Application, Request, Response } from 'express';
-import * as baseController from '../controllers/base';
 import * as errorController from '../controllers/error';
 import * as languageController from '../controllers/language';
-import authRouter from './auth';
 import checkinRouter from './checkin';
 import inquiryRouter from './inquiry';
 import reservationsRouter from './reservations';
@@ -37,18 +35,14 @@ const getRedirectOfficialUrl = (req: Request, urlByLocale: any): string => {
  * リクエスト毎に、req,res,nextでコントローラーインスタンスを生成して、URLに応じたメソッドを実行する、という考え方
  */
 export default (app: Application) => {
-    const base = baseController.setLocals;
-
-    app.use(authRouter);
-
     // 言語切替
     app.get('/language/update/:locale', languageController.update);
 
     // 入場
-    app.use('/checkin', base, checkinRouter);
+    app.use('/checkin', checkinRouter);
     // チケット照会
-    app.use('/inquiry', base, inquiryRouter);
-    app.use('/reservations', base, reservationsRouter);
+    app.use('/inquiry', inquiryRouter);
+    app.use('/reservations', reservationsRouter);
 
     // 利用規約ページ
     app.get('/terms/', (req: Request, res: Response) => {
@@ -56,8 +50,6 @@ export default (app: Application) => {
         res.locals.conf = conf;
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
-        res.locals.description = 'TTTS Terms';
-        res.locals.keywords = 'TTTS Terms';
 
         res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
     });
@@ -68,8 +60,6 @@ export default (app: Application) => {
         res.locals.conf = conf;
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
-        res.locals.description = 'TTTS Act on Specified Commercial Transactions';
-        res.locals.keywords = 'TTTS Act on Specified Commercial Transactions';
 
         res.render('common/asct/', { layout: 'layouts/inquiry/layout' });
     });
@@ -95,7 +85,7 @@ export default (app: Application) => {
     });
 
     // 404
-    app.get('/error/notFound', base, errorController.notFound);
+    app.get('/error/notFound', errorController.notFound);
     app.use((_: Request, res: Response) => { res.redirect('/error/notFound'); });
 
     // error handlers

@@ -138,7 +138,9 @@ function search(req, res) {
                 end: reserveMaxDate
             },
             reserveMaxDate: reserveMaxDate,
-            layout: 'layouts/inquiry/layout'
+            layout: 'layouts/inquiry/layout',
+            pageId: 'page_inquiry_search',
+            pageClassName: `page-inquiry page-search page-${req.locale}`
         });
     });
 }
@@ -175,7 +177,9 @@ function result(req, res, next) {
                 ticketInfos: ticketInfos,
                 enableCancel: true,
                 cancellationFee: cancellationFee,
-                layout: 'layouts/inquiry/layout'
+                layout: 'layouts/inquiry/layout',
+                pageId: 'page_inquiry_result',
+                pageClassName: `page-inquiry page-result page-complete page-${req.locale}`
             });
         }
         catch (error) {

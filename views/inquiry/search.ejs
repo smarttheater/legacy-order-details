@@ -1,22 +1,3 @@
-<%- contentFor('pageId') %>
-page_inquiry_search
-<%- contentFor('pageClassName') %>
-page-inquiry page-search page-<%- locale %>
-<%- contentFor('scripts') %>
-<script>
-    window.ttts.errmsgLocales = {
-        empty: "<%-__('NoInput{{fieldName}}', { fieldName: '{{fieldName}}' }) %>",
-        invalid: "<%-__('Invalid{{fieldName}}', { fieldName: '{{fieldName}}' }) %>",
-        match: "<%-__('Match{{fieldName}}', { fieldName: '{{fieldName}}' }) %>",
-        maxLength: "<%-__('MaxLength{{fieldName}}{{max}}', { fieldName: '{{fieldName}}', max: '{{max}}' }) %>",
-    };
-    window.ttts.reservableMaxDate = '<%= reserveMaxDate %>';
-</script>
-<link href="/css/flatpickr.css" rel="stylesheet">
-<script src="/js/flatpickr/flatpickr.min.js"></script>
-<script src="/js/flatpickr/flatpickr.locale.<%= locale %>.js"></script>
-<script src="/js/inquiry/search.js"></script>
-<%- contentFor('body') %>
 <input type="hidden" name="apiEndpoint" value="<%= process.env.API_ENDPOINT %>">
 
 <h1 class="pagetitle"><%- __('TicketInquiry') %></h1>
@@ -76,3 +57,17 @@ page-inquiry page-search page-<%- locale %>
         </div>
     </div>
 </div>
+
+<script>
+    window.ttts.errmsgLocales = {
+        empty: "<%-__('NoInput{{fieldName}}', { fieldName: '{{fieldName}}' }) %>",
+        invalid: "<%-__('Invalid{{fieldName}}', { fieldName: '{{fieldName}}' }) %>",
+        match: "<%-__('Match{{fieldName}}', { fieldName: '{{fieldName}}' }) %>",
+        maxLength: "<%-__('MaxLength{{fieldName}}{{max}}', { fieldName: '{{fieldName}}', max: '{{max}}' }) %>",
+    };
+    window.ttts.reservableMaxDate = '<%= reserveMaxDate %>';
+</script>
+<link href="/css/flatpickr.css" rel="stylesheet">
+<script src="/js/flatpickr/flatpickr.min.js"></script>
+<script src="/js/flatpickr/flatpickr.locale.<%= locale %>.js"></script>
+<script src="/js/inquiry/search.js"></script>

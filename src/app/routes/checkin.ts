@@ -2,8 +2,6 @@
  * 入場ルーター
  */
 import * as express from 'express';
-import * as checkInController from '../controllers/checkIn';
-import userAuthentication from '../middlewares/userAuthentication';
 
 const checkinRouter = express.Router();
 
@@ -14,27 +12,19 @@ checkinRouter.all(
         res.redirect('/checkin/confirm');
     }
 );
-// ログアウト
-checkinRouter.all(
-    '/logout',
-    userAuthentication,
-    (req, res) => {
-        res.redirect(<string>req.staffUser?.generateLogoutUrl());
-    }
-);
 
 // 入場確認
-checkinRouter.get('/confirm', userAuthentication, checkInController.confirm);
-checkinRouter.post('/confirm', userAuthentication, checkInController.confirm);
+checkinRouter.get(
+    '/confirm',
+    (__, res, next) => {
+        if (typeof process.env.NEW_CHECKIN_URL === 'string') {
+            res.redirect(process.env.NEW_CHECKIN_URL);
 
-// テスト！(入場確認)
-checkinRouter.get('/confirmTest', userAuthentication, checkInController.confirmTest);
-checkinRouter.post('/confirmTest', userAuthentication, checkInController.confirmTest);
+            return;
+        }
 
-// api・チケット認証関連
-checkinRouter.post('/performance/reservations', userAuthentication, checkInController.getReservations);
-checkinRouter.get('/reservation/:qr', userAuthentication, checkInController.getReservation);
-checkinRouter.post('/reservation/:qr', userAuthentication, checkInController.addCheckIn);
-checkinRouter.delete('/reservation/:qr', userAuthentication, checkInController.removeCheckIn);
+        next(new Error('unexepected error'));
+    }
+);
 
 export default checkinRouter;

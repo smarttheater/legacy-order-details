@@ -4,10 +4,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * デフォルトルーター
  */
 const conf = require("config");
-const baseController = require("../controllers/base");
 const errorController = require("../controllers/error");
 const languageController = require("../controllers/language");
-const auth_1 = require("./auth");
 const checkin_1 = require("./checkin");
 const inquiry_1 = require("./inquiry");
 const reservations_1 = require("./reservations");
@@ -34,23 +32,19 @@ const getRedirectOfficialUrl = (req, urlByLocale) => {
  * リクエスト毎に、req,res,nextでコントローラーインスタンスを生成して、URLに応じたメソッドを実行する、という考え方
  */
 exports.default = (app) => {
-    const base = baseController.setLocals;
-    app.use(auth_1.default);
     // 言語切替
     app.get('/language/update/:locale', languageController.update);
     // 入場
-    app.use('/checkin', base, checkin_1.default);
+    app.use('/checkin', checkin_1.default);
     // チケット照会
-    app.use('/inquiry', base, inquiry_1.default);
-    app.use('/reservations', base, reservations_1.default);
+    app.use('/inquiry', inquiry_1.default);
+    app.use('/reservations', reservations_1.default);
     // 利用規約ページ
     app.get('/terms/', (req, res) => {
         res.locals.req = req;
         res.locals.conf = conf;
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
-        res.locals.description = 'TTTS Terms';
-        res.locals.keywords = 'TTTS Terms';
         res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
     });
     // 特定商取引法に基づく表示ページ
@@ -59,8 +53,6 @@ exports.default = (app) => {
         res.locals.conf = conf;
         res.locals.validation = null;
         res.locals.title = 'Tokyo Tower';
-        res.locals.description = 'TTTS Act on Specified Commercial Transactions';
-        res.locals.keywords = 'TTTS Act on Specified Commercial Transactions';
         res.render('common/asct/', { layout: 'layouts/inquiry/layout' });
     });
     // 本体サイトの入場案内ページの対応言語版に転送
@@ -80,7 +72,7 @@ exports.default = (app) => {
         res.redirect(getRedirectOfficialUrl(req, topUrlByLocale));
     });
     // 404
-    app.get('/error/notFound', base, errorController.notFound);
+    app.get('/error/notFound', errorController.notFound);
     app.use((_, res) => { res.redirect('/error/notFound'); });
     // error handlers
     app.use(errorController.index);

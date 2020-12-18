@@ -144,7 +144,9 @@ export async function search(req: Request, res: Response): Promise<void> {
             end: reserveMaxDate
         },
         reserveMaxDate: reserveMaxDate,
-        layout: 'layouts/inquiry/layout'
+        layout: 'layouts/inquiry/layout',
+        pageId: 'page_inquiry_search',
+        pageClassName: `page-inquiry page-search page-${req.locale}`
     });
 }
 
@@ -190,7 +192,9 @@ export async function result(req: Request, res: Response, next: NextFunction): P
             ticketInfos: ticketInfos,
             enableCancel: true,
             cancellationFee: cancellationFee,
-            layout: 'layouts/inquiry/layout'
+            layout: 'layouts/inquiry/layout',
+            pageId: 'page_inquiry_result',
+            pageClassName: `page-inquiry page-result page-complete page-${req.locale}`
         });
     } catch (error) {
         next(error);
