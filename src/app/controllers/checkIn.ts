@@ -33,6 +33,12 @@ const reservationService = new cinerinoapi.service.Reservation({
  * @desc Rコードを読み取って結果を表示するための画面
  */
 export async function confirm(req: Request, res: Response, next: NextFunction): Promise<void> {
+    if (typeof process.env.NEW_CHECKIN_URL === 'string') {
+        res.redirect(process.env.NEW_CHECKIN_URL);
+
+        return;
+    }
+
     if (req === null) {
         next(new Error('unexepected error'));
     }

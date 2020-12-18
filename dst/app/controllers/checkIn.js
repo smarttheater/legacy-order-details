@@ -41,6 +41,10 @@ const reservationService = new cinerinoapi.service.Reservation({
  */
 function confirm(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (typeof process.env.NEW_CHECKIN_URL === 'string') {
+            res.redirect(process.env.NEW_CHECKIN_URL);
+            return;
+        }
         if (req === null) {
             next(new Error('unexepected error'));
         }
