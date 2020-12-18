@@ -40,7 +40,7 @@
     "request-promise-native": "^1.0.5",
     "vue": "2.6.12"
   },
-  "description": "This is a repogitory for TTTS online authentication.",
+  "description": "Smart Theater Legacy Order Details",
   "devDependencies": {
     "@types/body-parser": "0.0.34",
     "@types/config": "0.0.32",
@@ -107,9 +107,9 @@
     "npm": "5.6.0"
   },
   "keywords": [],
-  "license": "UNLICENSED",
-  "main": "server.js",
-  "name": "ttts-authentication",
+  "license": "ISC",
+  "main": "dst/server.js",
+  "name": "@smarttheater/legacy-order-details",
   "private": true,
   "repository": {},
   "scripts": {
@@ -117,10 +117,9 @@
     "check": "npm run tslint",
     "clean": "rimraf ./dst ./doc ./coverage \"npm-debug.log*\" ./.nyc_output",
     "css": "gulp",
-    "doc": "jsdoc -c jsdoc.json",
+    "doc": "echo \"implementing...\" && exit 0",
     "mocha": "mocha",
     "start": "node dst/server.js",
-    "start:development": "node ./dst/ssl",
     "test": "npm run check",
     "tslint": "tslint --project tsconfig.json -c tslint.json --exclude \"**/*.spec.ts\" \"src/**/*.ts\"",
     "precommit": "npm test",

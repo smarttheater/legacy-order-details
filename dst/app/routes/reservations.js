@@ -29,42 +29,6 @@ const orderService = new cinerinoapi.service.Order({
     endpoint: process.env.CINERINO_API_ENDPOINT,
     auth: authClient
 });
-/**
- * チケット印刷(A4)
- * @deprecated Use POST /print
- */
-// reservationsRouter.get(
-//     '/print',
-//     async (req, res, next) => {
-//         try {
-//             // 他所からリンクされてくる時のためURLで言語を指定できるようにしておく (TTTS-230)
-//             (<any>req.session).locale = req.params.locale;
-//             jwt.verify(<string>req.query.token, <string>process.env.TTTS_TOKEN_SECRET, async (jwtErr, decoded: any) => {
-//                 if (jwtErr instanceof Error) {
-//                     next(jwtErr);
-//                 } else {
-//                     // 指定された予約ID
-//                     const ids = <string[]>decoded.object;
-//                     if (Array.isArray(decoded.orders)) {
-//                         try {
-//                             await printByReservationIds(req, res)({
-//                                 output: <string>req.query.output,
-//                                 ids: ids,
-//                                 orders: decoded.orders
-//                             });
-//                         } catch (error) {
-//                             next(error);
-//                         }
-//                     } else {
-//                         next(new Error('パラメータを確認できませんでした:orders'));
-//                     }
-//                 }
-//             });
-//         } catch (error) {
-//             next(new Error(req.__('UnexpectedError')));
-//         }
-//     }
-// );
 reservationsRouter.post('/print', (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         jwt.verify(req.body.token, process.env.TTTS_TOKEN_SECRET, (jwtErr, decoded) => __awaiter(void 0, void 0, void 0, function* () {
