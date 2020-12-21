@@ -56,6 +56,6 @@ app.use(expressValidator());
 app.use(setLocals); // ローカル変数セット
 
 // router登録
-router(app);
+app.use('/', router);
 
 export = app;

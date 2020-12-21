@@ -17,7 +17,7 @@
     }
   ],
   "dependencies": {
-    "@cinerino/sdk": "1.16.0-alpha.2",
+    "@cinerino/sdk": "1.18.1",
     "@motionpicture/express-middleware": "0.0.0",
     "body-parser": "^1.18.2",
     "config": "^1.29.0",
@@ -36,8 +36,6 @@
     "moment-timezone": "^0.5.25",
     "numeral": "^2.0.6",
     "redis": "^2.8.0",
-    "request": "^2.83.0",
-    "request-promise-native": "^1.0.5",
     "vue": "2.6.12"
   },
   "description": "Smart Theater Legacy Order Details",
@@ -138,5 +136,5 @@
       ]
     ]
   },
-  "version": "3.0.1"
+  "version": "3.0.2"
 }

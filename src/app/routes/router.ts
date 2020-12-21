@@ -2,7 +2,7 @@
  * デフォルトルーター
  */
 import * as conf from 'config';
-import { Application, Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 import * as errorController from '../controllers/error';
 import * as languageController from '../controllers/language';
 import checkinRouter from './checkin';
@@ -25,69 +25,62 @@ const getRedirectOfficialUrl = (req: Request, urlByLocale: any): string => {
     return (urlByLocale[locale] !== undefined) ? urlByLocale[locale] : urlByLocale.en;
 };
 
-/**
- * URLルーティング
- *
- * app.get(パス, ルーティング名称, メソッド);
- * といった形でルーティングを登録する
- * ルーティング名称は、ejs側やコントローラーでURLを生成する際に用いたりするので、意識的にページ一意な値を定めること
- *
- * リクエスト毎に、req,res,nextでコントローラーインスタンスを生成して、URLに応じたメソッドを実行する、という考え方
- */
-export default (app: Application) => {
-    // 言語切替
-    app.get('/language/update/:locale', languageController.update);
+const router = Router();
 
-    // 入場
-    app.use('/checkin', checkinRouter);
-    // チケット照会
-    app.use('/inquiry', inquiryRouter);
-    app.use('/reservations', reservationsRouter);
+// 言語切替
+router.get('/language/update/:locale', languageController.update);
 
-    // 利用規約ページ
-    app.get('/terms/', (req: Request, res: Response) => {
-        res.locals.req = req;
-        res.locals.conf = conf;
-        res.locals.validation = null;
-        res.locals.title = 'Tokyo Tower';
+// 入場
+router.use('/checkin', checkinRouter);
+// チケット照会
+router.use('/inquiry', inquiryRouter);
+router.use('/reservations', reservationsRouter);
 
-        res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
-    });
+// 利用規約ページ
+router.get('/terms/', (req: Request, res: Response) => {
+    res.locals.req = req;
+    res.locals.conf = conf;
+    res.locals.validation = null;
+    res.locals.title = 'Tokyo Tower';
 
-    // 特定商取引法に基づく表示ページ
-    app.get('/asct/', (req: Request, res: Response) => {
-        res.locals.req = req;
-        res.locals.conf = conf;
-        res.locals.validation = null;
-        res.locals.title = 'Tokyo Tower';
+    res.render('common/terms/', { layout: 'layouts/inquiry/layout' });
+});
 
-        res.render('common/asct/', { layout: 'layouts/inquiry/layout' });
-    });
+// 特定商取引法に基づく表示ページ
+router.get('/asct/', (req: Request, res: Response) => {
+    res.locals.req = req;
+    res.locals.conf = conf;
+    res.locals.validation = null;
+    res.locals.title = 'Tokyo Tower';
 
-    // 本体サイトの入場案内ページの対応言語版に転送
-    app.get('/aboutenter', (req: Request, res: Response) => {
-        res.redirect(getRedirectOfficialUrl(req, aboutEnteringUrlByLocale));
-    });
+    res.render('common/asct/', { layout: 'layouts/inquiry/layout' });
+});
 
-    // 本体サイトのプライバシーポリシーページの対応言語版に転送
-    app.get('/privacypolicy', (req: Request, res: Response) => {
-        res.redirect(getRedirectOfficialUrl(req, privacyPolicyUrlByLocale));
-    });
+// 本体サイトの入場案内ページの対応言語版に転送
+router.get('/aboutenter', (req: Request, res: Response) => {
+    res.redirect(getRedirectOfficialUrl(req, aboutEnteringUrlByLocale));
+});
 
-    // 本体サイトのお問い合わせページの対応言語版に転送
-    app.get('/contact', (req: Request, res: Response) => {
-        res.redirect(getRedirectOfficialUrl(req, contactUrlByLocale));
-    });
+// 本体サイトのプライバシーポリシーページの対応言語版に転送
+router.get('/privacypolicy', (req: Request, res: Response) => {
+    res.redirect(getRedirectOfficialUrl(req, privacyPolicyUrlByLocale));
+});
 
-    // 本体サイトトップページの対応言語版に転送
-    app.get('/returntop', (req: Request, res: Response) => {
-        res.redirect(getRedirectOfficialUrl(req, topUrlByLocale));
-    });
+// 本体サイトのお問い合わせページの対応言語版に転送
+router.get('/contact', (req: Request, res: Response) => {
+    res.redirect(getRedirectOfficialUrl(req, contactUrlByLocale));
+});
 
-    // 404
-    app.get('/error/notFound', errorController.notFound);
-    app.use((_: Request, res: Response) => { res.redirect('/error/notFound'); });
+// 本体サイトトップページの対応言語版に転送
+router.get('/returntop', (req: Request, res: Response) => {
+    res.redirect(getRedirectOfficialUrl(req, topUrlByLocale));
+});
 
-    // error handlers
-    app.use(errorController.index);
-};
+// 404
+router.get('/error/notFound', errorController.notFound);
+router.use((_: Request, res: Response) => { res.redirect('/error/notFound'); });
+
+// error handlers
+router.use(errorController.index);
+
+export default router;
