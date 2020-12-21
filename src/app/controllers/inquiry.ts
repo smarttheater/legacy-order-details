@@ -240,7 +240,7 @@ export async function cancel(req: Request, res: Response): Promise<void> {
         text: getCancelMail(req, order, CANCEL_CHARGE)
     };
 
-    const informOrderUrl = `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`;
+    const informOrderUrl = `${process.env.INFORM_ORDER_ENDPOINT}/webhooks/onReturnOrder`;
 
     // クレジットカード返金アクション
     const refundCreditCardActionsParams: cinerinoapi.factory.transaction.returnOrder.IRefundCreditCardParams[] =

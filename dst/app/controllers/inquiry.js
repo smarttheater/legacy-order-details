@@ -224,7 +224,7 @@ function cancel(req, res) {
             about: req.__('EmailTitleCan'),
             text: getCancelMail(req, order, CANCEL_CHARGE)
         };
-        const informOrderUrl = `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`;
+        const informOrderUrl = `${process.env.INFORM_ORDER_ENDPOINT}/webhooks/onReturnOrder`;
         // クレジットカード返金アクション
         const refundCreditCardActionsParams = yield Promise.all(order.paymentMethods
             .filter((p) => p.typeOf === cinerinoapi.factory.paymentMethodType.CreditCard)
