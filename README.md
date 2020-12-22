@@ -11,7 +11,8 @@
 | `REDIS_KEY`                   | true     |                        |         |
 | `NODE_CONFIG_DIR`             | true     |                        |         |
 | `TTTS_TOKEN_SECRET`           | true     |                        |         |
-| `API_ENDPOINT`                | true     |                        |         |
+| `INFORM_ORDER_ENDPOINT`       | true     |                        |         |
+| `CINERINO_API_ENDPOINT`       | true     |                        |         |
 | `API_CLIENT_ID`               | true     |                        |         |
 | `API_CLIENT_SECRET`           | true     |                        |         |
 | `API_AUTHORIZE_SERVER_DOMAIN` | true     |                        |         |

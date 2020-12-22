@@ -38,7 +38,7 @@ const orderService = new cinerinoapi.service.Order({
 // キャンセル料(1予約あたり1000円固定)
 const CANCEL_CHARGE = 1000;
 // 予約可能日数定義
-const reserveMaxDateInfo = conf.get('reserve_max_date');
+const reserveMaxDateInfo = { days: 60 };
 if (process.env.API_CLIENT_ID === undefined) {
     throw new Error('Please set an environment variable \'API_CLIENT_ID\'');
 }
@@ -224,7 +224,7 @@ function cancel(req, res) {
             about: req.__('EmailTitleCan'),
             text: getCancelMail(req, order, CANCEL_CHARGE)
         };
-        const informOrderUrl = `${process.env.API_ENDPOINT}/webhooks/onReturnOrder`;
+        const informOrderUrl = `${process.env.INFORM_ORDER_ENDPOINT}/webhooks/onReturnOrder`;
         // クレジットカード返金アクション
         const refundCreditCardActionsParams = yield Promise.all(order.paymentMethods
             .filter((p) => p.typeOf === cinerinoapi.factory.paymentMethodType.CreditCard)

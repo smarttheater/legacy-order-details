@@ -14,8 +14,6 @@
         "es": "Español",
         "ru": "Русский"
     },
-    "official_website_url": "https://www.tokyotower.co.jp/",
-    "official_tel_number": "03-1234-5678",
     "official_url_top_by_locale": {
         "ja": "https://www.tokyotower.co.jp/",
         "en": "https://www.tokyotower.co.jp/en.html",
@@ -45,36 +43,6 @@
         "it": "https://tdt.tokyotower.co.jp/it/#faq",
         "es": "https://tdt.tokyotower.co.jp/es/#faq",
         "ru": "https://tdt.tokyotower.co.jp/ru/#faq"
-    },
-    "official_url_ticketinfo_by_locale": {
-        "ja": "https://tdt.tokyotower.co.jp/#price",
-        "en": "https://tdt.tokyotower.co.jp/en/#price",
-        "zh-hans": "https://tdt.tokyotower.co.jp/cn/#price",
-        "zh-hant": "https://tdt.tokyotower.co.jp/zh/#price",
-        "ko": "https://tdt.tokyotower.co.jp/ko/#price",
-        "th": "https://tdt.tokyotower.co.jp/th/#price",
-        "id": "https://tdt.tokyotower.co.jp/in/#price",
-        "vi": "https://tdt.tokyotower.co.jp/vi/#price",
-        "fr": "https://tdt.tokyotower.co.jp/fr/#price",
-        "de": "https://tdt.tokyotower.co.jp/de/#price",
-        "it": "https://tdt.tokyotower.co.jp/it/#price",
-        "es": "https://tdt.tokyotower.co.jp/es/#price",
-        "ru": "https://tdt.tokyotower.co.jp/ru/#price"
-    },
-    "official_url_wheelchairinfo_by_locale": {
-        "ja": "https://tdt.tokyotower.co.jp/#chair",
-        "en": "https://tdt.tokyotower.co.jp/en/#chair",
-        "zh-hans": "https://tdt.tokyotower.co.jp/cn/#chair",
-        "zh-hant": "https://tdt.tokyotower.co.jp/zh/#chair",
-        "ko": "https://tdt.tokyotower.co.jp/ko/#chair",
-        "th": "https://tdt.tokyotower.co.jp/th/#chair",
-        "id": "https://tdt.tokyotower.co.jp/in/#chair",
-        "vi": "https://tdt.tokyotower.co.jp/vi/#chair",
-        "fr": "https://tdt.tokyotower.co.jp/fr/#chair",
-        "de": "https://tdt.tokyotower.co.jp/de/#chair",
-        "it": "https://tdt.tokyotower.co.jp/it/#chair",
-        "es": "https://tdt.tokyotower.co.jp/es/#chair",
-        "ru": "https://tdt.tokyotower.co.jp/ru/#chair"
     },
     "official_url_aboutentering_by_locale": {
         "ja": "https://tdt.tokyotower.co.jp/#set",
@@ -106,21 +74,6 @@
         "es": "https://www.tokyotower.co.jp/privacypolicy/en.html",
         "ru": "https://www.tokyotower.co.jp/privacypolicy/en.html"
     },
-    "official_url_inquiry_by_locale": {
-        "ja": "https://reference.tokyotower.co.jp/inquiry/search/?locale=ja",
-        "en": "https://reference.tokyotower.co.jp/inquiry/search/?locale=en",
-        "zh-hant": "https://reference.tokyotower.co.jp/inquiry/search/?locale=zh-hant",
-        "zh-hans": "https://reference.tokyotower.co.jp/inquiry/search/?locale=zh-hans",
-        "ko": "https://reference.tokyotower.co.jp/inquiry/search/?locale=ko",
-        "th": "https://reference.tokyotower.co.jp/inquiry/search/?locale=th",
-        "id": "https://reference.tokyotower.co.jp/inquiry/search/?locale=id",
-        "vi": "https://reference.tokyotower.co.jp/inquiry/search/?locale=vi",
-        "fr": "https://reference.tokyotower.co.jp/inquiry/search/?locale=fr",
-        "de": "https://reference.tokyotower.co.jp/inquiry/search/?locale=de",
-        "it": "https://reference.tokyotower.co.jp/inquiry/search/?locale=it",
-        "es": "https://reference.tokyotower.co.jp/inquiry/search/?locale=es",
-        "ru": "https://reference.tokyotower.co.jp/inquiry/search/?locale=ru"
-    },
     "official_url_contact_by_locale": {
         "ja": "https://www.tokyotower.co.jp/contact/index.html",
         "en": "https://www.tokyotower.co.jp/contact/en.html",
@@ -136,41 +89,8 @@
         "es": "https://www.tokyotower.co.jp/contact/en.html",
         "ru": "https://www.tokyotower.co.jp/contact/en.html"
     },
-    "meta": {
-        "keywords": "TOKYO TOWER TOP DECK TOUR",
-        "description": "TOKYO TOWER TOP DECK TOUR"
-    },
     "email": {
         "from": "noreply@tokyotower.co.jp",
         "fromname": "Tokyo Tower TOP DECK TOUR Online Ticket"
-    },
-    "gmo_payment_api_link_multi_entry": "https://pt01.mul-pay.jp/link/tshop00026838/Multi/Entry",
-    "datetimes": {
-        "reservation_start_customers_first": "2016-09-28T00:00:00+09:00",
-        "reservation_start_customers_second": "2016-10-22T10:30:00+09:00",
-        "event_start": "2016-10-25T00:00:00+09:00",
-        "event_end": "2017-12-31T23:59:59+09:00"
-    },
-    "temporary_reservation_valid_period_seconds": 900,
-    "waiting_settlement_reservatioin_valid_period_hours": 72,
-    "performanceIds4limit2": [],
-    "cancelCharge": 1000,
-    "cancellableDays": 3,
-    "ticketInfos": {
-        "000004": {
-            "description": "1"
-        },
-        "000005": {
-            "description": "1"
-        },
-        "000006": {
-            "description": "1"
-        }
-    },
-    "reserve_max_date": {
-        "days": 60
-    },
-    "descriptionInfos": {
-        "1": "wheelchair"
     }
 }
