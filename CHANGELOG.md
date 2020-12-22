@@ -10,9 +10,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Changed
 
-- API_ENDPOINTをINFORM_ORDER_ENDPOINTとして再定義
-- 不要なconfigを削除
-
 ### Deprecated
 
 ### Removed
@@ -20,6 +17,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Fixed
 
 ### Security
+
+## v3.0.3 - 2020-12-22
+
+### Changed
+
+- API_ENDPOINTをINFORM_ORDER_ENDPOINTとして再定義
+- 不要なconfigを削除
 
 ## v3.0.2 - 2020-12-21
 
