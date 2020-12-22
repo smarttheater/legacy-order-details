@@ -38,7 +38,7 @@ const orderService = new cinerinoapi.service.Order({
 // キャンセル料(1予約あたり1000円固定)
 const CANCEL_CHARGE = 1000;
 // 予約可能日数定義
-const reserveMaxDateInfo = conf.get('reserve_max_date');
+const reserveMaxDateInfo = { days: 60 };
 if (process.env.API_CLIENT_ID === undefined) {
     throw new Error('Please set an environment variable \'API_CLIENT_ID\'');
 }

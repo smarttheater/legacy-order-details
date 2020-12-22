@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Changed
 
 - API_ENDPOINTをINFORM_ORDER_ENDPOINTとして再定義
+- 不要なconfigを削除
 
 ### Deprecated
 

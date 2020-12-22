@@ -34,7 +34,7 @@ const orderService = new cinerinoapi.service.Order({
 const CANCEL_CHARGE: number = 1000;
 
 // 予約可能日数定義
-const reserveMaxDateInfo = conf.get<{ [period: string]: number }>('reserve_max_date');
+const reserveMaxDateInfo = { days: 60 };
 
 if (process.env.API_CLIENT_ID === undefined) {
     throw new Error('Please set an environment variable \'API_CLIENT_ID\'');
@@ -131,7 +131,7 @@ export async function search(req: Request, res: Response): Promise<void> {
 
     const maxDate = moment();
     Object.keys(reserveMaxDateInfo).forEach((key) => {
-        maxDate.add(reserveMaxDateInfo[key], <moment.unitOfTime.DurationConstructor>key);
+        maxDate.add((<any>reserveMaxDateInfo)[key], <moment.unitOfTime.DurationConstructor>key);
     });
     const reserveMaxDate: string = maxDate.format('YYYY/MM/DD');
 
